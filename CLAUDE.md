@@ -1,14 +1,23 @@
-# bill-me
+# kinsenas
 
 <!-- Each section is filled by the skill named under its heading. Placeholders count as missing. -->
 
 ## What this is
 <!-- owner: /brief — 2–3 lines: problem, user, core loop. Details live in docs/brief.md. -->
-Run /brief.
+Personal finance tracker web app. People with money split across banks, e-wallets and cash can't see their real total, and they miss bills and lose track of goals.
+First users: young Filipino employees (20–30) with 3–6 accounts, starting with the owner and 3–5 friends.
+Core loop: log income/expense/transfer → pay bills and debts → fund goals → check the overview (net worth, budget left, upcoming bills).
 
 ## Stack
 <!-- owner: /architect — one line per layer. Exact versions live in docs/arch.md. -->
-Run /architect.
+- Framework: Next.js (App Router), TypeScript
+- Package / test: pnpm, Vitest
+- UI: Tailwind CSS, shadcn/ui, Source Serif 4 + Instrument Sans
+- Validation: Zod
+- Database: Neon Postgres, Drizzle ORM, RLS per user (restricted role + per-request transaction)
+- Auth: Neon Auth (Better Auth), Google
+- PWA: Next.js app/manifest.ts
+- Hosting: Vercel
 
 ## Commands
 <!-- owner: /scaffold — install, dev, test, lint, build. Exact commands that work. -->
