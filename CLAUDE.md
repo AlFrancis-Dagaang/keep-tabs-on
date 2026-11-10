@@ -55,3 +55,4 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 
 ## Project rules
 <!-- owner: me — rules specific to this project. Lessons stay in knowledge/lessons/. -->
+- Account balances are never negative; owed money goes in debts (knowledge/lessons/2026-11-10-no-negative-balances.md).

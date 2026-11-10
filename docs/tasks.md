@@ -8,7 +8,7 @@ Status: done
 - [x] `pnpm build` succeeds
 
 ## T-02: App shell and accounts
-Status: todo
+Status: done
 - [ ] Sidebar shows all v1 pages and a light/dark toggle; at 375px wide it becomes a horizontal scrolling top bar and the page never scrolls sideways
 - [ ] Create, rename and delete an account with a starting balance; Accounts table lists each balance and a net worth total
 - [ ] Editing an account's balance to X changes its starting balance so the shown balance equals X
