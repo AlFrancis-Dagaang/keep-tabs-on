@@ -56,3 +56,5 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 ## Project rules
 <!-- owner: me — rules specific to this project. Lessons stay in knowledge/lessons/. -->
 - Account balances are never negative; owed money goes in debts (knowledge/lessons/2026-11-10-no-negative-balances.md).
+- Commits follow Conventional Commits: `type(scope): subject`. Types: feat, fix, refactor, docs, test, chore, build, ci, perf.
+  Scope is optional: the area or task (`accounts`, `db`, `T-03`). Subject is imperative, lowercase, no period.
