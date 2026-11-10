@@ -1,0 +1,113 @@
+"use client";
+
+import { useActionState, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import type { Account } from "@/db/schema";
+import { balanceOf, toInput } from "@/lib/money";
+import { deleteAccount, saveAccount } from "./actions";
+
+type AccountRow = Pick<Account, "id" | "name" | "startingBalance">;
+
+/** "Add account" with no account; "Edit" (name and balance) with one. */
+export function AccountForm({ account }: { account?: AccountRow }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant={account ? "ghost" : "default"} size="sm">
+          {account ? "Edit" : "Add account"}
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{account ? "Edit account" : "Add account"}</DialogTitle>
+          <DialogDescription>Enter what the account holds today.</DialogDescription>
+        </DialogHeader>
+        <Fields account={account} onSaved={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
+function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => void }) {
+  const [state, action, pending] = useActionState(saveAccount, {});
+  useEffect(() => {
+    if (state.ok) onSaved();
+  }, [state, onSaved]);
+
+  return (
+    <form action={action} className="grid gap-4">
+      {account && <input type="hidden" name="id" value={account.id} />}
+      <div className="grid gap-2">
+        <Label htmlFor="name">Name</Label>
+        <Input
+          id="name"
+          name="name"
+          placeholder="BPI savings"
+          defaultValue={state.values?.name ?? account?.name}
+          aria-invalid={!!state.errors?.name}
+          aria-describedby={state.errors?.name ? "name-error" : undefined}
+        />
+        {state.errors?.name && <p id="name-error" className="text-sm text-destructive">{state.errors.name}</p>}
+      </div>
+      <div className="grid gap-2">
+        <Label htmlFor="balance">Balance today (₱)</Label>
+        <Input
+          id="balance"
+          name="balance"
+          inputMode="decimal"
+          placeholder="0.00"
+          className="tabular-nums"
+          defaultValue={state.values?.balance ?? (account ? toInput(balanceOf(account)) : "")}
+          aria-invalid={!!state.errors?.balance}
+          aria-describedby={state.errors?.balance ? "balance-error" : undefined}
+        />
+        {state.errors?.balance && <p id="balance-error" className="text-sm text-destructive">{state.errors.balance}</p>}
+      </div>
+      <DialogFooter>
+        <Button type="submit" disabled={pending}>
+          {account ? "Save" : "Add account"}
+        </Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function DeleteAccount({ account }: { account: AccountRow }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          Delete
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Delete {account.name}?</DialogTitle>
+          <DialogDescription>This removes the account and its balance from your net worth.</DialogDescription>
+        </DialogHeader>
+        <form
+          action={async (formData) => {
+            await deleteAccount(formData);
+            setOpen(false);
+          }}
+        >
+          <input type="hidden" name="id" value={account.id} />
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="secondary">Cancel</Button>
+            </DialogClose>
+            <Button type="submit" variant="destructive">
+              Delete account
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}

@@ -40,7 +40,14 @@ Vercel: production from main, a preview per branch. Neon: a production branch, p
 Migrations run with drizzle-kit over the direct (unpooled) owner connection; the app uses the restricted role's pooled URL.
 
 ## Versions
-Pinned by /scaffold.
+- Node 22.23.3, pnpm 12.18.0
+- next 16.4.5, react / react-dom 19.3.1, typescript 5.9.3
+- @neon/auth 0.8.2, drizzle-orm 0.45.4, @neondatabase/serverless 1.2.0
+- drizzle-kit 0.31.11, zod 4.6.7, next-themes 0.4.6
+- tailwindcss / @tailwindcss/turbopack 4.3.5
+- shadcn 4.23.0 (CLI, radix base): radix-ui 1.8.1, cn 0.5.2, class-variance-authority 0.7.1, lucide-react 1.70.0
+- vitest 5.1.0, eslint 9.39.5, eslint-config-next 16.4.5
+- @types/node 22.20.5, @types/react / @types/react-dom 19.3.0
 
 ## Risks
 - Neon Auth is young and recently rebuilt on Better Auth; its packages and APIs may change. Mitigation: keep auth in one module.

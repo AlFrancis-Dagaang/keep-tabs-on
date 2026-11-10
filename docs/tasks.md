@@ -1,11 +1,11 @@
 # Tasks
 
 ## T-01: Walking skeleton
-Status: todo
-- [ ] `pnpm install` and `pnpm dev` run without errors; `pnpm test` passes one Vitest test
-- [ ] Signing in with Google lands on an Overview page showing the signed-in email; signed-out visits redirect to sign-in
-- [ ] One query runs against Neon as the restricted (non-BYPASSRLS) role inside the per-request transaction helper
-- [ ] `pnpm build` succeeds
+Status: done
+- [x] `pnpm install` and `pnpm dev` run without errors; `pnpm test` passes one Vitest test
+- [x] Signing in with Google lands on an Overview page showing the signed-in email; signed-out visits redirect to sign-in
+- [x] One query runs against Neon as the restricted (non-BYPASSRLS) role inside the per-request transaction helper
+- [x] `pnpm build` succeeds
 
 ## T-02: App shell and accounts
 Status: todo
