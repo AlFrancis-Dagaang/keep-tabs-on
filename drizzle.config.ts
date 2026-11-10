@@ -1,6 +1,8 @@
+import { existsSync } from "node:fs";
 import { defineConfig } from "drizzle-kit";
 
-process.loadEnvFile(".env.local");
+// Vercel/CI have no .env.local; they pass DATABASE_OWNER_URL in the environment.
+if (existsSync(".env.local")) process.loadEnvFile(".env.local");
 
 // Migrations run as the owner over the direct connection; the app never uses this URL.
 export default defineConfig({
