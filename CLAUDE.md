@@ -49,8 +49,9 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 - Checks: the commands in the Commands section. Never invent others.
 - Done: every acceptance criterion met and every check passes. Then /validate sets `Status: done`
   in `docs/tasks.md` and records the outcome at the end of the plan file.
-- Code graph: `graphify-out/`. Built by `/graphify` after /scaffold, refreshed with
-  `/graphify . --update` after each validated task. Query it before searching the code.
+- Code lookup: use the session-start codebase map and claude-mem's parser (`smart_search`, `smart_outline`); both are always current.
+  `graphify-out/` is refreshed with `/graphify . --update` only on request (a milestone, a retro, or before a cross-cutting task);
+  it may be stale, so confirm anything it says in the file.
 - Lessons: `knowledge/lessons/`. Decisions: `knowledge/decisions/` (append-only).
 - Add one line to `knowledge/INDEX.md` for each new knowledge file.
 
@@ -58,4 +59,5 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 <!-- owner: me — rules specific to this project. Lessons stay in knowledge/lessons/. -->
 - Account balances are never negative; owed money goes in debts (knowledge/lessons/2026-11-10-no-negative-balances.md).
 - Commits follow Conventional Commits: `type(scope): subject`. Types: feat, fix, refactor, docs, test, chore, build, ci, perf.
-  Scope is optional: the area or task (`accounts`, `db`, `T-03`). Subject is imperative, lowercase, no period.
+  Scope is optional and names the area changed (`accounts`, `activity`, `db`), never a task id like `T-03`.
+  Subject is imperative, lowercase, no period, and says what changed. No Co-Authored-By trailer.
