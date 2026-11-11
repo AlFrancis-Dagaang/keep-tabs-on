@@ -38,6 +38,7 @@ Balances, progress and budget spent are computed from transactions, never stored
 ## Deploy
 Vercel: production from main, a preview per branch. Neon: a production branch, plus a dev branch for local work and previews.
 Migrations run with drizzle-kit over the direct (unpooled) owner connection; the app uses the restricted role's pooled URL.
+GitHub Actions (`.github/workflows/ci.yml`) runs lint, test and build on pull requests and pushes to main; Vercel deploys.
 
 ## Versions
 - Node 22.23.3, pnpm 12.18.0

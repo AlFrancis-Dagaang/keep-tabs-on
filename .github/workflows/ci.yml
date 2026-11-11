@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Lint · Test · Build
+    runs-on: ubuntu-latest
+    env:
+      # Placeholders, not secrets: the build only needs them present. RLS tests skip without DATABASE_URL.
+      NEON_AUTH_BASE_URL: https://ci.invalid/auth
+      NEON_AUTH_COOKIE_SECRET: ci-placeholder-secret-at-least-32-chars
+    steps:
+      - uses: actions/checkout@v7.0.1
+      - uses: pnpm/action-setup@v6.1.0 # pnpm version comes from packageManager in package.json
+      - uses: actions/setup-node@v7.1.0
+        with:
+          node-version: 22.23.3
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm test
+      - run: pnpm build
