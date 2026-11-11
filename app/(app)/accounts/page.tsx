@@ -1,11 +1,10 @@
-import { asc, eq } from "drizzle-orm";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { accounts } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
+import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { balanceOf, formatMoney } from "@/lib/money";
+import { formatMoney } from "@/lib/money";
 import { AccountForm, DeleteAccount } from "./account-form";
 
 export default function AccountsPage() {
@@ -23,10 +22,7 @@ export default function AccountsPage() {
 
 async function AccountsTable() {
   const userId = await getUserId();
-  const rows = await withUser(userId, (tx) =>
-    tx.select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance })
-      .from(accounts).where(eq(accounts.userId, userId)).orderBy(asc(accounts.createdAt)),
-  );
+  const { accounts: rows } = await withUser(userId, (tx) => loadBalances(tx, userId));
 
   if (rows.length === 0) {
     return (
@@ -36,7 +32,7 @@ async function AccountsTable() {
     );
   }
 
-  const netWorth = rows.reduce((sum, account) => sum + balanceOf(account), 0);
+  const netWorth = rows.reduce((sum, account) => sum + account.balance, 0);
   return (
     <div className="rounded-xl border bg-surface">
       <Table>
@@ -51,7 +47,7 @@ async function AccountsTable() {
           {rows.map((account) => (
             <TableRow key={account.id}>
               <TableCell className="pl-4">{account.name}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(balanceOf(account))}</TableCell>
+              <TableCell className="text-right tabular-nums">{formatMoney(account.balance)}</TableCell>
               <TableCell className="pr-4 text-right whitespace-nowrap">
                 <AccountForm account={account} />
                 <DeleteAccount account={account} />

@@ -1,10 +1,11 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, eq, or } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { accounts } from "@/db/schema";
+import { accounts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
+import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
 import { parseMoney, startingForBalance } from "@/lib/money";
 
@@ -37,17 +38,28 @@ export async function saveAccount(_: FormState, formData: FormData): Promise<For
   const { id, name, balance } = parsed.data;
   await withUser(userId, async (tx) => {
     if (!id) return tx.insert(accounts).values({ userId, name, startingBalance: balance });
-    const own = and(eq(accounts.id, id), eq(accounts.userId, userId));
-    const [account] = await tx.select().from(accounts).where(own);
-    if (account) await tx.update(accounts).set({ name, startingBalance: startingForBalance(account, balance) }).where(own);
+    const { accounts: rows, entries } = await loadBalances(tx, userId, { lock: true });
+    const account = rows.find((row) => row.id === id);
+    if (account) {
+      await tx.update(accounts).set({ name, startingBalance: startingForBalance(account, entries, balance) })
+        .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+    }
   });
   refresh();
   return { ok: true };
 }
 
-export async function deleteAccount(formData: FormData) {
+/** Refuses while entries use the account: deleting them too would change the other accounts' balances. */
+export async function deleteAccount(formData: FormData): Promise<{ error?: string }> {
   const userId = await getUserId();
   const id = z.uuid().parse(formData.get("id"));
-  await withUser(userId, (tx) => tx.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId))));
+  const error = await withUser(userId, async (tx) => {
+    const [used] = await tx.select({ id: transactions.id }).from(transactions)
+      .where(and(eq(transactions.userId, userId), or(eq(transactions.accountId, id), eq(transactions.toAccountId, id)))).limit(1);
+    if (used) return "Delete its entries in Activity first.";
+    await tx.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
+  });
+  if (error) return { error };
   refresh();
+  return {};
 }

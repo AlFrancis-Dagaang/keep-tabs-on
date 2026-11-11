@@ -8,6 +8,13 @@
       "when": 1794317812746,
       "tag": "0000_goofy_elektra",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794403720037,
+      "tag": "0001_lumpy_morlocks",
+      "breakpoints": true
     }
   ]
 }

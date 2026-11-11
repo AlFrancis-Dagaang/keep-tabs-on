@@ -6,10 +6,10 @@ import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Account } from "@/db/schema";
-import { balanceOf, toInput } from "@/lib/money";
+import { toInput } from "@/lib/money";
 import { deleteAccount, saveAccount } from "./actions";
 
-type AccountRow = Pick<Account, "id" | "name" | "startingBalance">;
+type AccountRow = Pick<Account, "id" | "name"> & { balance: number };
 
 /** "Add account" with no account; "Edit" (name and balance) with one. */
 export function AccountForm({ account }: { account?: AccountRow }) {
@@ -62,7 +62,7 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
           inputMode="decimal"
           placeholder="0.00"
           className="tabular-nums"
-          defaultValue={state.values?.balance ?? (account ? toInput(balanceOf(account)) : "")}
+          defaultValue={state.values?.balance ?? (account ? toInput(account.balance) : "")}
           aria-invalid={!!state.errors?.balance}
           aria-describedby={state.errors?.balance ? "balance-error" : undefined}
         />
@@ -79,8 +79,12 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
 
 export function DeleteAccount({ account }: { account: AccountRow }) {
   const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string>();
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(next) => {
+        setOpen(next);
+        setError(undefined);
+      }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
           Delete
@@ -93,11 +97,13 @@ export function DeleteAccount({ account }: { account: AccountRow }) {
         </DialogHeader>
         <form
           action={async (formData) => {
-            await deleteAccount(formData);
-            setOpen(false);
+            const result = await deleteAccount(formData);
+            if (result.error) setError(result.error);
+            else setOpen(false);
           }}
         >
           <input type="hidden" name="id" value={account.id} />
+          {error && <p role="alert" className="mb-4 text-sm text-destructive">{error}</p>}
           <DialogFooter>
             <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>

@@ -12,6 +12,8 @@ Debts as their own entity (total, deadline, payments) separate from accounts.
 ## Rule
 Account balances and starting balances are >= 0; parseMoney rejects negatives, and anything
 owed goes in the debts table, never as a negative account.
+Shown balances stay >= 0 (exactly zero is fine); when a balance is edited, the starting balance may go below
+zero as an adjustment (T-03 decision).
 
 ## Applies when
 Accounts, money parsing (lib/money.ts), transactions/transfers that lower a balance (T-03),

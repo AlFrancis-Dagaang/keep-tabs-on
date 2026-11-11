@@ -1,4 +1,4 @@
-import type { Account } from "@/db/schema";
+import type { Account, Transaction } from "@/db/schema";
 
 // shortcut: PHP for everyone, until T-09 adds the currency setting.
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
@@ -20,12 +20,18 @@ export function toInput(centavos: number): string {
   return (centavos / 100).toFixed(2);
 }
 
-// T-03 adds income, expenses and transfers here.
-export function balanceOf(account: Pick<Account, "startingBalance">): number {
-  return account.startingBalance;
+export type Entry = Pick<Transaction, "type" | "amount" | "accountId" | "toAccountId">;
+
+/** starting + income − expenses + transfers in − transfers out. */
+export function balanceOf(account: Pick<Account, "id" | "startingBalance">, entries: Entry[]): number {
+  return entries.reduce((balance, { type, amount, accountId, toAccountId }) => {
+    if (type === "transfer" && toAccountId === account.id) return balance + amount;
+    if (accountId !== account.id) return balance;
+    return type === "income" ? balance + amount : balance - amount;
+  }, account.startingBalance);
 }
 
-/** The starting balance that makes balanceOf(account) equal target. */
-export function startingForBalance(account: Pick<Account, "startingBalance">, target: number): number {
-  return account.startingBalance + (target - balanceOf(account));
+/** The starting balance that makes balanceOf(account) equal target. Can go below zero: it's only an adjustment. */
+export function startingForBalance(account: Pick<Account, "id" | "startingBalance">, entries: Entry[], target: number): number {
+  return account.startingBalance + (target - balanceOf(account, entries));
 }

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceOf, formatMoney, parseMoney, startingForBalance, toInput } from "./money";
+import { balanceOf, type Entry, formatMoney, parseMoney, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -21,10 +21,37 @@ describe("formatMoney", () => {
   });
 });
 
+const a = "a";
+const b = "b";
+const entries: Entry[] = [
+  { type: "income", amount: 50000, accountId: a, toAccountId: null },
+  { type: "expense", amount: 20000, accountId: a, toAccountId: null },
+  { type: "transfer", amount: 30000, accountId: a, toAccountId: b },
+  { type: "transfer", amount: 5000, accountId: b, toAccountId: a },
+  { type: "expense", amount: 1000, accountId: b, toAccountId: null },
+];
+
+describe("balanceOf", () => {
+  it("is starting + income − expenses + transfers in − transfers out", () => {
+    expect(balanceOf({ id: a, startingBalance: 100000 }, entries)).toBe(100000 + 50000 - 20000 + 5000 - 30000);
+    expect(balanceOf({ id: b, startingBalance: 0 }, entries)).toBe(30000 - 5000 - 1000);
+  });
+
+  it("ignores other accounts' entries", () => {
+    expect(balanceOf({ id: "c", startingBalance: 700 }, entries)).toBe(700);
+  });
+});
+
 describe("startingForBalance", () => {
   it("sets the starting balance so the shown balance equals the target", () => {
-    const account = { startingBalance: 10000 };
-    const startingBalance = startingForBalance(account, 25050);
-    expect(balanceOf({ startingBalance })).toBe(25050);
+    const account = { id: a, startingBalance: 100000 };
+    const startingBalance = startingForBalance(account, entries, 25050);
+    expect(balanceOf({ id: a, startingBalance }, entries)).toBe(25050);
+  });
+
+  it("goes below zero when entries already exceed the target", () => {
+    const account = { id: a, startingBalance: 0 };
+    const income: Entry[] = [{ type: "income", amount: 50000, accountId: a, toAccountId: null }];
+    expect(startingForBalance(account, income, 10000)).toBe(-40000);
   });
 });

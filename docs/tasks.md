@@ -16,7 +16,7 @@ Status: done
 - [ ] Money is stored as integer centavos and shown with tabular numbers
 
 ## T-03: Categories and activity
-Status: todo
+Status: done
 - [ ] Settings lets me add, rename and delete spending and income categories
 - [ ] Record income, expense, and transfer (from/to) with date, amount, category and payee; each appears in Activity
 - [ ] Account balances follow starting + income − expenses + transfers in − transfers out (Vitest unit test covers all four)
