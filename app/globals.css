@@ -41,6 +41,21 @@
   --color-muted-foreground: var(--muted-foreground);
   --color-accent: var(--raised);
   --color-accent-foreground: var(--foreground);
+
+  /* pixel progress bars: blocks drop in, a completed bar flashes like a cleared line */
+  --animate-drop: drop 300ms ease-out both;
+  --animate-flash: flash 250ms steps(1) 4;
+  @keyframes drop {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+  }
+  @keyframes flash {
+    50% {
+      opacity: 0.2;
+    }
+  }
 }
 
 @layer base {

@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { accounts, categories, transactions } from "../db/schema";
+import { accounts, bills, categories, transactions } from "../db/schema";
 import { withUser } from "./db";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -47,6 +47,20 @@ describe.skipIf(!process.env.DATABASE_URL)("RLS", () => {
         await tx.delete(categories).where(eq(categories.userId, a));
         await tx.delete(accounts).where(eq(accounts.id, account.id));
       });
+    }
+  });
+
+  it("hides one user's bills from another", async () => {
+    const [a, b] = [randomUUID(), randomUUID()];
+    const [bill] = await withUser(a, (tx) =>
+      tx.insert(bills).values({ userId: a, name: "RLS test", amount: 100, nextDueDate: "2026-11-30", dueDay: 30, repeat: "monthly" }).returning(),
+    );
+    try {
+      expect(await withUser(b, (tx) => tx.select().from(bills))).toEqual([]);
+      expect(await withUser(b, (tx) => tx.update(bills).set({ amount: 1 }).where(eq(bills.id, bill.id)).returning())).toEqual([]);
+      expect(await withUser(a, (tx) => tx.select().from(bills))).toHaveLength(1);
+    } finally {
+      await withUser(a, (tx) => tx.delete(bills).where(eq(bills.id, bill.id)));
     }
   });
 });

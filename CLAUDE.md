@@ -32,7 +32,7 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 <!-- owner: /scaffold — top-level folders and what goes where. -->
 - `app/`: routes (App Router). `(app)/` holds the signed-in pages under the sidebar layout, each page's server actions in its own `actions.ts`;
   `auth/sign-in/` the sign-in page; `api/auth/[...path]/` the Neon Auth handler.
-- `components/`: shared UI (sidebar, page header, theme toggle). `components/ui/` is shadcn, added with `pnpm dlx shadcn@4.23.0 add`.
+- `components/`: shared UI (sidebar, page header, theme toggle, pixel progress bar). `components/ui/` is shadcn, added with `pnpm dlx shadcn@4.23.0 add`.
 - `lib/auth/`: Neon Auth server (`server.ts`, incl. `getUserId`) and browser client (`client.ts`). All auth lives here.
 - `lib/db.ts`: database client and `withUser`, the per-request RLS transaction. Every query goes through it.
 - `lib/money.ts`: pure money logic (centavos, formatting, balances), unit-tested.

@@ -23,7 +23,7 @@ Status: done
 - [ ] Filter Activity by type; delete an entry and the affected balances update
 
 ## T-04: Recurring bills and pixel progress bar
-Status: todo
+Status: done
 - [ ] Create a bill with amount, next due date and repeat (weekly, every 2 weeks, monthly, every 3 months, yearly); due date editable anytime
 - [ ] Record payment from an account (partial allowed): an expense linked to the bill is saved, and the bill's 12-block progress bar fills by the paid share of this cycle
 - [ ] Paying the cycle in full rolls the next due date in the same DB transaction; unit tests cover each repeat, including Jan 31 → Feb 28/29

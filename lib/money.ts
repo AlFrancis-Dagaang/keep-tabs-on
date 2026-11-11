@@ -1,4 +1,4 @@
-import type { Account, Transaction } from "@/db/schema";
+import type { Account, Bill, Transaction } from "@/db/schema";
 
 // shortcut: PHP for everyone, until T-09 adds the currency setting.
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
@@ -34,4 +34,26 @@ export function balanceOf(account: Pick<Account, "id" | "startingBalance">, entr
 /** The starting balance that makes balanceOf(account) equal target. Can go below zero: it's only an adjustment. */
 export function startingForBalance(account: Pick<Account, "id" | "startingBalance">, entries: Entry[], target: number): number {
   return account.startingBalance + (target - balanceOf(account, entries));
+}
+
+export const repeatLabels: Record<Bill["repeat"], string> = {
+  weekly: "Weekly", biweekly: "Every 2 weeks", monthly: "Monthly", quarterly: "Every 3 months", yearly: "Yearly",
+};
+
+const monthsPerRepeat = { monthly: 1, quarterly: 3, yearly: 12 } as const;
+
+/** The due date after this one. Month-based repeats land on dueDay, clamped to the month's length (Jan 31 → Feb 28 → Mar 31). */
+export function nextDueDate(date: string, repeat: Bill["repeat"], dueDay: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  if (repeat === "weekly" || repeat === "biweekly") {
+    return new Date(Date.UTC(year, month - 1, day + (repeat === "weekly" ? 7 : 14))).toISOString().slice(0, 10);
+  }
+  const target = month - 1 + monthsPerRepeat[repeat];
+  const daysInTarget = new Date(Date.UTC(year, target + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, target, Math.min(dueDay, daysInTarget))).toISOString().slice(0, 10);
+}
+
+/** How many of a progress bar's 12 blocks are filled. A block shows only once it's earned; all 12 only when fully paid. */
+export function billBlocks(paid: number, amount: number): number {
+  return Math.min(12, Math.floor((paid * 12) / amount));
 }
