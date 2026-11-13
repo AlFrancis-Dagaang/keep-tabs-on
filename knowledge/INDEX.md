@@ -8,6 +8,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Tick a task's acceptance criteria when it's marked done](lessons/2026-11-13-tick-criteria-when-done.md) — Status: done also ticks the criteria in tasks.md and the plan
 - [Seed cycle rows and their payments in separate transactions](lessons/2026-11-13-now-fixed-per-transaction.md) — now() is fixed per transaction; write timestamp-compared rows in separate withUser calls
 - [Wrap usePathname() in a layout in Suspense under cacheComponents](lessons/2026-11-13-suspense-around-usepathname.md) — layout hooks reading request data need a Suspense boundary with a same-UI fallback
+- [State the exact scope in an option's label when asking the owner to choose](lessons/2026-11-13-state-scope-in-option-labels.md) — put the list or count in the label; ask open scope as its own question
 
 ## Decisions
 - [Stack](decisions/2026-11-09-stack.md) — Next.js + Neon/Drizzle + Neon Auth on Vercel; RLS via restricted role and per-request transaction
@@ -24,5 +25,6 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-06](tasks/T-06.md) — Goals: goals CRUD, add money as a linked transfer, detail page with from/to history
 - [T-07](tasks/T-07.md) — Budget: limits stored as month snapshots on change, this month vs limits, striped over-budget bars, history
 - [T-08](tasks/T-08.md) — Overview: five stat cards incl. budget left, account tiles, mini tables, empty states everywhere
+- [T-09](tasks/T-09.md) — First-run setup and settings: settings table, /setup page, currency, start over
 
 ## Retros

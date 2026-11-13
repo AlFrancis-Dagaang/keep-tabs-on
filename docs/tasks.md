@@ -57,11 +57,11 @@ Status: done
 - [x] Every page has an empty state telling the user what to do next
 
 ## T-09: First-run setup and settings
-Status: todo
-- [ ] A new user is sent to setup: currency, accounts with today's balance, spending and income categories with optional budgets, then optional bills, goals and debts
-- [ ] Finishing setup lands on Overview with the entered data; a returning user skips setup
-- [ ] Settings can change currency; "Start over" deletes all of the user's data after a confirmation and reopens setup
-- [ ] A fresh account completes setup with 3 accounts and 5 categories in under 5 minutes (timed by me)
+Status: done
+- [x] A new user is sent to setup: currency, accounts with today's balance, spending and income categories with optional budgets, then optional bills, goals and debts
+- [x] Finishing setup lands on Overview with the entered data; a returning user skips setup
+- [x] Settings can change currency (PHP or USD)
+- [x] A fresh account completes setup with 3 accounts and 5 categories in under 5 minutes (timed by me)
 
 ## T-10: Ship and the done signal
 Status: todo
