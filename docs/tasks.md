@@ -51,10 +51,10 @@ Status: done
 - [x] "This month" uses Asia/Manila dates (unit test around the month boundary)
 
 ## T-08: Overview
-Status: todo
-- [ ] Four stat cards: net worth, income this month, expenses this month, bills due in 7 days
-- [ ] Mini tables for accounts, upcoming bills, goals, debts and recent activity, each linking to its page
-- [ ] Every page has an empty state telling the user what to do next
+Status: done
+- [x] Four stat cards: net worth, income this month, expenses this month, bills due in 7 days
+- [x] Mini tables for accounts, upcoming bills, goals, debts and recent activity, each linking to its page
+- [x] Every page has an empty state telling the user what to do next
 
 ## T-09: First-run setup and settings
 Status: todo

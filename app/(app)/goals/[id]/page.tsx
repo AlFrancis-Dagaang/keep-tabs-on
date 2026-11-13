@@ -60,7 +60,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
         )}
       </div>
       {transfers.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No money added yet.</p>
+        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No money added yet. Move some in with Add money.</p>
       ) : (
         <div className="rounded-xl border bg-surface">
           <Table>

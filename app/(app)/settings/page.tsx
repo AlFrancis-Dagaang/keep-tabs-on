@@ -40,7 +40,7 @@ function CategoryTable({ title, kind, rows }: { title: string; kind: Category["k
         <CategoryForm kind={kind} />
       </div>
       {rows.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No {kind} categories yet.</p>
+        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No {kind} categories yet. Add one with Add category.</p>
       ) : (
         <div className="rounded-xl border bg-surface">
           <Table>

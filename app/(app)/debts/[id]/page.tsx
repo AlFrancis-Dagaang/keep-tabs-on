@@ -52,7 +52,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
         )}
       </div>
       {payments.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No payments yet.</p>
+        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No payments yet. Record one with Record payment.</p>
       ) : (
         <div className="rounded-xl border bg-surface">
           <Table>

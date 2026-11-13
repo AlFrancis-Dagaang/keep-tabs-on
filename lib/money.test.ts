@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceOf, type BudgetExpense, budgetFor, budgetHistory, type Entry, formatMoney, manilaMonth, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
+import { balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, type Entry, formatMoney, manilaMonth, monthTotals, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -150,5 +150,28 @@ describe("budget", () => {
     ]);
     expect(history[0].rows.map((row) => row.id)).toEqual(["food"]); // Fun had nothing in November
     expect(budgetHistory("2026-12-01", categories, [], [])).toEqual([]);
+  });
+});
+
+describe("monthTotals", () => {
+  it("sums income and expenses inside the month, leaving out transfers", () => {
+    expect(monthTotals("2026-11-01", [
+      { type: "income", amount: 1000, date: "2026-11-01" },
+      { type: "income", amount: 500, date: "2026-12-01" }, // next month
+      { type: "expense", amount: 200, date: "2026-11-30" },
+      { type: "expense", amount: 300, date: "2026-10-31" }, // last month
+      { type: "transfer", amount: 400, date: "2026-11-15" },
+    ])).toEqual({ income: 1000, expenses: 200 });
+  });
+});
+
+describe("billsDueSoon", () => {
+  it("counts overdue bills and those due within 7 days, with what's left this cycle", () => {
+    expect(billsDueSoon([
+      { nextDueDate: "2026-11-01", amount: 1000, paid: 0 }, // overdue
+      { nextDueDate: "2026-11-20", amount: 500, paid: 200 }, // day 7, part paid
+      { nextDueDate: "2026-11-21", amount: 900, paid: 0 }, // day 8
+    ], "2026-11-13")).toEqual({ count: 2, left: 1300 });
+    expect(billsDueSoon([{ nextDueDate: "2026-12-03", amount: 100, paid: 0 }], "2026-11-28")).toEqual({ count: 1, left: 100 }); // across months
   });
 });

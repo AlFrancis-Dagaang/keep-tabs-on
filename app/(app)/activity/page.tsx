@@ -72,7 +72,7 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
             ))}
           </nav>
           {rows.length === 0 ? (
-            <p className="rounded-xl border bg-surface p-6 text-muted-foreground">{type ? `No ${type} entries yet.` : "No entries yet."}</p>
+            <p className="rounded-xl border bg-surface p-6 text-muted-foreground">{type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}</p>
           ) : (
             <div className="rounded-xl border bg-surface">
               <Table>

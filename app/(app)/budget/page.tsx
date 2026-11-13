@@ -55,6 +55,7 @@ async function Budget() {
       <section>
         <h2 className="mb-3 font-serif text-xl">{monthName(thisMonth)}</h2>
         <Totals month={current} leftLabel="Left" />
+        {current.budget === 0 && <p className="mb-4 text-muted-foreground">Set a limit on a category to start your budget.</p>}
         <CategoryTable month={current} editable />
       </section>
       <section>

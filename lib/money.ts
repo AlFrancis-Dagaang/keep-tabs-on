@@ -102,3 +102,19 @@ export function budgetHistory(thisMonth: string, categories: Pick<Category, "id"
   }
   return months.reverse();
 }
+
+/** Money in and out during a month. Transfers only move money between accounts; bill and debt payments are money out. */
+export function monthTotals(month: string, entries: Pick<Transaction, "type" | "amount" | "date">[]) {
+  const end = nextMonth(month);
+  const inMonth = entries.filter((e) => e.date >= month && e.date < end);
+  const total = (type: Transaction["type"]) => inMonth.filter((e) => e.type === type).reduce((sum, e) => sum + e.amount, 0);
+  return { income: total("income"), expenses: total("expense") };
+}
+
+/** Bills due on or before today + days (overdue ones too), and what's left to pay on them this cycle. */
+export function billsDueSoon(bills: (Pick<Bill, "nextDueDate" | "amount"> & { paid: number })[], today: string, days = 7) {
+  const [year, month, day] = today.split("-").map(Number);
+  const until = new Date(Date.UTC(year, month - 1, day + days)).toISOString().slice(0, 10);
+  const due = bills.filter((bill) => bill.nextDueDate <= until);
+  return { count: due.length, left: due.reduce((sum, bill) => sum + bill.amount - bill.paid, 0) };
+}
