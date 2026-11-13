@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceOf, billBlocks, type Entry, formatMoney, nextDueDate, parseMoney, startingForBalance, toInput } from "./money";
+import { balanceOf, type Entry, formatMoney, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -79,11 +79,11 @@ describe("nextDueDate", () => {
   });
 });
 
-describe("billBlocks", () => {
+describe("progressBlocks", () => {
   it("fills a block only once it's earned, and all 12 only when fully paid", () => {
-    expect(billBlocks(0, 120000)).toBe(0);
-    expect(billBlocks(30000, 120000)).toBe(3);
-    expect(billBlocks(119999, 120000)).toBe(11);
-    expect(billBlocks(120000, 120000)).toBe(12);
+    expect(progressBlocks(0, 120000)).toBe(0);
+    expect(progressBlocks(30000, 120000)).toBe(3);
+    expect(progressBlocks(119999, 120000)).toBe(11);
+    expect(progressBlocks(120000, 120000)).toBe(12);
   });
 });

@@ -54,6 +54,6 @@ export function nextDueDate(date: string, repeat: Bill["repeat"], dueDay: number
 }
 
 /** How many of a progress bar's 12 blocks are filled. A block shows only once it's earned; all 12 only when fully paid. */
-export function billBlocks(paid: number, amount: number): number {
+export function progressBlocks(paid: number, amount: number): number {
   return Math.min(12, Math.floor((paid * 12) / amount));
 }

@@ -31,7 +31,7 @@ Status: done
 - [ ] Overdue bills show a clay warning badge
 
 ## T-05: Debts
-Status: todo
+Status: done
 - [ ] Create a debt with total, deadline and paid-before-tracking amount
 - [ ] Record payment from an account: an expense linked to the debt is saved, and the progress bar shows (paid before + payments) / total
 - [ ] Debt detail shows payment history; the bar turns clay and flashes when fully paid

@@ -1,4 +1,33 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { cn } from "cn";
+
+// The pay dialog and the bar sit in different places; this event tells the bar its bill cycle, debt or goal just completed.
+const completedEvent = "progress-completed";
+
+export function announceCompleted(id: string) {
+  window.dispatchEvent(new CustomEvent(completedEvent, { detail: id }));
+}
+
+/** True for about a second after announceCompleted(id), so the bar can flash. */
+export function useCompletedFlash(id: string) {
+  const [flashing, setFlashing] = useState(false);
+  useEffect(() => {
+    let timer: ReturnType<typeof setTimeout>;
+    const onCompleted = (event: Event) => {
+      if ((event as CustomEvent<string>).detail !== id) return;
+      setFlashing(true);
+      timer = setTimeout(() => setFlashing(false), 1000);
+    };
+    window.addEventListener(completedEvent, onCompleted);
+    return () => {
+      window.removeEventListener(completedEvent, onCompleted);
+      clearTimeout(timer);
+    };
+  }, [id]);
+  return flashing;
+}
 
 /** docs/design.md's signature bar: 12 square blocks that drop in, turn clay when complete, and flash on completion. */
 export function PixelBar({ blocks, label, flash = false }: { blocks: number; label: string; flash?: boolean }) {

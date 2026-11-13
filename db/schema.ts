@@ -56,6 +56,24 @@ export const bills = pgTable(
   ],
 ).enableRLS();
 
+export const debts = pgTable(
+  "debts",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    name: text().notNull(),
+    total: bigint({ mode: "number" }).notNull(), // centavos
+    deadline: date({ mode: "string" }).notNull(),
+    paidBefore: bigint("paid_before", { mode: "number" }).notNull().default(0), // centavos paid before tracking started
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("debts_total", sql`${t.total} > 0`),
+    check("debts_paid_before", sql`${t.paidBefore} between 0 and ${t.total}`),
+    ownRows(t.userId),
+  ],
+).enableRLS();
+
 // FKs are checked without RLS, so actions must confirm account and category ids are the user's own.
 export const transactions = pgTable(
   "transactions",
@@ -70,6 +88,7 @@ export const transactions = pgTable(
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
     payee: text(),
     billId: uuid("bill_id").references(() => bills.id, { onDelete: "set null" }), // bill payments: expenses with no category
+    debtId: uuid("debt_id").references(() => debts.id, { onDelete: "set null" }), // debt payments: expenses with no category
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -87,3 +106,4 @@ export type Account = typeof accounts.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
+export type Debt = typeof debts.$inferSelect;

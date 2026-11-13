@@ -1,41 +1,25 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
-import { PixelBar } from "@/components/pixel-bar";
+import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Bill } from "@/db/schema";
-import { billBlocks, formatMoney, repeatLabels, toInput } from "@/lib/money";
+import { formatMoney, progressBlocks, repeatLabels, toInput } from "@/lib/money";
 import { deleteBill, type FormState, payBill, saveBill } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
 type EditableBill = Pick<Bill, "id" | "name" | "amount" | "nextDueDate" | "repeat">;
 
-// PayBill and BillProgress sit in different table cells; this event tells the bar its cycle just finished.
-const completedEvent = "bill-completed";
-
 export function BillProgress({ id, name, paid, amount }: { id: string; name: string; paid: number; amount: number }) {
-  const [flashing, setFlashing] = useState(false);
-  useEffect(() => {
-    let timer: ReturnType<typeof setTimeout>;
-    const onCompleted = (event: Event) => {
-      if ((event as CustomEvent<string>).detail !== id) return;
-      setFlashing(true);
-      timer = setTimeout(() => setFlashing(false), 1000);
-    };
-    window.addEventListener(completedEvent, onCompleted);
-    return () => {
-      window.removeEventListener(completedEvent, onCompleted);
-      clearTimeout(timer);
-    };
-  }, [id]);
+  const flashing = useCompletedFlash(id);
   // While flashing, show the cycle that just closed; after that, the new cycle's bar.
   return flashing
     ? <PixelBar blocks={12} flash label={`${name}: paid in full`} />
-    : <PixelBar key="cycle" blocks={billBlocks(paid, amount)} label={`${name}: ${formatMoney(paid)} of ${formatMoney(amount)} paid this cycle`} />;
+    : <PixelBar key="cycle" blocks={progressBlocks(paid, amount)} label={`${name}: ${formatMoney(paid)} of ${formatMoney(amount)} paid this cycle`} />;
 }
 
 export function BillForm({ today, bill }: { today: string; bill?: EditableBill }) {
@@ -120,7 +104,7 @@ function PayFields({ bill, accounts, today, onSaved }: { bill: { id: string; lef
   const [state, action, pending] = useActionState(payBill, {});
   useEffect(() => {
     if (!state.ok) return;
-    if (state.completed) window.dispatchEvent(new CustomEvent(completedEvent, { detail: bill.id }));
+    if (state.completed) announceCompleted(bill.id);
     onSaved();
   }, [state, bill.id, onSaved]);
 
