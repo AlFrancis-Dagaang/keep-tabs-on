@@ -20,7 +20,7 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 - **Debts:** total, deadline, amount paid before tracking, linked payments, progress and payment history.
 - **Goals:** target, deadline, the account the money is saved in, and the amount already saved. Progress comes from linked transfers; history shows from and to.
 - **Budget:** monthly limits on spending categories only (bill and debt payments don't count). Shows the current month with a total. Past months are kept with budget, spent and saved per month and per category, and each month's budget amounts are saved as they were.
-- **Settings:** currency, manage categories, start over with setup.
+- **Settings:** currency, manage categories.
 - **Sign-in:** Google sign-in. Each user sees only their own data.
 
 ## Non-goals
