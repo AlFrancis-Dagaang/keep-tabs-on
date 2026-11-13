@@ -24,19 +24,19 @@ Hosting | Vercel | Preview per branch, production on main
 ## Data
 All in Neon Postgres. Every table has user_id with RLS policies (Drizzle crudPolicy). Money is integer centavos.
 - users / sessions: managed by Neon Auth.
-- settings: currency, setup_done.
+- settings: currency (PHP | USD), setup_done. One row per user, created by first-run setup.
 - accounts: name, starting_balance.
-- categories: name, kind (spending | income), monthly_budget (optional).
+- categories: name, kind (spending | income).
 - transactions: type (income | expense | transfer), amount, date, account_id, to_account_id (transfers),
   category_id, payee, optional bill_id | debt_id | goal_id.
 - bills: name, amount, next_due_date, repeat (weekly | biweekly | monthly | quarterly | yearly).
 - debts: name, total, deadline, paid_before.
 - goals: name, target, deadline, account_id, saved_before.
-- budget_months: month, category_id, budget (snapshot of the limit for that month).
+- budget_months: month (first of the month), category_id, budget (null = limit removed). A row is written when a limit is set or changed; a month’s limit is the latest row at or before it.
 Balances, progress and budget spent are computed from transactions, never stored.
 
 ## Deploy
-Vercel: production from main, a preview per branch. Neon: a production branch, plus a dev branch for local work and previews.
+Vercel: production from main, a preview per branch. Neon: a production branch and a dev branch (local work and tests; see the 2026-11-14 decision).
 Migrations run with drizzle-kit over the direct (unpooled) owner connection; the app uses the restricted role's pooled URL.
 GitHub Actions (`.github/workflows/ci.yml`) runs lint, test and build on pull requests and pushes to main; Vercel deploys.
 
@@ -53,5 +53,5 @@ GitHub Actions (`.github/workflows/ci.yml`) runs lint, test and build on pull re
 ## Risks
 - Neon Auth is young and recently rebuilt on Better Auth; its packages and APIs may change. Mitigation: keep auth in one module.
 - RLS depends on every query going through the per-request transaction helper; a stray owner-role connection would bypass it.
-- The budget month snapshot must be written when a month is first viewed or rolls over; a missed snapshot means history uses current limits.
+- Budget history depends on reading the latest limit row at or before each month; never read a category’s limit without the month.
 - Dates and "this month" must use the user's timezone (Asia/Manila) rather than the server's UTC.
