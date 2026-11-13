@@ -47,7 +47,7 @@ function fieldErrors(error: z.ZodError): FormState["errors"] {
   return Object.fromEntries(Object.entries(z.flattenError(error).fieldErrors).map(([field, messages]) => [field, (messages as string[])?.[0]]));
 }
 
-/** What's been added through Kinsenas, not counting what was saved before tracking. */
+/** What's been added through Keep tabs on, not counting what was saved before tracking. */
 async function addedTransfers(tx: Tx, goalId: string) {
   const [row] = await tx.select({ added: sum(transactions.amount).mapWith(Number) }).from(transactions).where(eq(transactions.goalId, goalId));
   return row?.added ?? 0;

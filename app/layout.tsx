@@ -7,7 +7,7 @@ const sans = Instrument_Sans({ subsets: ["latin"], variable: "--font-instrument-
 const serif = Source_Serif_4({ subsets: ["latin"], weight: "500", variable: "--font-source-serif" });
 
 export const metadata: Metadata = {
-  title: "Kinsenas",
+  title: "Keep tabs on",
   description: "Track your money across every account.",
 };
 

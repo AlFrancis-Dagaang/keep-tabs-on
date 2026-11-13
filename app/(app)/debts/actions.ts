@@ -46,7 +46,7 @@ function fieldErrors(error: z.ZodError): FormState["errors"] {
   return Object.fromEntries(Object.entries(z.flattenError(error).fieldErrors).map(([field, messages]) => [field, (messages as string[])?.[0]]));
 }
 
-/** What's been paid through Kinsenas, not counting what was paid before tracking. */
+/** What's been paid through Keep tabs on, not counting what was paid before tracking. */
 async function paidPayments(tx: Tx, debtId: string) {
   const [row] = await tx.select({ paid: sum(transactions.amount).mapWith(Number) }).from(transactions).where(eq(transactions.debtId, debtId));
   return row?.paid ?? 0;

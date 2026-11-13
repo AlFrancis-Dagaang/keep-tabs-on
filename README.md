@@ -1,4 +1,4 @@
-# kinsenas
+# Keep tabs on
 
 Personal finance tracker: see your real total across banks, e-wallets and cash, and stay on top of bills, debts and goals.
 

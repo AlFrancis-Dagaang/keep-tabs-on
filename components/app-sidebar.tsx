@@ -21,7 +21,7 @@ const pages = [
 export function AppSidebar() {
   return (
     <aside className="flex items-center gap-2 border-b bg-surface px-2 md:sticky md:top-0 md:h-screen md:w-56 md:shrink-0 md:flex-col md:items-stretch md:border-r md:border-b-0 md:px-3 md:py-6">
-      <span className="hidden px-3 pb-4 font-serif text-xl md:block">Kinsenas</span>
+      <span className="hidden px-3 pb-4 font-serif text-xl md:block">Keep tabs on</span>
       <nav className="flex min-w-0 flex-1 gap-1 overflow-x-auto py-2 md:flex-col md:overflow-visible md:py-0">
         {/* usePathname suspends on routes with unknown params (/debts/[id]); the fallback is the same links, unlit */}
         <Suspense fallback={<Links pathname={null} />}>
