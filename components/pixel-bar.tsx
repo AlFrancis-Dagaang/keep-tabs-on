@@ -29,8 +29,8 @@ export function useCompletedFlash(id: string) {
   return flashing;
 }
 
-/** docs/design.md's signature bar: 12 square blocks that drop in, turn clay when complete, and flash on completion. */
-export function PixelBar({ blocks, label, flash = false }: { blocks: number; label: string; flash?: boolean }) {
+/** docs/design.md's signature bar: 12 square blocks that drop in, turn clay when complete, and flash on completion. Over budget, they're clay stripes. */
+export function PixelBar({ blocks, label, flash = false, over = false }: { blocks: number; label: string; flash?: boolean; over?: boolean }) {
   const complete = blocks === 12;
   return (
     <div
@@ -44,7 +44,7 @@ export function PixelBar({ blocks, label, flash = false }: { blocks: number; lab
       {Array.from({ length: 12 }, (_, i) => (
         <span
           key={i}
-          className={cn("size-[11px]", i >= blocks ? "bg-border" : complete ? "bg-primary motion-safe:animate-drop" : "bg-foreground motion-safe:animate-drop")}
+          className={cn("size-[11px]", i >= blocks ? "bg-border" : over ? "bg-[repeating-linear-gradient(45deg,var(--clay)_0_2px,transparent_2px_4px)] motion-safe:animate-drop" : complete ? "bg-primary motion-safe:animate-drop" : "bg-foreground motion-safe:animate-drop")}
           style={i < blocks ? { animationDelay: `${i * 40}ms` } : undefined}
         />
       ))}

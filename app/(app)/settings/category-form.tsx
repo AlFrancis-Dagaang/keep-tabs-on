@@ -74,7 +74,7 @@ export function DeleteCategory({ category }: { category: CategoryRow }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete {category.name}?</DialogTitle>
-          <DialogDescription>Entries keep their amounts and show as Uncategorized. This can&apos;t be undone.</DialogDescription>
+          <DialogDescription>Entries keep their amounts and show as Uncategorized. Its budget history goes too. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
           action={async (formData) => {

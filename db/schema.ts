@@ -93,6 +93,25 @@ export const goals = pgTable(
   ],
 ).enableRLS();
 
+// A limit is written for the month it's set in and holds until a later row changes it, so past months keep theirs.
+export const budgetMonths = pgTable(
+  "budget_months",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    categoryId: uuid("category_id").notNull().references(() => categories.id, { onDelete: "cascade" }),
+    month: date({ mode: "string" }).notNull(), // first of the month
+    budget: bigint({ mode: "number" }), // centavos; null = limit removed
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    unique().on(t.userId, t.categoryId, t.month),
+    check("budget_months_month", sql`extract(day from ${t.month}) = 1`),
+    check("budget_months_budget", sql`${t.budget} > 0`),
+    ownRows(t.userId),
+  ],
+).enableRLS();
+
 // FKs are checked without RLS, so actions must confirm account and category ids are the user's own.
 export const transactions = pgTable(
   "transactions",
@@ -128,3 +147,4 @@ export type Transaction = typeof transactions.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
+export type BudgetMonth = typeof budgetMonths.$inferSelect;

@@ -43,12 +43,12 @@ Status: done
 - [x] Progress = already saved + linked transfers; history lists each transfer with from/to; the bar turns clay and flashes at target
 
 ## T-07: Budget
-Status: todo
-- [ ] Set optional monthly limits on spending categories; Budget page shows this month's budget, spent and left per category and in total
-- [ ] Spent counts expenses in spending categories only; payments linked to bills or debts are excluded (unit test)
-- [ ] Over-budget categories show clay diagonal stripes on their bar
-- [ ] Each month's limits are snapshotted; past months appear in history with budget, spent and saved per month and per category, and changing a limit doesn't change past months (unit test)
-- [ ] "This month" uses Asia/Manila dates (unit test around the month boundary)
+Status: done
+- [x] Set optional monthly limits on spending categories; Budget page shows this month's budget, spent and left per category and in total
+- [x] Spent counts expenses in spending categories only; payments linked to bills or debts are excluded (unit test)
+- [x] Over-budget categories show clay diagonal stripes on their bar
+- [x] Each month's limits are snapshotted; past months appear in history with budget, spent and saved per month and per category, and changing a limit doesn't change past months (unit test)
+- [x] "This month" uses Asia/Manila dates (unit test around the month boundary)
 
 ## T-08: Overview
 Status: todo

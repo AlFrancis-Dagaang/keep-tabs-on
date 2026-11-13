@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceOf, type Entry, formatMoney, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
+import { balanceOf, type BudgetExpense, budgetFor, budgetHistory, type Entry, formatMoney, manilaMonth, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -85,5 +85,70 @@ describe("progressBlocks", () => {
     expect(progressBlocks(30000, 120000)).toBe(3);
     expect(progressBlocks(119999, 120000)).toBe(11);
     expect(progressBlocks(120000, 120000)).toBe(12);
+  });
+});
+
+describe("manilaMonth", () => {
+  it("turns the month at Manila midnight, 8 hours ahead of UTC", () => {
+    expect(manilaMonth(new Date("2026-11-30T15:59:59Z"))).toBe("2026-11-01");
+    expect(manilaMonth(new Date("2026-11-30T16:00:00Z"))).toBe("2026-12-01");
+    expect(manilaMonth(new Date("2026-12-31T16:00:00Z"))).toBe("2027-01-01");
+  });
+});
+
+describe("budget", () => {
+  const categories = [
+    { id: "food", name: "Food", kind: "spending" as const },
+    { id: "fun", name: "Fun", kind: "spending" as const },
+    { id: "salary", name: "Salary", kind: "income" as const },
+  ];
+  const expense = (amount: number, date: string, categoryId: string | null, more: Partial<BudgetExpense> = {}): BudgetExpense =>
+    ({ type: "expense", amount, date, categoryId, billId: null, debtId: null, ...more });
+
+  it("counts expenses in spending categories only, inside the month, without bill or debt payments", () => {
+    const result = budgetFor("2026-11-01", categories, [{ categoryId: "food", month: "2026-11-01", budget: 1000 }], [
+      expense(100, "2026-11-01", "food"),
+      expense(200, "2026-11-30", "food"),
+      expense(400, "2026-12-01", "food"), // next month
+      expense(800, "2026-10-31", "food"), // last month
+      expense(50, "2026-11-10", "food", { billId: "bill" }),
+      expense(60, "2026-11-10", "food", { debtId: "debt" }),
+      expense(70, "2026-11-10", "salary"),
+      { ...expense(90, "2026-11-10", "food"), type: "income" },
+      { ...expense(90, "2026-11-10", "food"), type: "transfer" },
+      expense(30, "2026-11-10", "fun"),
+    ]);
+    expect(result.rows).toEqual([
+      { id: "food", name: "Food", budget: 1000, spent: 300, left: 700 },
+      { id: "fun", name: "Fun", budget: null, spent: 30, left: null },
+    ]);
+    // Fun has no limit, so it stays out of the totals.
+    expect(result).toMatchObject({ budget: 1000, spent: 300, left: 700 });
+  });
+
+  it("uses the limit as it was in each month, so changing it later leaves past months alone", () => {
+    const limits = [{ categoryId: "food", month: "2026-09-01", budget: 1000 }];
+    const expenses = [expense(300, "2026-10-05", "food"), expense(1200, "2026-11-05", "food")];
+    const october = budgetFor("2026-10-01", categories, limits, expenses);
+    expect(october).toMatchObject({ budget: 1000, spent: 300, left: 700 });
+
+    const changed = [...limits, { categoryId: "food", month: "2026-12-01", budget: 5000 }];
+    expect(budgetFor("2026-10-01", categories, changed, expenses)).toEqual(october);
+    expect(budgetFor("2026-12-01", categories, changed, expenses)).toMatchObject({ budget: 5000 });
+    // A removed limit holds from its month on.
+    expect(budgetFor("2026-12-01", categories, [...limits, { categoryId: "food", month: "2026-12-01", budget: null }], expenses).rows[0].budget).toBeNull();
+  });
+
+  it("lists past months newest first with budget, spent and saved, skipping empty ones", () => {
+    const limits = [{ categoryId: "food", month: "2026-09-01", budget: 1000 }, { categoryId: "food", month: "2026-12-01", budget: 5000 }];
+    const expenses = [expense(300, "2026-10-05", "food"), expense(1200, "2026-11-05", "food"), expense(10, "2026-12-02", "fun")];
+    const history = budgetHistory("2026-12-01", categories, limits, expenses);
+    expect(history.map(({ month, budget, spent, left }) => ({ month, budget, spent, left }))).toEqual([
+      { month: "2026-11-01", budget: 1000, spent: 1200, left: -200 },
+      { month: "2026-10-01", budget: 1000, spent: 300, left: 700 },
+      { month: "2026-09-01", budget: 1000, spent: 0, left: 1000 },
+    ]);
+    expect(history[0].rows.map((row) => row.id)).toEqual(["food"]); // Fun had nothing in November
+    expect(budgetHistory("2026-12-01", categories, [], [])).toEqual([]);
   });
 });

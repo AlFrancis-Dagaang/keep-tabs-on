@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { accounts, bills, categories, debts, goals, transactions } from "../db/schema";
+import { accounts, bills, budgetMonths, categories, debts, goals, transactions } from "../db/schema";
 import { withUser } from "./db";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -91,6 +91,21 @@ describe.skipIf(!process.env.DATABASE_URL)("RLS", () => {
     } finally {
       await withUser(a, (tx) => tx.delete(goals).where(eq(goals.id, goal.id)));
       await withUser(a, (tx) => tx.delete(accounts).where(eq(accounts.id, account.id)));
+    }
+  });
+
+  it("hides one user's budget limits from another", async () => {
+    const [a, b] = [randomUUID(), randomUUID()];
+    const [category] = await withUser(a, (tx) => tx.insert(categories).values({ userId: a, name: "RLS test", kind: "spending" }).returning());
+    try {
+      const [limit] = await withUser(a, (tx) =>
+        tx.insert(budgetMonths).values({ userId: a, categoryId: category.id, month: "2026-11-01", budget: 100 }).returning(),
+      );
+      expect(await withUser(b, (tx) => tx.select().from(budgetMonths))).toEqual([]);
+      expect(await withUser(b, (tx) => tx.update(budgetMonths).set({ budget: 1 }).where(eq(budgetMonths.id, limit.id)).returning())).toEqual([]);
+      expect(await withUser(a, (tx) => tx.select().from(budgetMonths))).toHaveLength(1);
+    } finally {
+      await withUser(a, (tx) => tx.delete(categories).where(eq(categories.id, category.id))); // cascades to its limits
     }
   });
 });

@@ -1,4 +1,4 @@
-import type { Account, Bill, Transaction } from "@/db/schema";
+import type { Account, Bill, BudgetMonth, Category, Transaction } from "@/db/schema";
 
 // shortcut: PHP for everyone, until T-09 adds the currency setting.
 const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
@@ -56,4 +56,49 @@ export function nextDueDate(date: string, repeat: Bill["repeat"], dueDay: number
 /** How many of a progress bar's 12 blocks are filled. A block shows only once it's earned; all 12 only when fully paid. */
 export function progressBlocks(paid: number, amount: number): number {
   return Math.min(12, Math.floor((paid * 12) / amount));
+}
+
+/** This month's first day, "YYYY-MM-01", on the Asia/Manila calendar rather than the server's UTC. */
+export function manilaMonth(now: Date): string {
+  return `${new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(now).slice(0, 8)}01`;
+}
+
+function nextMonth(month: string): string {
+  const [year, m] = month.split("-").map(Number);
+  return new Date(Date.UTC(year, m, 1)).toISOString().slice(0, 10);
+}
+
+export type BudgetLimit = Pick<BudgetMonth, "categoryId" | "month" | "budget">;
+export type BudgetExpense = Pick<Transaction, "type" | "amount" | "date" | "categoryId" | "billId" | "debtId">;
+
+/**
+ * Budget, spent and left per spending category for one month. A category's limit is its latest row at or before
+ * the month, so a later change never reaches back. Totals cover only categories with a limit.
+ */
+export function budgetFor(month: string, categories: Pick<Category, "id" | "name" | "kind">[], limits: BudgetLimit[], expenses: BudgetExpense[]) {
+  const end = nextMonth(month);
+  const rows = categories.filter((category) => category.kind === "spending").map(({ id, name }) => {
+    const latest = limits.filter((limit) => limit.categoryId === id && limit.month <= month).sort((a, b) => b.month.localeCompare(a.month))[0];
+    const budget = latest?.budget ?? null;
+    const spent = expenses
+      .filter((e) => e.type === "expense" && e.categoryId === id && !e.billId && !e.debtId && e.date >= month && e.date < end)
+      .reduce((total, e) => total + e.amount, 0);
+    return { id, name, budget, spent, left: budget === null ? null : budget - spent };
+  });
+  const limited = rows.filter((row) => row.budget !== null);
+  const budget = limited.reduce((total, row) => total + row.budget!, 0);
+  const spent = limited.reduce((total, row) => total + row.spent, 0);
+  return { month, rows, budget, spent, left: budget - spent };
+}
+
+/** Every month before thisMonth that had a limit or spending, newest first. Left is what was saved (negative when over). */
+export function budgetHistory(thisMonth: string, categories: Pick<Category, "id" | "name" | "kind">[], limits: BudgetLimit[], expenses: BudgetExpense[]) {
+  const starts = [...limits.map((limit) => limit.month), ...expenses.filter((e) => e.type === "expense").map((e) => `${e.date.slice(0, 8)}01`)];
+  const months = [];
+  for (let month = starts.sort()[0]; month && month < thisMonth; month = nextMonth(month)) {
+    const result = budgetFor(month, categories, limits, expenses);
+    const rows = result.rows.filter((row) => row.budget !== null || row.spent > 0);
+    if (rows.length > 0) months.push({ ...result, rows });
+  }
+  return months.reverse();
 }
