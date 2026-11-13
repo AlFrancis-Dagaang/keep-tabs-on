@@ -34,7 +34,7 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
     rows: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, payee: transactions.payee,
-        account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId,
+        account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -95,7 +95,7 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
                         <TableCell className="pl-4 tabular-nums">{row.date}</TableCell>
                         <TableCell>{row.payee ?? <span className="text-muted-foreground">—</span>}</TableCell>
                         <TableCell className={cn(!row.category && !row.billId && !row.debtId && "text-muted-foreground")}>
-                          {row.type === "transfer" ? "Transfer" : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized"))}
+                          {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized"))}
                         </TableCell>
                         <TableCell>{where}</TableCell>
                         <TableCell className="text-right tabular-nums">{sign}{formatMoney(row.amount)}</TableCell>

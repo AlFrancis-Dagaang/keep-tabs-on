@@ -74,6 +74,25 @@ export const debts = pgTable(
   ],
 ).enableRLS();
 
+export const goals = pgTable(
+  "goals",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    name: text().notNull(),
+    target: bigint({ mode: "number" }).notNull(), // centavos
+    deadline: date({ mode: "string" }).notNull(),
+    accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where the money is saved
+    savedBefore: bigint("saved_before", { mode: "number" }).notNull().default(0), // centavos saved before tracking started
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("goals_target", sql`${t.target} > 0`),
+    check("goals_saved_before", sql`${t.savedBefore} between 0 and ${t.target}`),
+    ownRows(t.userId),
+  ],
+).enableRLS();
+
 // FKs are checked without RLS, so actions must confirm account and category ids are the user's own.
 export const transactions = pgTable(
   "transactions",
@@ -89,6 +108,7 @@ export const transactions = pgTable(
     payee: text(),
     billId: uuid("bill_id").references(() => bills.id, { onDelete: "set null" }), // bill payments: expenses with no category
     debtId: uuid("debt_id").references(() => debts.id, { onDelete: "set null" }), // debt payments: expenses with no category
+    goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }), // money added to a goal: transfers into its account
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -107,3 +127,4 @@ export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
+export type Goal = typeof goals.$inferSelect;

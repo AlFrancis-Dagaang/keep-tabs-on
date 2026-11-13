@@ -29,6 +29,13 @@
       "when": 1794528667524,
       "tag": "0003_handy_loners",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1794532301550,
+      "tag": "0004_massive_mac_gargan",
+      "breakpoints": true
     }
   ]
 }

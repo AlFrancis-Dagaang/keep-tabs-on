@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { accounts, bills, categories, debts, transactions } from "../db/schema";
+import { accounts, bills, categories, debts, goals, transactions } from "../db/schema";
 import { withUser } from "./db";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -75,6 +75,22 @@ describe.skipIf(!process.env.DATABASE_URL)("RLS", () => {
       expect(await withUser(a, (tx) => tx.select().from(debts))).toHaveLength(1);
     } finally {
       await withUser(a, (tx) => tx.delete(debts).where(eq(debts.id, debt.id)));
+    }
+  });
+
+  it("hides one user's goals from another", async () => {
+    const [a, b] = [randomUUID(), randomUUID()];
+    const [account] = await withUser(a, (tx) => tx.insert(accounts).values({ userId: a, name: "RLS test" }).returning());
+    const [goal] = await withUser(a, (tx) =>
+      tx.insert(goals).values({ userId: a, name: "RLS test", target: 100, deadline: "2026-12-31", accountId: account.id }).returning(),
+    );
+    try {
+      expect(await withUser(b, (tx) => tx.select().from(goals))).toEqual([]);
+      expect(await withUser(b, (tx) => tx.update(goals).set({ target: 1 }).where(eq(goals.id, goal.id)).returning())).toEqual([]);
+      expect(await withUser(a, (tx) => tx.select().from(goals))).toHaveLength(1);
+    } finally {
+      await withUser(a, (tx) => tx.delete(goals).where(eq(goals.id, goal.id)));
+      await withUser(a, (tx) => tx.delete(accounts).where(eq(accounts.id, account.id)));
     }
   });
 });

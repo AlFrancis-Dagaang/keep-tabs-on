@@ -3,7 +3,7 @@
 import { and, eq, or } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { accounts, transactions } from "@/db/schema";
+import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
@@ -57,6 +57,8 @@ export async function deleteAccount(formData: FormData): Promise<{ error?: strin
     const [used] = await tx.select({ id: transactions.id }).from(transactions)
       .where(and(eq(transactions.userId, userId), or(eq(transactions.accountId, id), eq(transactions.toAccountId, id)))).limit(1);
     if (used) return "Delete its entries in Activity first.";
+    const [goal] = await tx.select({ id: goals.id }).from(goals).where(and(eq(goals.userId, userId), eq(goals.accountId, id))).limit(1);
+    if (goal) return "Move or delete its goals first.";
     await tx.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
   });
   if (error) return { error };
