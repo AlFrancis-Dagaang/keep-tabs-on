@@ -152,7 +152,7 @@ export function DeleteEntry({ id, label }: { id: string; label: string }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete this entry?</DialogTitle>
-          <DialogDescription>{label}. The account balances change back.</DialogDescription>
+          <DialogDescription>{label}. The account balances change back. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
           action={async (formData) => {

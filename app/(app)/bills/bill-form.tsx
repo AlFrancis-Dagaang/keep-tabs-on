@@ -148,7 +148,7 @@ export function DeleteBill({ id, name }: { id: string; name: string }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete {name}?</DialogTitle>
-          <DialogDescription>Its payments stay in Activity as expenses.</DialogDescription>
+          <DialogDescription>Its payments stay in Activity as expenses. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form action={deleteBill}>
           <input type="hidden" name="id" value={id} />

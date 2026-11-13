@@ -93,7 +93,7 @@ export function DeleteAccount({ account }: { account: AccountRow }) {
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Delete {account.name}?</DialogTitle>
-          <DialogDescription>This removes the account and its balance from your net worth.</DialogDescription>
+          <DialogDescription>This removes the account and its balance from your net worth. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
           action={async (formData) => {
