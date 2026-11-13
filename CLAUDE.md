@@ -58,6 +58,7 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 ## Project rules
 <!-- owner: me — rules specific to this project. Lessons stay in knowledge/lessons/. -->
 - Account balances are never negative; owed money goes in debts (knowledge/lessons/2026-11-10-no-negative-balances.md).
+- Setting a task to `Status: done` also ticks its acceptance criteria `[x]` in docs/tasks.md and in its plan file (knowledge/lessons/2026-11-13-tick-criteria-when-done.md).
 - Commits follow Conventional Commits: `type(scope): subject`. Types: feat, fix, refactor, docs, test, chore, build, ci, perf.
   Scope is optional and names the area changed (`accounts`, `activity`, `db`), never a task id like `T-03`.
   Subject is imperative, lowercase, no period, and says what changed. No Co-Authored-By trailer.
