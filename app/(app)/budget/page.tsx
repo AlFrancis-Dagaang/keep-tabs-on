@@ -7,8 +7,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { budgetMonths, categories, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { withUser } from "@/lib/db";
-import { budgetFor, budgetHistory, formatMoney, manilaMonth, progressBlocks } from "@/lib/money";
+import { budgetFor, budgetHistory, manilaMonth, progressBlocks } from "@/lib/money";
+
 import { LimitForm } from "./limit-form";
+import { getMoney } from "@/lib/settings";
 
 export default function BudgetPage() {
   return (
@@ -78,20 +80,22 @@ async function Budget() {
   );
 }
 
-function Totals({ month, leftLabel }: { month: Month; leftLabel: string }) {
+async function Totals({ month, leftLabel }: { month: Month; leftLabel: string }) {
+  const money = await getMoney();
   return (
     <dl className="mb-4 grid grid-cols-3 gap-4 rounded-xl border bg-surface p-4">
       {([["Budget", month.budget], ["Spent", month.spent], [leftLabel, month.left]] as const).map(([label, value]) => (
         <div key={label}>
           <dt className="text-sm text-muted-foreground">{label}</dt>
-          <dd className={`font-serif text-2xl tabular-nums ${value < 0 ? "text-destructive" : ""}`}>{formatMoney(value)}</dd>
+          <dd className={`font-serif text-2xl tabular-nums ${value < 0 ? "text-destructive" : ""}`}>{money(value)}</dd>
         </div>
       ))}
     </dl>
   );
 }
 
-function CategoryTable({ month, editable = false, leftLabel = "Left" }: { month: Month; editable?: boolean; leftLabel?: string }) {
+async function CategoryTable({ month, editable = false, leftLabel = "Left" }: { month: Month; editable?: boolean; leftLabel?: string }) {
+  const money = await getMoney();
   return (
     <div className="rounded-xl border bg-surface">
       <Table>
@@ -113,14 +117,14 @@ function CategoryTable({ month, editable = false, leftLabel = "Left" }: { month:
                   <PixelBar
                     blocks={progressBlocks(row.spent, row.budget)}
                     over={row.spent > row.budget}
-                    label={`${row.name}: ${formatMoney(row.spent)} of ${formatMoney(row.budget)} spent`}
+                    label={`${row.name}: ${money(row.spent)} of ${money(row.budget)} spent`}
                   />
                 )}
-                <div className="mt-1 text-sm tabular-nums">{formatMoney(row.spent)}</div>
+                <div className="mt-1 text-sm tabular-nums">{money(row.spent)}</div>
               </TableCell>
-              <TableCell className="text-right tabular-nums">{row.budget === null ? "No limit" : formatMoney(row.budget)}</TableCell>
+              <TableCell className="text-right tabular-nums">{row.budget === null ? "No limit" : money(row.budget)}</TableCell>
               <TableCell className={`text-right tabular-nums ${editable ? "" : "pr-4"} ${row.left !== null && row.left < 0 ? "text-destructive" : ""}`}>
-                {row.left === null ? "—" : formatMoney(row.left)}
+                {row.left === null ? "—" : money(row.left)}
               </TableCell>
               {editable && (
                 <TableCell className="pr-4 text-right whitespace-nowrap">

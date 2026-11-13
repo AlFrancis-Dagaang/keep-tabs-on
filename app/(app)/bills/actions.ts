@@ -7,7 +7,8 @@ import { bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { type Tx, withUser } from "@/lib/db";
-import { formatMoney, nextDueDate, parseMoney } from "@/lib/money";
+import { nextDueDate, parseMoney } from "@/lib/money";
+import { getMoney } from "@/lib/settings";
 
 const billFields = ["id", "name", "amount", "nextDueDate", "repeat"] as const;
 const payFields = ["billId", "accountId", "amount", "date"] as const;
@@ -54,6 +55,7 @@ async function paidThisCycle(tx: Tx, billId: string) {
 /** Creates a bill, or edits one. The picked date's day becomes the day monthly rolls land on. */
 export async function saveBill(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = read(formData, billFields);
   const parsed = billInput.safeParse(values);
   if (!parsed.success) return { values, errors: fieldErrors(parsed.error) };
@@ -70,7 +72,7 @@ export async function saveBill(_: FormState, formData: FormData): Promise<FormSt
     if (!current) return { name: "This bill is gone. Close and refresh." };
     // Lowering the amount below what's paid would finish the cycle without a payment to roll it.
     const paid = await paidThisCycle(tx, current.id);
-    if (row.amount <= paid) return { amount: `Already paid ${formatMoney(paid)} this cycle. Enter more than that.` };
+    if (row.amount <= paid) return { amount: `Already paid ${money(paid)} this cycle. Enter more than that.` };
     await tx.update(bills).set(row).where(own);
   });
   if (errors) return { values, errors };
@@ -89,6 +91,7 @@ export async function deleteBill(formData: FormData) {
 /** Saves an expense linked to the bill. Paying the rest of the cycle rolls the due date in the same transaction. */
 export async function payBill(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = read(formData, payFields);
   const parsed = payInput.safeParse(values);
   if (!parsed.success) return { values, errors: fieldErrors(parsed.error) };
@@ -102,8 +105,8 @@ export async function payBill(_: FormState, formData: FormData): Promise<FormSta
     const from = accounts.find((account) => account.id === payment.accountId);
     if (!from) return { errors: { accountId: "Pick an account." } };
     const left = bill.amount - (await paidThisCycle(tx, bill.id));
-    if (payment.amount > left) return { errors: { amount: `Only ${formatMoney(left)} left this cycle.` } };
-    if (balance(from.id)! < payment.amount) return { errors: { amount: `Only ${formatMoney(balance(from.id)!)} in ${from.name}.` } };
+    if (payment.amount > left) return { errors: { amount: `Only ${money(left)} left this cycle.` } };
+    if (balance(from.id)! < payment.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
 
     await tx.insert(transactions).values({
       userId, type: "expense", amount: payment.amount, date: payment.date, accountId: from.id, billId: bill.id, payee: bill.name,

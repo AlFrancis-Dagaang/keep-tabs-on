@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import { useMoney } from "@/components/currency-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Category, Transaction } from "@/db/schema";
-import { formatMoney } from "@/lib/money";
 import { deleteEntry, saveEntry, type FormState } from "./actions";
 
 type Options = {
@@ -37,6 +37,7 @@ export function EntryForm(options: Options) {
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
 function Fields({ accounts, categories, today, onSaved }: Options & { onSaved: () => void }) {
+  const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveEntry, {});
   const [type, setType] = useState<Transaction["type"]>("expense");
   useEffect(() => {
@@ -82,7 +83,7 @@ function Fields({ accounts, categories, today, onSaved }: Options & { onSaved: (
           )}
         </Field>
       )}
-      <Field label="Amount (₱)" name="amount" state={state}>
+      <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" placeholder="0.00" className="tabular-nums" defaultValue={state.values?.amount} {...invalid(state, "amount")} />
       </Field>
       <Field label="Date" name="date" state={state}>
@@ -115,6 +116,7 @@ function Field({ label, name, state, children }: { label: string; name: FieldNam
 }
 
 function AccountSelect({ label, name, accounts, state }: { label: string; name: "accountId" | "toAccountId"; accounts: Options["accounts"]; state: FormState }) {
+  const { money } = useMoney();
   return (
     <Field label={label} name={name} state={state}>
       <Select name={name} defaultValue={state.values?.[name] || undefined}>
@@ -124,7 +126,7 @@ function AccountSelect({ label, name, accounts, state }: { label: string; name: 
         <SelectContent>
           {accounts.map((account) => (
             <SelectItem key={account.id} value={account.id}>
-              {account.name} <span className="text-muted-foreground tabular-nums">{formatMoney(account.balance)}</span>
+              {account.name} <span className="text-muted-foreground tabular-nums">{money(account.balance)}</span>
             </SelectItem>
           ))}
         </SelectContent>

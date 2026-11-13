@@ -9,7 +9,9 @@ import { accounts, bills, budgetMonths, categories, debts, goals, transactions }
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { billsDueSoon, budgetFor, formatMoney, manilaMonth, monthTotals, progressBlocks } from "@/lib/money";
+import { billsDueSoon, budgetFor, manilaMonth, monthTotals, progressBlocks } from "@/lib/money";
+import { getMoney } from "@/lib/settings";
+
 
 const toAccounts = alias(accounts, "to_accounts");
 
@@ -25,6 +27,7 @@ export default function OverviewPage() {
 }
 
 async function Overview() {
+  const money = await getMoney();
   const userId = await getUserId();
   // shortcut: the bills, goals and debts queries are copies of their pages' queries; move them to lib/ if a third page needs them.
   const data = await withUser(userId, async (tx) => ({
@@ -97,15 +100,15 @@ async function Overview() {
   return (
     <div className="grid gap-8">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Card href="/accounts" label="Net worth" value={formatMoney(netWorth)} />
-        <Card href="/activity?type=income" label="Income this month" value={formatMoney(income)} />
-        <Card href="/activity?type=expense" label="Expenses this month" value={formatMoney(expenses)} />
-        <Card href="/bills" label="Bills due in 7 days" value={formatMoney(dueSoon.left)} note={`${dueSoon.count} ${dueSoon.count === 1 ? "bill" : "bills"}`} />
+        <Card href="/accounts" label="Net worth" value={money(netWorth)} />
+        <Card href="/activity?type=income" label="Income this month" value={money(income)} />
+        <Card href="/activity?type=expense" label="Expenses this month" value={money(expenses)} />
+        <Card href="/bills" label="Bills due in 7 days" value={money(dueSoon.left)} note={`${dueSoon.count} ${dueSoon.count === 1 ? "bill" : "bills"}`} />
         <Card
           href="/budget"
           label="Budget left"
-          value={budget.budget === 0 ? "—" : formatMoney(budget.left)}
-          note={budget.budget === 0 ? "No limits set" : `of ${formatMoney(budget.budget)}`}
+          value={budget.budget === 0 ? "—" : money(budget.left)}
+          note={budget.budget === 0 ? "No limits set" : `of ${money(budget.budget)}`}
           warn={budget.left < 0}
         />
       </div>
@@ -115,7 +118,7 @@ async function Overview() {
           {data.balances.accounts.map((account) => (
             <Link key={account.id} href="/accounts" className="rounded-xl border bg-surface p-4 hover:bg-accent">
               <div className="text-sm text-muted-foreground">{account.name}</div>
-              <div className="font-serif text-xl tabular-nums">{formatMoney(account.balance)}</div>
+              <div className="font-serif text-xl tabular-nums">{money(account.balance)}</div>
             </Link>
           ))}
         </div>
@@ -132,7 +135,7 @@ async function Overview() {
                   <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">Overdue</span>
                 )}
               </TableCell>
-              <TableCell className="pr-4 text-right tabular-nums">{formatMoney(bill.amount - (bill.paid ?? 0))} left</TableCell>
+              <TableCell className="pr-4 text-right tabular-nums">{money(bill.amount - (bill.paid ?? 0))} left</TableCell>
             </TableRow>
           ))}
         </MiniTable>
@@ -163,7 +166,7 @@ async function Overview() {
                 {row.payee ?? row.category ?? <span className="text-muted-foreground">—</span>}
                 <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount}` : row.account}</div>
               </TableCell>
-              <TableCell className="pr-4 text-right tabular-nums">{{ income: "+", expense: "−", transfer: "" }[row.type]}{formatMoney(row.amount)}</TableCell>
+              <TableCell className="pr-4 text-right tabular-nums">{{ income: "+", expense: "−", transfer: "" }[row.type]}{money(row.amount)}</TableCell>
             </TableRow>
           ))}
         </MiniTable>
@@ -205,15 +208,16 @@ function MiniTable({ children }: { children: ReactNode }) {
 }
 
 // The name's link stretches over the row, like the Goals and Debts lists.
-function ProgressRow({ href, name, done, total, verb }: { href: string; name: string; done: number; total: number; verb: string }) {
+async function ProgressRow({ href, name, done, total, verb }: { href: string; name: string; done: number; total: number; verb: string }) {
+  const money = await getMoney();
   return (
     <TableRow className="relative">
       <TableCell className="pl-4">
         <Link href={href} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{name}</Link>
       </TableCell>
       <TableCell className="pr-4">
-        <PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${formatMoney(done)} of ${formatMoney(total)} ${verb}`} />
-        <div className="mt-1 text-sm text-muted-foreground tabular-nums">{formatMoney(done)} of {formatMoney(total)} {verb}</div>
+        <PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${money(done)} of ${money(total)} ${verb}`} />
+        <div className="mt-1 text-sm text-muted-foreground tabular-nums">{money(done)} of {money(total)} {verb}</div>
       </TableCell>
     </TableRow>
   );

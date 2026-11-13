@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useMoney } from "@/components/currency-provider";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,18 +9,19 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Bill } from "@/db/schema";
-import { formatMoney, progressBlocks, repeatLabels, toInput } from "@/lib/money";
+import { progressBlocks, repeatLabels, toInput } from "@/lib/money";
 import { deleteBill, type FormState, payBill, saveBill } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
 type EditableBill = Pick<Bill, "id" | "name" | "amount" | "nextDueDate" | "repeat">;
 
 export function BillProgress({ id, name, paid, amount }: { id: string; name: string; paid: number; amount: number }) {
+  const { money } = useMoney();
   const flashing = useCompletedFlash(id);
   // While flashing, show the cycle that just closed; after that, the new cycle's bar.
   return flashing
     ? <PixelBar blocks={12} flash label={`${name}: paid in full`} />
-    : <PixelBar key="cycle" blocks={progressBlocks(paid, amount)} label={`${name}: ${formatMoney(paid)} of ${formatMoney(amount)} paid this cycle`} />;
+    : <PixelBar key="cycle" blocks={progressBlocks(paid, amount)} label={`${name}: ${money(paid)} of ${money(amount)} paid this cycle`} />;
 }
 
 export function BillForm({ today, bill }: { today: string; bill?: EditableBill }) {
@@ -43,6 +45,7 @@ export function BillForm({ today, bill }: { today: string; bill?: EditableBill }
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
 function BillFields({ today, bill, onSaved }: { today: string; bill?: EditableBill; onSaved: () => void }) {
+  const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveBill, {});
   useEffect(() => {
     if (state.ok) onSaved();
@@ -56,7 +59,7 @@ function BillFields({ today, bill, onSaved }: { today: string; bill?: EditableBi
       <Field label="Name" name="name" state={state}>
         <Input id="name" name="name" placeholder="Internet" defaultValue={values?.name ?? bill?.name} {...invalid(state, "name")} />
       </Field>
-      <Field label="Amount (₱)" name="amount" state={state}>
+      <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.amount ?? (bill && toInput(bill.amount))} {...invalid(state, "amount")} />
       </Field>
@@ -83,6 +86,7 @@ function BillFields({ today, bill, onSaved }: { today: string; bill?: EditableBi
 }
 
 export function PayBill(props: { bill: { id: string; name: string; left: number }; accounts: Accounts; today: string }) {
+  const { money } = useMoney();
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -92,7 +96,7 @@ export function PayBill(props: { bill: { id: string; name: string; left: number 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Record payment</DialogTitle>
-          <DialogDescription>{props.bill.name}: {formatMoney(props.bill.left)} left this cycle. Partial payments are fine.</DialogDescription>
+          <DialogDescription>{props.bill.name}: {money(props.bill.left)} left this cycle. Partial payments are fine.</DialogDescription>
         </DialogHeader>
         <PayFields {...props} onSaved={() => setOpen(false)} />
       </DialogContent>
@@ -101,6 +105,7 @@ export function PayBill(props: { bill: { id: string; name: string; left: number 
 }
 
 function PayFields({ bill, accounts, today, onSaved }: { bill: { id: string; left: number }; accounts: Accounts; today: string; onSaved: () => void }) {
+  const { money, symbol } = useMoney();
   const [state, action, pending] = useActionState(payBill, {});
   useEffect(() => {
     if (!state.ok) return;
@@ -120,13 +125,13 @@ function PayFields({ bill, accounts, today, onSaved }: { bill: { id: string; lef
           <SelectContent>
             {accounts.map((account) => (
               <SelectItem key={account.id} value={account.id}>
-                {account.name} <span className="text-muted-foreground tabular-nums">{formatMoney(account.balance)}</span>
+                {account.name} <span className="text-muted-foreground tabular-nums">{money(account.balance)}</span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </Field>
-      <Field label="Amount (₱)" name="amount" state={state}>
+      <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" className="tabular-nums" defaultValue={values?.amount ?? toInput(bill.left)} {...invalid(state, "amount")} />
       </Field>
       <Field label="Date" name="date" state={state}>

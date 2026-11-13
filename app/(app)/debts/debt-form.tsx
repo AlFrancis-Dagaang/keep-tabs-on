@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useMoney } from "@/components/currency-provider";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,15 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Debt } from "@/db/schema";
-import { formatMoney, progressBlocks, toInput } from "@/lib/money";
+import { progressBlocks, toInput } from "@/lib/money";
 import { deleteDebt, type FormState, payDebt, saveDebt } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
 type EditableDebt = Pick<Debt, "id" | "name" | "total" | "deadline" | "paidBefore">;
 
 export function DebtProgress({ id, name, paid, total }: { id: string; name: string; paid: number; total: number }) {
+  const { money } = useMoney();
   const flashing = useCompletedFlash(id);
-  return <PixelBar blocks={progressBlocks(paid, total)} flash={flashing} label={`${name}: ${formatMoney(paid)} of ${formatMoney(total)} paid`} />;
+  return <PixelBar blocks={progressBlocks(paid, total)} flash={flashing} label={`${name}: ${money(paid)} of ${money(total)} paid`} />;
 }
 
 export function DebtForm({ today, debt }: { today: string; debt?: EditableDebt }) {
@@ -40,6 +42,7 @@ export function DebtForm({ today, debt }: { today: string; debt?: EditableDebt }
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
 function DebtFields({ today, debt, onSaved }: { today: string; debt?: EditableDebt; onSaved: () => void }) {
+  const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveDebt, {});
   useEffect(() => {
     if (state.ok) onSaved();
@@ -52,14 +55,14 @@ function DebtFields({ today, debt, onSaved }: { today: string; debt?: EditableDe
       <Field label="Name" name="name" state={state}>
         <Input id="name" name="name" placeholder="Credit card" defaultValue={values?.name ?? debt?.name} {...invalid(state, "name")} />
       </Field>
-      <Field label="Total owed (₱)" name="total" state={state}>
+      <Field label={`Total owed (${symbol})`} name="total" state={state}>
         <Input id="total" name="total" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.total ?? (debt && toInput(debt.total))} {...invalid(state, "total")} />
       </Field>
       <Field label="Deadline" name="deadline" state={state}>
         <Input id="deadline" name="deadline" type="date" defaultValue={values?.deadline ?? debt?.deadline ?? today} {...invalid(state, "deadline")} />
       </Field>
-      <Field label="Paid before tracking (₱)" name="paidBefore" state={state}>
+      <Field label={`Paid before tracking (${symbol})`} name="paidBefore" state={state}>
         <Input id="paidBefore" name="paidBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.paidBefore ?? (debt?.paidBefore ? toInput(debt.paidBefore) : undefined)} {...invalid(state, "paidBefore")} />
       </Field>
@@ -71,6 +74,7 @@ function DebtFields({ today, debt, onSaved }: { today: string; debt?: EditableDe
 }
 
 export function PayDebt(props: { debt: { id: string; name: string; left: number }; accounts: Accounts; today: string }) {
+  const { money } = useMoney();
   const [open, setOpen] = useState(false);
   // Disabled rather than hidden once paid off: hiding it would unmount the form before it announces the flash.
   return (
@@ -81,7 +85,7 @@ export function PayDebt(props: { debt: { id: string; name: string; left: number 
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Record payment</DialogTitle>
-          <DialogDescription>{props.debt.name}: {formatMoney(props.debt.left)} left to pay. Partial payments are fine.</DialogDescription>
+          <DialogDescription>{props.debt.name}: {money(props.debt.left)} left to pay. Partial payments are fine.</DialogDescription>
         </DialogHeader>
         <PayFields {...props} onSaved={() => setOpen(false)} />
       </DialogContent>
@@ -90,6 +94,7 @@ export function PayDebt(props: { debt: { id: string; name: string; left: number 
 }
 
 function PayFields({ debt, accounts, today, onSaved }: { debt: { id: string; left: number }; accounts: Accounts; today: string; onSaved: () => void }) {
+  const { money, symbol } = useMoney();
   const [state, action, pending] = useActionState(payDebt, {});
   useEffect(() => {
     if (!state.ok) return;
@@ -109,13 +114,13 @@ function PayFields({ debt, accounts, today, onSaved }: { debt: { id: string; lef
           <SelectContent>
             {accounts.map((account) => (
               <SelectItem key={account.id} value={account.id}>
-                {account.name} <span className="text-muted-foreground tabular-nums">{formatMoney(account.balance)}</span>
+                {account.name} <span className="text-muted-foreground tabular-nums">{money(account.balance)}</span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </Field>
-      <Field label="Amount (₱)" name="amount" state={state}>
+      <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" className="tabular-nums" defaultValue={values?.amount ?? toInput(debt.left)} {...invalid(state, "amount")} />
       </Field>
       <Field label="Date" name="date" state={state}>

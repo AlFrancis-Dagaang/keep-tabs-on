@@ -10,8 +10,9 @@ import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
+
 import { AddMoney, GoalProgress } from "../goal-form";
+import { getMoney } from "@/lib/settings";
 
 const toAccounts = alias(accounts, "to_accounts");
 
@@ -24,6 +25,7 @@ export default function GoalPage({ params }: { params: Promise<{ id: string }> }
 }
 
 async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
+  const money = await getMoney();
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const userId = await getUserId();
@@ -54,9 +56,9 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
         <GoalProgress id={goal.id} name={goal.name} saved={saved} target={goal.target} />
-        <div className="mt-2 text-sm tabular-nums">{formatMoney(saved)} of {formatMoney(goal.target)} saved</div>
+        <div className="mt-2 text-sm tabular-nums">{money(saved)} of {money(goal.target)} saved</div>
         {goal.savedBefore > 0 && (
-          <div className="text-sm text-muted-foreground tabular-nums">Includes {formatMoney(goal.savedBefore)} saved before tracking</div>
+          <div className="text-sm text-muted-foreground tabular-nums">Includes {money(goal.savedBefore)} saved before tracking</div>
         )}
       </div>
       {transfers.length === 0 ? (
@@ -78,7 +80,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
                   <TableCell className="pl-4 tabular-nums">{transfer.date}</TableCell>
                   <TableCell>{transfer.from}</TableCell>
                   <TableCell>{transfer.to}</TableCell>
-                  <TableCell className="pr-4 text-right tabular-nums">{formatMoney(transfer.amount)}</TableCell>
+                  <TableCell className="pr-4 text-right tabular-nums">{money(transfer.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

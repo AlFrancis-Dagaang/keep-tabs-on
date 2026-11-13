@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, type Entry, formatMoney, manilaMonth, monthTotals, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
+import { balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatMoney, manilaMonth, monthTotals, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -15,9 +15,15 @@ describe("parseMoney", () => {
 });
 
 describe("formatMoney", () => {
-  it("shows centavos as pesos", () => {
-    expect(formatMoney(123456)).toBe("₱1,234.56");
+  it("shows centavos in the chosen currency", () => {
+    expect(formatMoney(123456, "PHP")).toBe("₱1,234.56");
+    expect(formatMoney(123456, "USD")).toBe("$1,234.56");
     expect(toInput(123456)).toBe("1234.56");
+  });
+
+  it("gives the symbol for form labels", () => {
+    expect(currencySymbol("PHP")).toBe("₱");
+    expect(currencySymbol("USD")).toBe("$");
   });
 });
 

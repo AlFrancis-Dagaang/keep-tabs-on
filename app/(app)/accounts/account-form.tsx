@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useMoney } from "@/components/currency-provider";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -34,6 +35,7 @@ export function AccountForm({ account }: { account?: AccountRow }) {
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
 function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => void }) {
+  const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveAccount, {});
   useEffect(() => {
     if (state.ok) onSaved();
@@ -55,7 +57,7 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
         {state.errors?.name && <p id="name-error" className="text-sm text-destructive">{state.errors.name}</p>}
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="balance">Balance today (₱)</Label>
+        <Label htmlFor="balance">Balance today ({symbol})</Label>
         <Input
           id="balance"
           name="balance"

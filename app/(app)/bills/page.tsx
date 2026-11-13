@@ -7,8 +7,10 @@ import { bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney, repeatLabels } from "@/lib/money";
+import { repeatLabels } from "@/lib/money";
+
 import { BillForm, BillProgress, DeleteBill, PayBill } from "./bill-form";
+import { getMoney } from "@/lib/settings";
 
 export default function BillsPage() {
   return (
@@ -19,6 +21,7 @@ export default function BillsPage() {
 }
 
 async function Bills() {
+  const money = await getMoney();
   const userId = await getUserId();
   const { balances, rows } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
@@ -65,7 +68,7 @@ async function Bills() {
                   <TableRow key={row.id}>
                     <TableCell className="pl-4">
                       <div className="font-medium">{row.name}</div>
-                      <div className="text-sm text-muted-foreground tabular-nums">{formatMoney(row.amount)}</div>
+                      <div className="text-sm text-muted-foreground tabular-nums">{money(row.amount)}</div>
                     </TableCell>
                     <TableCell>{repeatLabels[row.repeat]}</TableCell>
                     <TableCell className="tabular-nums">
@@ -77,7 +80,7 @@ async function Bills() {
                     <TableCell>
                       <BillProgress id={row.id} name={row.name} paid={paid} amount={row.amount} />
                       <div className="mt-1 text-sm text-muted-foreground tabular-nums">
-                        {formatMoney(paid)} of {formatMoney(row.amount)}
+                        {money(paid)} of {money(row.amount)}
                       </div>
                     </TableCell>
                     <TableCell className="pr-4 text-right whitespace-nowrap">

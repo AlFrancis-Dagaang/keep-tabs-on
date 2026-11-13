@@ -1,11 +1,24 @@
 import { sql } from "drizzle-orm";
-import { type AnyPgColumn, bigint, check, date, pgPolicy, pgTable, smallint, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
+import { type AnyPgColumn, bigint, boolean, check, date, pgPolicy, pgTable, smallint, text, timestamp, unique, uuid } from "drizzle-orm/pg-core";
 
 // The user withUser() put in the transaction's claims. Every table's policy compares user_id to this.
 export const currentUserId = sql`(current_setting('request.jwt.claims', true)::json->>'sub')::uuid`;
 
 const ownRows = (userId: AnyPgColumn) =>
   pgPolicy("own rows", { for: "all", using: sql`${userId} = ${currentUserId}`, withCheck: sql`${userId} = ${currentUserId}` });
+
+export const settings = pgTable(
+  "settings",
+  {
+    userId: uuid("user_id").primaryKey(),
+    currency: text().notNull().default("PHP"), // an ISO code from lib/money.ts's currencies
+    setupDone: boolean("setup_done").notNull().default(false),
+  },
+  (t) => [
+    check("settings_currency", sql`${t.currency} in ('PHP', 'USD')`),
+    ownRows(t.userId),
+  ],
+).enableRLS();
 
 export const accounts = pgTable(
   "accounts",
@@ -141,6 +154,7 @@ export const transactions = pgTable(
   ],
 ).enableRLS();
 
+export type Settings = typeof settings.$inferSelect;
 export type Account = typeof accounts.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;

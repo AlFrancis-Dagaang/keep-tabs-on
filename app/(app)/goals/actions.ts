@@ -7,7 +7,8 @@ import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { type Tx, withUser } from "@/lib/db";
-import { formatMoney, parseMoney } from "@/lib/money";
+import { parseMoney } from "@/lib/money";
+import { getMoney } from "@/lib/settings";
 
 const goalFields = ["id", "name", "target", "deadline", "accountId", "savedBefore"] as const;
 const addFields = ["goalId", "fromAccountId", "amount", "date"] as const;
@@ -56,6 +57,7 @@ async function addedTransfers(tx: Tx, goalId: string) {
 /** Creates a goal, or edits one. The target can't drop below what's already saved. */
 export async function saveGoal(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = read(formData, goalFields);
   const parsed = goalInput.safeParse(values);
   if (!parsed.success) return { values, errors: fieldErrors(parsed.error) };
@@ -69,7 +71,7 @@ export async function saveGoal(_: FormState, formData: FormData): Promise<FormSt
     const [current] = id ? await tx.select({ id: goals.id }).from(goals).where(own).for("update") : [];
     if (id && !current) return { name: "This goal is gone. Close and refresh." };
     const saved = goal.savedBefore + (current ? await addedTransfers(tx, current.id) : 0);
-    if (saved > goal.target) return { target: `Already saved ${formatMoney(saved)}. Enter at least that.` };
+    if (saved > goal.target) return { target: `Already saved ${money(saved)}. Enter at least that.` };
     if (current) await tx.update(goals).set(goal).where(own);
     else await tx.insert(goals).values({ userId, ...goal });
   });
@@ -89,6 +91,7 @@ export async function deleteGoal(formData: FormData) {
 /** Saves a transfer into the goal's account, linked to the goal, up to what's left. */
 export async function addToGoal(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = read(formData, addFields);
   const parsed = addInput.safeParse(values);
   if (!parsed.success) return { values, errors: fieldErrors(parsed.error) };
@@ -102,8 +105,8 @@ export async function addToGoal(_: FormState, formData: FormData): Promise<FormS
     const from = accounts.find((account) => account.id === transfer.fromAccountId);
     if (!from || from.id === goal.accountId) return { errors: { fromAccountId: "Pick an account other than the one the goal is saved in." } };
     const left = goal.target - goal.savedBefore - (await addedTransfers(tx, goal.id));
-    if (transfer.amount > left) return { errors: { amount: `Only ${formatMoney(left)} left to reach the target.` } };
-    if (balance(from.id)! < transfer.amount) return { errors: { amount: `Only ${formatMoney(balance(from.id)!)} in ${from.name}.` } };
+    if (transfer.amount > left) return { errors: { amount: `Only ${money(left)} left to reach the target.` } };
+    if (balance(from.id)! < transfer.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
 
     await tx.insert(transactions).values({
       userId, type: "transfer", amount: transfer.amount, date: transfer.date,

@@ -7,8 +7,9 @@ import { debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
+
 import { DebtForm, DebtProgress, DeleteDebt, PayDebt } from "./debt-form";
+import { getMoney } from "@/lib/settings";
 
 export default function DebtsPage() {
   return (
@@ -19,6 +20,7 @@ export default function DebtsPage() {
 }
 
 async function Debts() {
+  const money = await getMoney();
   const userId = await getUserId();
   const { balances, rows } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
@@ -63,13 +65,13 @@ async function Debts() {
                 <TableRow key={row.id} className="relative">
                   <TableCell className="pl-4">
                     <Link href={`/debts/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
-                    <div className="text-sm text-muted-foreground tabular-nums">{formatMoney(row.total)}</div>
+                    <div className="text-sm text-muted-foreground tabular-nums">{money(row.total)}</div>
                   </TableCell>
                   <TableCell className="tabular-nums">{row.deadline}</TableCell>
                   <TableCell>
                     <DebtProgress id={row.id} name={row.name} paid={row.paid} total={row.total} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
-                      {formatMoney(row.paid)} of {formatMoney(row.total)}
+                      {money(row.paid)} of {money(row.total)}
                     </div>
                   </TableCell>
                   <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">

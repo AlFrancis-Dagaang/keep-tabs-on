@@ -4,8 +4,9 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
+
 import { AccountForm, DeleteAccount } from "./account-form";
+import { getMoney } from "@/lib/settings";
 
 export default function AccountsPage() {
   return (
@@ -21,6 +22,7 @@ export default function AccountsPage() {
 }
 
 async function AccountsTable() {
+  const money = await getMoney();
   const userId = await getUserId();
   const { accounts: rows } = await withUser(userId, (tx) => loadBalances(tx, userId));
 
@@ -47,7 +49,7 @@ async function AccountsTable() {
           {rows.map((account) => (
             <TableRow key={account.id}>
               <TableCell className="pl-4">{account.name}</TableCell>
-              <TableCell className="text-right tabular-nums">{formatMoney(account.balance)}</TableCell>
+              <TableCell className="text-right tabular-nums">{money(account.balance)}</TableCell>
               <TableCell className="pr-4 text-right whitespace-nowrap">
                 <AccountForm account={account} />
                 <DeleteAccount account={account} />
@@ -58,7 +60,7 @@ async function AccountsTable() {
         <TableFooter>
           <TableRow>
             <TableCell className="pl-4 font-medium">Net worth</TableCell>
-            <TableCell className="text-right font-medium tabular-nums">{formatMoney(netWorth)}</TableCell>
+            <TableCell className="text-right font-medium tabular-nums">{money(netWorth)}</TableCell>
             <TableCell />
           </TableRow>
         </TableFooter>

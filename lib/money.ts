@@ -1,7 +1,11 @@
 import type { Account, Bill, BudgetMonth, Category, Transaction } from "@/db/schema";
 
-// shortcut: PHP for everyone, until T-09 adds the currency setting.
-const peso = new Intl.NumberFormat("en-PH", { style: "currency", currency: "PHP" });
+export const currencies = ["PHP", "USD"] as const;
+export type Currency = (typeof currencies)[number];
+
+const formatters = Object.fromEntries(
+  currencies.map((currency) => [currency, new Intl.NumberFormat("en-PH", { style: "currency", currency, currencyDisplay: "narrowSymbol" })]),
+) as Record<Currency, Intl.NumberFormat>;
 
 /** "1,234.56" → 123456 centavos. Null for anything else, including negatives: accounts hold money you have. */
 export function parseMoney(input: string): number | null {
@@ -11,8 +15,13 @@ export function parseMoney(input: string): number | null {
   return Number.isSafeInteger(centavos) ? centavos : null;
 }
 
-export function formatMoney(centavos: number): string {
-  return peso.format(centavos / 100);
+export function formatMoney(centavos: number, currency: Currency): string {
+  return formatters[currency].format(centavos / 100);
+}
+
+/** The symbol for a form label: "₱", "$". */
+export function currencySymbol(currency: Currency): string {
+  return formatters[currency].formatToParts(0).find((part) => part.type === "currency")!.value;
 }
 
 /** For a form field: 123456 → "1234.56". */

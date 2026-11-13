@@ -9,8 +9,9 @@ import { accounts, debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
+
 import { DebtProgress, PayDebt } from "../debt-form";
+import { getMoney } from "@/lib/settings";
 
 export default function DebtPage({ params }: { params: Promise<{ id: string }> }) {
   return (
@@ -21,6 +22,7 @@ export default function DebtPage({ params }: { params: Promise<{ id: string }> }
 }
 
 async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
+  const money = await getMoney();
   const id = z.uuid().safeParse((await params).id);
   if (!id.success) notFound();
   const userId = await getUserId();
@@ -46,9 +48,9 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
         <DebtProgress id={debt.id} name={debt.name} paid={paid} total={debt.total} />
-        <div className="mt-2 text-sm tabular-nums">{formatMoney(paid)} of {formatMoney(debt.total)} paid</div>
+        <div className="mt-2 text-sm tabular-nums">{money(paid)} of {money(debt.total)} paid</div>
         {debt.paidBefore > 0 && (
-          <div className="text-sm text-muted-foreground tabular-nums">Includes {formatMoney(debt.paidBefore)} paid before tracking</div>
+          <div className="text-sm text-muted-foreground tabular-nums">Includes {money(debt.paidBefore)} paid before tracking</div>
         )}
       </div>
       {payments.length === 0 ? (
@@ -68,7 +70,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
                 <TableRow key={payment.id}>
                   <TableCell className="pl-4 tabular-nums">{payment.date}</TableCell>
                   <TableCell>{payment.account}</TableCell>
-                  <TableCell className="pr-4 text-right tabular-nums">{formatMoney(payment.amount)}</TableCell>
+                  <TableCell className="pr-4 text-right tabular-nums">{money(payment.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

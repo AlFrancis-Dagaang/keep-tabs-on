@@ -7,7 +7,8 @@ import { categories, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney, parseMoney } from "@/lib/money";
+import { parseMoney } from "@/lib/money";
+import { getMoney } from "@/lib/settings";
 
 const fields = ["type", "accountId", "toAccountId", "categoryId", "amount", "date", "payee"] as const;
 type Field = (typeof fields)[number];
@@ -38,6 +39,7 @@ const entryInput = z.discriminatedUnion("type", [
 /** Records an income, expense or transfer. Refuses when it would take an account below zero. */
 export async function saveEntry(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = Object.fromEntries(fields.map((field) => [field, String(formData.get(field) ?? "")])) as Record<Field, string>;
   const parsed = entryInput.safeParse(values);
   if (!parsed.success) {
@@ -59,7 +61,7 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
       if (category?.kind !== (entry.type === "income" ? "income" : "spending")) return { categoryId: "Pick a category." };
     }
     if (entry.type !== "income" && balance(from.id)! < entry.amount) {
-      return { amount: `Only ${formatMoney(balance(from.id)!)} in ${from.name}.` };
+      return { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` };
     }
     await tx.insert(transactions).values({ userId, ...entry });
   });
@@ -71,6 +73,7 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
 /** Refuses when the money it brought in is already spent: the account would drop below zero. */
 export async function deleteEntry(formData: FormData): Promise<{ error?: string }> {
   const userId = await getUserId();
+  const money = await getMoney();
   const id = z.uuid().parse(formData.get("id"));
   const error = await withUser(userId, async (tx) => {
     const own = and(eq(transactions.id, id), eq(transactions.userId, userId));
@@ -80,7 +83,7 @@ export async function deleteEntry(formData: FormData): Promise<{ error?: string 
     const credited = entry.type === "income" ? entry.accountId : entry.type === "transfer" ? entry.toAccountId : null;
     if (credited && balance(credited)! < entry.amount) {
       const account = accounts.find((row) => row.id === credited)!;
-      return `${account.name} has only ${formatMoney(account.balance)} left, so this can't be undone.`;
+      return `${account.name} has only ${money(account.balance)} left, so this can't be undone.`;
     }
     await tx.delete(transactions).where(own);
   });

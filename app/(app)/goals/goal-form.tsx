@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { useMoney } from "@/components/currency-provider";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,15 +9,16 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Goal } from "@/db/schema";
-import { formatMoney, progressBlocks, toInput } from "@/lib/money";
+import { progressBlocks, toInput } from "@/lib/money";
 import { addToGoal, deleteGoal, type FormState, saveGoal } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
 type EditableGoal = Pick<Goal, "id" | "name" | "target" | "deadline" | "accountId" | "savedBefore">;
 
 export function GoalProgress({ id, name, saved, target }: { id: string; name: string; saved: number; target: number }) {
+  const { money } = useMoney();
   const flashing = useCompletedFlash(id);
-  return <PixelBar blocks={progressBlocks(saved, target)} flash={flashing} label={`${name}: ${formatMoney(saved)} of ${formatMoney(target)} saved`} />;
+  return <PixelBar blocks={progressBlocks(saved, target)} flash={flashing} label={`${name}: ${money(saved)} of ${money(target)} saved`} />;
 }
 
 export function GoalForm({ today, accounts, goal }: { today: string; accounts: Accounts; goal?: EditableGoal }) {
@@ -40,6 +42,7 @@ export function GoalForm({ today, accounts, goal }: { today: string; accounts: A
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
 function GoalFields({ today, accounts, goal, onSaved }: { today: string; accounts: Accounts; goal?: EditableGoal; onSaved: () => void }) {
+  const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveGoal, {});
   useEffect(() => {
     if (state.ok) onSaved();
@@ -52,7 +55,7 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
       <Field label="Name" name="name" state={state}>
         <Input id="name" name="name" placeholder="Emergency fund" defaultValue={values?.name ?? goal?.name} {...invalid(state, "name")} />
       </Field>
-      <Field label="Target (₱)" name="target" state={state}>
+      <Field label={`Target (${symbol})`} name="target" state={state}>
         <Input id="target" name="target" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.target ?? (goal && toInput(goal.target))} {...invalid(state, "target")} />
       </Field>
@@ -62,7 +65,7 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
       <Field label="Saved in" name="accountId" state={state}>
         <AccountSelect id="accountId" accounts={accounts} defaultValue={values?.accountId || goal?.accountId} state={state} />
       </Field>
-      <Field label="Already saved (₱)" name="savedBefore" state={state}>
+      <Field label={`Already saved (${symbol})`} name="savedBefore" state={state}>
         <Input id="savedBefore" name="savedBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.savedBefore ?? (goal?.savedBefore ? toInput(goal.savedBefore) : undefined)} {...invalid(state, "savedBefore")} />
       </Field>
@@ -74,6 +77,7 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
 }
 
 export function AddMoney(props: { goal: { id: string; name: string; accountId: string; left: number }; accounts: Accounts; today: string }) {
+  const { money } = useMoney();
   const [open, setOpen] = useState(false);
   // Disabled rather than hidden at target: hiding it would unmount the form before it announces the flash.
   return (
@@ -84,7 +88,7 @@ export function AddMoney(props: { goal: { id: string; name: string; accountId: s
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Add money</DialogTitle>
-          <DialogDescription>{props.goal.name}: {formatMoney(props.goal.left)} left to reach the target.</DialogDescription>
+          <DialogDescription>{props.goal.name}: {money(props.goal.left)} left to reach the target.</DialogDescription>
         </DialogHeader>
         <AddFields {...props} onSaved={() => setOpen(false)} />
       </DialogContent>
@@ -93,6 +97,7 @@ export function AddMoney(props: { goal: { id: string; name: string; accountId: s
 }
 
 function AddFields({ goal, accounts, today, onSaved }: { goal: { id: string; accountId: string; left: number }; accounts: Accounts; today: string; onSaved: () => void }) {
+  const { symbol } = useMoney();
   const [state, action, pending] = useActionState(addToGoal, {});
   useEffect(() => {
     if (!state.ok) return;
@@ -108,7 +113,7 @@ function AddFields({ goal, accounts, today, onSaved }: { goal: { id: string; acc
         <AccountSelect id="fromAccountId" accounts={accounts.filter((account) => account.id !== goal.accountId)}
           defaultValue={values?.fromAccountId} state={state} />
       </Field>
-      <Field label="Amount (₱)" name="amount" state={state}>
+      <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" className="tabular-nums" defaultValue={values?.amount ?? toInput(goal.left)} {...invalid(state, "amount")} />
       </Field>
       <Field label="Date" name="date" state={state}>
@@ -147,6 +152,7 @@ export function DeleteGoal({ id, name }: { id: string; name: string }) {
 }
 
 function AccountSelect({ id, accounts, defaultValue, state }: { id: "accountId" | "fromAccountId"; accounts: Accounts; defaultValue?: string; state: FormState }) {
+  const { money } = useMoney();
   return (
     <Select name={id} defaultValue={defaultValue || undefined}>
       <SelectTrigger id={id} className="w-full" {...invalid(state, id)}>
@@ -155,7 +161,7 @@ function AccountSelect({ id, accounts, defaultValue, state }: { id: "accountId" 
       <SelectContent>
         {accounts.map((account) => (
           <SelectItem key={account.id} value={account.id}>
-            {account.name} <span className="text-muted-foreground tabular-nums">{formatMoney(account.balance)}</span>
+            {account.name} <span className="text-muted-foreground tabular-nums">{money(account.balance)}</span>
           </SelectItem>
         ))}
       </SelectContent>

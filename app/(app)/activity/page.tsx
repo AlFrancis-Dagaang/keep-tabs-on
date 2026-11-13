@@ -9,8 +9,9 @@ import { accounts, categories, transactions, type Transaction } from "@/db/schem
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
+
 import { DeleteEntry, EntryForm } from "./entry-form";
+import { getMoney } from "@/lib/settings";
 
 const types: Transaction["type"][] = ["income", "expense", "transfer"];
 const toAccounts = alias(accounts, "to_accounts");
@@ -24,6 +25,7 @@ export default function ActivityPage({ searchParams }: { searchParams: Promise<{
 }
 
 async function Activity({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+  const money = await getMoney();
   const userId = await getUserId();
   const param = (await searchParams).type;
   const type = types.find((t) => t === param);
@@ -98,9 +100,9 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
                           {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized"))}
                         </TableCell>
                         <TableCell>{where}</TableCell>
-                        <TableCell className="text-right tabular-nums">{sign}{formatMoney(row.amount)}</TableCell>
+                        <TableCell className="text-right tabular-nums">{sign}{money(row.amount)}</TableCell>
                         <TableCell className="pr-4 text-right">
-                          <DeleteEntry id={row.id} label={`${row.date} · ${where} · ${sign}${formatMoney(row.amount)}`} />
+                          <DeleteEntry id={row.id} label={`${row.date} · ${where} · ${sign}${money(row.amount)}`} />
                         </TableCell>
                       </TableRow>
                     );

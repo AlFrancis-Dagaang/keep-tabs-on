@@ -7,8 +7,9 @@ import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatMoney } from "@/lib/money";
+
 import { AddMoney, DeleteGoal, GoalForm, GoalProgress } from "./goal-form";
+import { getMoney } from "@/lib/settings";
 
 export default function GoalsPage() {
   return (
@@ -19,6 +20,7 @@ export default function GoalsPage() {
 }
 
 async function Goals() {
+  const money = await getMoney();
   const userId = await getUserId();
   const { balances, rows } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
@@ -66,14 +68,14 @@ async function Goals() {
                 <TableRow key={row.id} className="relative">
                   <TableCell className="pl-4">
                     <Link href={`/goals/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
-                    <div className="text-sm text-muted-foreground tabular-nums">{formatMoney(row.target)}</div>
+                    <div className="text-sm text-muted-foreground tabular-nums">{money(row.target)}</div>
                   </TableCell>
                   <TableCell className="tabular-nums">{row.deadline}</TableCell>
                   <TableCell>{row.account}</TableCell>
                   <TableCell>
                     <GoalProgress id={row.id} name={row.name} saved={row.saved} target={row.target} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
-                      {formatMoney(row.saved)} of {formatMoney(row.target)}
+                      {money(row.saved)} of {money(row.target)}
                     </div>
                   </TableCell>
                   <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">

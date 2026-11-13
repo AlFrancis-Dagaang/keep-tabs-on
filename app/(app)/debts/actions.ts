@@ -7,7 +7,8 @@ import { debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { type Tx, withUser } from "@/lib/db";
-import { formatMoney, parseMoney } from "@/lib/money";
+import { parseMoney } from "@/lib/money";
+import { getMoney } from "@/lib/settings";
 
 const debtFields = ["id", "name", "total", "deadline", "paidBefore"] as const;
 const payFields = ["debtId", "accountId", "amount", "date"] as const;
@@ -55,6 +56,7 @@ async function paidPayments(tx: Tx, debtId: string) {
 /** Creates a debt, or edits one. The total can't drop below what's already paid. */
 export async function saveDebt(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = read(formData, debtFields);
   const parsed = debtInput.safeParse(values);
   if (!parsed.success) return { values, errors: fieldErrors(parsed.error) };
@@ -65,7 +67,7 @@ export async function saveDebt(_: FormState, formData: FormData): Promise<FormSt
     const [current] = id ? await tx.select({ id: debts.id }).from(debts).where(own).for("update") : [];
     if (id && !current) return { name: "This debt is gone. Close and refresh." };
     const paid = debt.paidBefore + (current ? await paidPayments(tx, current.id) : 0);
-    if (paid > debt.total) return { total: `Already paid ${formatMoney(paid)}. Enter at least that.` };
+    if (paid > debt.total) return { total: `Already paid ${money(paid)}. Enter at least that.` };
     if (current) await tx.update(debts).set(debt).where(own);
     else await tx.insert(debts).values({ userId, ...debt });
   });
@@ -85,6 +87,7 @@ export async function deleteDebt(formData: FormData) {
 /** Saves an expense linked to the debt, up to what's left. */
 export async function payDebt(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
+  const money = await getMoney();
   const values = read(formData, payFields);
   const parsed = payInput.safeParse(values);
   if (!parsed.success) return { values, errors: fieldErrors(parsed.error) };
@@ -98,8 +101,8 @@ export async function payDebt(_: FormState, formData: FormData): Promise<FormSta
     const from = accounts.find((account) => account.id === payment.accountId);
     if (!from) return { errors: { accountId: "Pick an account." } };
     const left = debt.total - debt.paidBefore - (await paidPayments(tx, debt.id));
-    if (payment.amount > left) return { errors: { amount: `Only ${formatMoney(left)} left to pay.` } };
-    if (balance(from.id)! < payment.amount) return { errors: { amount: `Only ${formatMoney(balance(from.id)!)} in ${from.name}.` } };
+    if (payment.amount > left) return { errors: { amount: `Only ${money(left)} left to pay.` } };
+    if (balance(from.id)! < payment.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
 
     await tx.insert(transactions).values({
       userId, type: "expense", amount: payment.amount, date: payment.date, accountId: from.id, debtId: debt.id, payee: debt.name,

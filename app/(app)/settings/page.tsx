@@ -1,20 +1,43 @@
 import { asc, eq } from "drizzle-orm";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { categories, type Category } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { withUser } from "@/lib/db";
+import { currencies, currencySymbol } from "@/lib/money";
+import { getSettings } from "@/lib/settings";
+import { saveCurrency } from "./actions";
 import { CategoryForm, DeleteCategory } from "./category-form";
 
 export default function SettingsPage() {
   return (
     <>
-      <PageHeader title="Settings" description="Currency, categories and starting over." />
+      <PageHeader title="Settings" description="Currency and categories." />
       <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
-        <Categories />
+        <div className="grid gap-8">
+          <Currency />
+          <Categories />
+        </div>
       </Suspense>
     </>
+  );
+}
+
+async function Currency() {
+  const { currency } = await getSettings();
+  return (
+    <section>
+      <h2 className="mb-3 font-serif text-xl">Currency</h2>
+      <form action={saveCurrency} className="flex items-center gap-3">
+        <select name="currency" aria-label="Currency" defaultValue={currency} className="h-9 rounded-md border bg-transparent px-3 text-sm">
+          {currencies.map((code) => <option key={code} value={code}>{code} ({currencySymbol(code)})</option>)}
+        </select>
+        <Button type="submit" size="sm">Save</Button>
+      </form>
+      <p className="mt-2 text-sm text-muted-foreground">Changes how amounts are shown. It doesn&apos;t convert them.</p>
+    </section>
   );
 }
 

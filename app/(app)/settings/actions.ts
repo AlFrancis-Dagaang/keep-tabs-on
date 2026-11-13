@@ -3,9 +3,10 @@
 import { and, eq, ne } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { categories } from "@/db/schema";
+import { categories, settings } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { withUser } from "@/lib/db";
+import { currencies } from "@/lib/money";
 
 export type FormState = {
   ok?: boolean;
@@ -44,5 +45,15 @@ export async function deleteCategory(formData: FormData) {
   const userId = await getUserId();
   const id = z.uuid().parse(formData.get("id"));
   await withUser(userId, (tx) => tx.delete(categories).where(and(eq(categories.id, id), eq(categories.userId, userId))));
+  refresh();
+}
+
+/** Only changes how amounts are shown; stored centavos stay as they are. */
+export async function saveCurrency(formData: FormData) {
+  const userId = await getUserId();
+  const currency = z.enum(currencies).parse(formData.get("currency"));
+  await withUser(userId, (tx) =>
+    tx.insert(settings).values({ userId, currency, setupDone: true }).onConflictDoUpdate({ target: settings.userId, set: { currency } }),
+  );
   refresh();
 }
