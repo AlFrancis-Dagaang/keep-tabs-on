@@ -9,38 +9,38 @@ Status: done
 
 ## T-02: App shell and accounts
 Status: done
-- [ ] Sidebar shows all v1 pages and a light/dark toggle; at 375px wide it becomes a horizontal scrolling top bar and the page never scrolls sideways
-- [ ] Create, rename and delete an account with a starting balance; Accounts table lists each balance and a net worth total
-- [ ] Editing an account's balance to X changes its starting balance so the shown balance equals X
-- [ ] A second Google user sees none of the first user's accounts (RLS), shown by a test or by signing in as both
-- [ ] Money is stored as integer centavos and shown with tabular numbers
+- [x] Sidebar shows all v1 pages and a light/dark toggle; at 375px wide it becomes a horizontal scrolling top bar and the page never scrolls sideways
+- [x] Create, rename and delete an account with a starting balance; Accounts table lists each balance and a net worth total
+- [x] Editing an account's balance to X changes its starting balance so the shown balance equals X
+- [x] A second Google user sees none of the first user's accounts (RLS), shown by a test or by signing in as both
+- [x] Money is stored as integer centavos and shown with tabular numbers
 
 ## T-03: Categories and activity
 Status: done
-- [ ] Settings lets me add, rename and delete spending and income categories
-- [ ] Record income, expense, and transfer (from/to) with date, amount, category and payee; each appears in Activity
-- [ ] Account balances follow starting + income − expenses + transfers in − transfers out (Vitest unit test covers all four)
-- [ ] Filter Activity by type; delete an entry and the affected balances update
+- [x] Settings lets me add, rename and delete spending and income categories
+- [x] Record income, expense, and transfer (from/to) with date, amount, category and payee; each appears in Activity
+- [x] Account balances follow starting + income − expenses + transfers in − transfers out (Vitest unit test covers all four)
+- [x] Filter Activity by type; delete an entry and the affected balances update
 
 ## T-04: Recurring bills and pixel progress bar
 Status: done
-- [ ] Create a bill with amount, next due date and repeat (weekly, every 2 weeks, monthly, every 3 months, yearly); due date editable anytime
-- [ ] Record payment from an account (partial allowed): an expense linked to the bill is saved, and the bill's 12-block progress bar fills by the paid share of this cycle
-- [ ] Paying the cycle in full rolls the next due date in the same DB transaction; unit tests cover each repeat, including Jan 31 → Feb 28/29
-- [ ] Progress bar matches docs/design.md: drop-in blocks, clay when complete, flash on completion, no animation under reduced motion
-- [ ] Overdue bills show a clay warning badge
+- [x] Create a bill with amount, next due date and repeat (weekly, every 2 weeks, monthly, every 3 months, yearly); due date editable anytime
+- [x] Record payment from an account (partial allowed): an expense linked to the bill is saved, and the bill's 12-block progress bar fills by the paid share of this cycle
+- [x] Paying the cycle in full rolls the next due date in the same DB transaction; unit tests cover each repeat, including Jan 31 → Feb 28/29
+- [x] Progress bar matches docs/design.md: drop-in blocks, clay when complete, flash on completion, no animation under reduced motion
+- [x] Overdue bills show a clay warning badge
 
 ## T-05: Debts
 Status: done
-- [ ] Create a debt with total, deadline and paid-before-tracking amount
-- [ ] Record payment from an account: an expense linked to the debt is saved, and the progress bar shows (paid before + payments) / total
-- [ ] Debt detail shows payment history; the bar turns clay and flashes when fully paid
+- [x] Create a debt with total, deadline and paid-before-tracking amount
+- [x] Record payment from an account: an expense linked to the debt is saved, and the progress bar shows (paid before + payments) / total
+- [x] Debt detail shows payment history; the bar turns clay and flashes when fully paid
 
 ## T-06: Goals
-Status: todo
-- [ ] Create a goal with target, deadline, saved-in account and already-saved amount
-- [ ] Add money moves funds by recording a transfer linked to the goal into its saved-in account; both account balances update
-- [ ] Progress = already saved + linked transfers; history lists each transfer with from/to; the bar turns clay and flashes at target
+Status: done
+- [x] Create a goal with target, deadline, saved-in account and already-saved amount
+- [x] Add money moves funds by recording a transfer linked to the goal into its saved-in account; both account balances update
+- [x] Progress = already saved + linked transfers; history lists each transfer with from/to; the bar turns clay and flashes at target
 
 ## T-07: Budget
 Status: todo
