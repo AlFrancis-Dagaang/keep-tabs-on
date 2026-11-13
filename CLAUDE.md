@@ -14,7 +14,7 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 - Package / test: pnpm, Vitest
 - UI: Tailwind CSS, shadcn/ui, Source Serif 4 + Instrument Sans
 - Validation: Zod
-- Database: Neon Postgres, Drizzle ORM, RLS per user (restricted role + per-request transaction)
+- Database: Neon Postgres (branches: production, dev), Drizzle ORM, RLS per user (restricted role + per-request transaction)
 - Auth: Neon Auth (Better Auth), Google
 - PWA: Next.js app/manifest.ts
 - Hosting: Vercel
@@ -62,3 +62,6 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 - Commits follow Conventional Commits: `type(scope): subject`. Types: feat, fix, refactor, docs, test, chore, build, ci, perf.
   Scope is optional and names the area changed (`accounts`, `activity`, `db`), never a task id like `T-03`. Never put a task number anywhere in a commit message; describe the change in words.
   Subject is imperative, lowercase, no period, and says what changed. No Co-Authored-By trailer.
+- Local work and tests use the Neon `dev` branch (`DATABASE_URL` and `DATABASE_OWNER_URL` in `.env.local`).
+  Never run `db:migrate`, tests or scripts against production; its connection strings live only in Vercel (knowledge/decisions/2026-11-14-dev-branch-for-local-work.md).
+  Before any DB command, check the host in `.env.local` is the dev endpoint (`ep-rough-sea-ao6no8lf`), not production (`ep-steep-base-ao0q4xxw`).
