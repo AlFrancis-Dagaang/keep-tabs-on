@@ -69,4 +69,3 @@ Status: todo
 - [ ] App installs to the home screen on iOS and Android from app/manifest.ts
 - [ ] I log every transaction for one full month (two paydays); at month end every account balance matches my real bank and e-wallet apps
 - [ ] At least one bill completes a cycle and rolls to the correct next due date, and one past month appears in budget history
-- [ ] 3 friends finish setup in under 5 minutes without help and are still logging after 2 weeks

@@ -5,7 +5,7 @@
 ## What this is
 <!-- owner: /brief — 2–3 lines: problem, user, core loop. Details live in docs/brief.md. -->
 Personal finance tracker web app. People with money split across banks, e-wallets and cash can't see their real total, and they miss bills and lose track of goals.
-First users: young Filipino employees (20–30) with 3–6 accounts, starting with the owner and 3–5 friends.
+First users: young Filipino employees (20–30) with 3–6 accounts. For now the owner is the only user; friends are deferred.
 Core loop: log income/expense/transfer → pay bills and debts → fund goals → check the overview (net worth, budget left, upcoming bills).
 
 ## Stack
@@ -60,5 +60,5 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 - Account balances are never negative; owed money goes in debts (knowledge/lessons/2026-11-10-no-negative-balances.md).
 - Setting a task to `Status: done` also ticks its acceptance criteria `[x]` in docs/tasks.md and in its plan file (knowledge/lessons/2026-11-13-tick-criteria-when-done.md).
 - Commits follow Conventional Commits: `type(scope): subject`. Types: feat, fix, refactor, docs, test, chore, build, ci, perf.
-  Scope is optional and names the area changed (`accounts`, `activity`, `db`), never a task id like `T-03`.
+  Scope is optional and names the area changed (`accounts`, `activity`, `db`), never a task id like `T-03`. Never put a task number anywhere in a commit message; describe the change in words.
   Subject is imperative, lowercase, no period, and says what changed. No Co-Authored-By trailer.

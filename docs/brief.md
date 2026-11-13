@@ -4,7 +4,7 @@
 People who keep money in several places (bank, GCash/Maya, savings, cash) can't see their real total or where it went. They track bills, installments and savings goals in their heads, in notes or in messy spreadsheets. So they miss due dates, overspend, and can't tell whether they're saving.
 
 ## User
-Young Filipino employees (about 20–30) in their first or second job. They're paid monthly or twice a month and split their money across 3–6 accounts. The first users are me and 3–5 friends.
+Young Filipino employees (about 20–30) in their first or second job. They're paid monthly or twice a month and split their money across 3–6 accounts. For now I'm the only user; friends come later, no date set.
 
 ## Core loop
 1. Log money as it moves: income, expense, or a transfer between my own accounts.
@@ -36,4 +36,3 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 ## Done signal
 - I use it daily for one full month (two paydays) and log every transaction. At month end, every account balance in the app matches my real bank and e-wallet apps.
 - At least one recurring bill finishes a cycle and rolls to the correct next due date, and one past month shows up in budget history.
-- 3 friends finish setup in under 5 minutes without my help and are still logging after 2 weeks.
