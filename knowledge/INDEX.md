@@ -9,6 +9,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Seed cycle rows and their payments in separate transactions](lessons/2026-11-13-now-fixed-per-transaction.md) — now() is fixed per transaction; write timestamp-compared rows in separate withUser calls
 - [Wrap usePathname() in a layout in Suspense under cacheComponents](lessons/2026-11-13-suspense-around-usepathname.md) — layout hooks reading request data need a Suspense boundary with a same-UI fallback
 - [State the exact scope in an option's label when asking the owner to choose](lessons/2026-11-13-state-scope-in-option-labels.md) — put the list or count in the label; ask open scope as its own question
+- [Check the database host before any DB command, and never run against production](lessons/2026-11-14-check-db-host.md) — read .env.local host; dev endpoint only
 
 ## Decisions
 - [Stack](decisions/2026-11-09-stack.md) — Next.js + Neon/Drizzle + Neon Auth on Vercel; RLS via restricted role and per-request transaction
