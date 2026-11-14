@@ -17,6 +17,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Rename to Keep tabs on](decisions/2026-11-13-rename-keep-tabs-on.md) — app renamed from Kinsenas; repo and folder keep-tabs-on
 - [Owner-only for now](decisions/2026-11-13-owner-only-for-now.md) — friends deferred, no date; multi-user code stays
 - [Dev branch for local work](decisions/2026-11-14-dev-branch-for-local-work.md) — Neon dev branch for local work and tests; production only in Vercel
+- [Migrate in the Vercel build](decisions/2026-11-14-migrate-in-vercel-build.md) — build runs db:migrate before next build; additive-only migrations
 - [Architecture update](decisions/2026-11-14-stack-2.md) — budget limits as a log, settings table, dev branch; updates the 2026-11-09 stack record
 
 ## Best practices
