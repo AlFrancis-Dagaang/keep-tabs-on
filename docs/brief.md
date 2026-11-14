@@ -14,8 +14,8 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 
 ## v1 scope
 - **Setup:** currency, accounts with today's balance, spending and income categories (monthly budgets optional), and optional bills, goals and debts.
-- **Accounts:** balance = starting + income − expenses + transfers in − transfers out. Shows a net worth total. Editing a balance adjusts the starting balance.
-- **Activity:** income, expense and transfer entries, each with a category, a payee and an optional link to a bill, debt or goal. Filter by type, delete entries.
+- **Accounts:** balance = starting + income − expenses + transfers in − transfers out. Shows a net worth total. Editing a balance adjusts the starting balance. Each account has its own history page with a running balance and a date filter.
+- **Activity:** income, expense and transfer entries, each with a category, a payee and an optional link to a bill, debt or goal. Filter by type and by date (month, day or range), delete entries.
 - **Recurring bills:** amount, next due date, and a repeat interval (weekly, every 2 weeks, monthly, every 3 months, yearly). Partial payments are allowed. Paying in full rolls the next due date forward; the due date can always be edited.
 - **Debts:** money you owe or money owed to you, in one list with a type label. Total, deadline, amount paid (or received) before tracking, linked payments or receipts, progress and history. Receiving a repayment adds it to an account.
 - **Goals:** target, deadline, the account the money is saved in, and the amount already saved. Progress comes from linked transfers; history shows from and to.

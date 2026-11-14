@@ -77,3 +77,11 @@ Status: done
 - [x] On an "Owed to you" debt, Receive adds the amount to the chosen account's balance, shows an income entry linked to the debt in Activity, and fills the progress bar (received / total); it can't go over what is still owed; paying a "You owe" debt works as before
 - [x] Net worth stays the sum of account balances, on Overview and on Accounts; debts in either direction don't change it, and a received repayment raises it by the amount received
 - [x] A received repayment doesn't change the Budget page
+
+## T-12: Account history and Activity filters
+Status: done
+- [x] Each account has a history page, opened from the Accounts page, listing every entry that touches it (income, expense, transfer in and out) with the account's running balance after each entry; entries from before a deleted category or payee still show
+- [x] The account history and Activity can be filtered by month, a single day, or a date range; on Activity it works together with the type filter
+- [x] On Activity, filtering by a type shows only the columns that fit it: expense shows category and payee; income shows source; transfer shows from and to. The "All" view keeps one shared set of columns
+- [x] Dates use Asia/Manila, with a unit test at a month boundary and a test that the running balance ends at the account's current balance
+- [x] Account balances, Budget and Overview figures are unchanged for the same data (display only, no balance math touched)
