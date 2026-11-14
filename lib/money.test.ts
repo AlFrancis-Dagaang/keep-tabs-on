@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatMoney, manilaMonth, monthTotals, nextDueDate, parseMoney, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatMoney, manilaMonth, monthRange, monthTotals, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -179,5 +179,45 @@ describe("billsDueSoon", () => {
       { nextDueDate: "2026-11-21", amount: 900, paid: 0 }, // day 8
     ], "2026-11-13")).toEqual({ count: 2, left: 1300 });
     expect(billsDueSoon([{ nextDueDate: "2026-12-03", amount: 100, paid: 0 }], "2026-11-28")).toEqual({ count: 1, left: 100 }); // across months
+  });
+});
+
+describe("monthRange", () => {
+  it("ends on the month's last day, including 28/29-day Februaries and December", () => {
+    expect(monthRange("2026-11-01")).toEqual({ from: "2026-11-01", to: "2026-11-30" });
+    expect(monthRange("2026-01-01").to).toBe("2026-01-31");
+    expect(monthRange("2026-02-01").to).toBe("2026-02-28");
+    expect(monthRange("2028-02-01").to).toBe("2028-02-29");
+    expect(monthRange("2026-12-01").to).toBe("2026-12-31");
+  });
+
+  it("puts Manila's 2026-11-30 inside November and 2026-12-01 outside it", () => {
+    const { from, to } = monthRange(manilaMonth(new Date("2026-11-30T15:00:00Z"))); // Nov 30, 23:00 in Manila
+    expect(from).toBe("2026-11-01");
+    expect("2026-11-30" >= from && "2026-11-30" <= to).toBe(true);
+    expect("2026-12-01" <= to).toBe(false);
+  });
+});
+
+describe("parseRange", () => {
+  it("keeps real dates, drops junk, and ignores an inverted pair", () => {
+    expect(parseRange("2026-11-01", "2026-11-30")).toEqual({ from: "2026-11-01", to: "2026-11-30" });
+    expect(parseRange("2026-11-05", undefined)).toEqual({ from: "2026-11-05", to: undefined });
+    expect(parseRange("2026-02-30", "nope")).toEqual({ from: undefined, to: undefined });
+    expect(parseRange("2026-11-30", "2026-11-01")).toEqual({});
+  });
+});
+
+describe("accountHistory", () => {
+  it("gives the balance after each entry and ends at balanceOf", () => {
+    const account = { id: a, startingBalance: 100000 };
+    const mine = entries.filter((e) => e.accountId === a || e.toAccountId === a);
+    const history = accountHistory(account, mine);
+    expect(history.map((h) => h.change)).toEqual(mine.map((e) => balanceOf({ id: a, startingBalance: 0 }, [e])));
+    expect(history.at(-1)!.balanceAfter).toBe(balanceOf(account, entries));
+  });
+
+  it("is empty when there are no entries", () => {
+    expect(accountHistory({ id: a, startingBalance: 700 }, [])).toEqual([]);
   });
 });

@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Suspense } from "react";
 import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -46,11 +47,14 @@ async function AccountsTable() {
           </TableRow>
         </TableHeader>
         <TableBody>
+          {/* The name's link stretches over the row; the actions cell sits above it so its buttons stay clickable. */}
           {rows.map((account) => (
-            <TableRow key={account.id}>
-              <TableCell className="pl-4">{account.name}</TableCell>
+            <TableRow key={account.id} className="relative">
+              <TableCell className="pl-4">
+                <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
+              </TableCell>
               <TableCell className="text-right tabular-nums">{money(account.balance)}</TableCell>
-              <TableCell className="pr-4 text-right whitespace-nowrap">
+              <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">
                 <AccountForm account={account} />
                 <DeleteAccount account={account} />
               </TableCell>

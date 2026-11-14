@@ -129,3 +129,29 @@ export function billsDueSoon(bills: (Pick<Bill, "nextDueDate" | "amount"> & { pa
 }
 
 export const directionLabels = { owe: "You owe", owed: "Owed to you" } as const;
+
+/** First and last day of a "YYYY-MM-01" month. */
+export function monthRange(month: string): { from: string; to: string } {
+  const [year, m] = month.split("-").map(Number);
+  return { from: month, to: new Date(Date.UTC(year, m, 0)).toISOString().slice(0, 10) };
+}
+
+function isDate(value: string | undefined): value is string {
+  return !!value && /^\d{4}-\d{2}-\d{2}$/.test(value) && new Date(`${value}T00:00:00Z`).toISOString().startsWith(value);
+}
+
+/** A date filter from search params. Anything that isn't a real YYYY-MM-DD is dropped, and an inverted pair is ignored. */
+export function parseRange(from?: string, to?: string): { from?: string; to?: string } {
+  const range = { from: isDate(from) ? from : undefined, to: isDate(to) ? to : undefined };
+  return range.from && range.to && range.from > range.to ? {} : range;
+}
+
+/** Each entry, oldest first as given, with its effect on the account and the balance after it. */
+export function accountHistory<T extends Entry>(account: Pick<Account, "id" | "startingBalance">, entries: T[]) {
+  let balance = account.startingBalance;
+  return entries.map((entry) => {
+    const change = balanceOf({ id: account.id, startingBalance: 0 }, [entry]);
+    balance += change;
+    return { ...entry, change, balanceAfter: balance };
+  });
+}

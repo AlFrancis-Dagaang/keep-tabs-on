@@ -1,14 +1,16 @@
-import { and, asc, desc, eq } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
-import { Suspense } from "react";
+import { Fragment, Suspense } from "react";
 import { cn } from "cn";
+import { DateFilter } from "@/components/date-filter";
 import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, categories, transactions, type Transaction } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
+import { parseRange } from "@/lib/money";
 
 import { DeleteEntry, EntryForm } from "./entry-form";
 import { getMoney } from "@/lib/settings";
@@ -16,7 +18,34 @@ import { getMoney } from "@/lib/settings";
 const types: Transaction["type"][] = ["income", "expense", "transfer"];
 const toAccounts = alias(accounts, "to_accounts");
 
-export default function ActivityPage({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+type Search = Promise<{ type?: string; from?: string; to?: string }>;
+type Row = Pick<Transaction, "type" | "payee" | "billId" | "debtId" | "goalId"> & { account: string; toAccount: string | null; category: string | null };
+
+const dash = <span className="text-muted-foreground">—</span>;
+const payee = { head: "Payee", cell: (row: Row) => <TableCell>{row.payee ?? dash}</TableCell> };
+const source = { ...payee, head: "Source" };
+const category = {
+  head: "Category",
+  cell: (row: Row) => (
+    <TableCell className={cn(!row.category && !row.billId && !row.debtId && "text-muted-foreground")}>
+      {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized"))}
+    </TableCell>
+  ),
+};
+const account = { head: "Account", cell: (row: Row) => <TableCell>{row.type === "transfer" ? `${row.account} → ${row.toAccount}` : row.account}</TableCell> };
+// Only the columns that fit the type; "All" mixes the three, so it keeps one shared set.
+const columns: Record<"all" | Transaction["type"], { head: string; cell: (row: Row) => React.ReactNode }[]> = {
+  all: [payee, category, account],
+  expense: [category, payee, account],
+  income: [category, source, account],
+  transfer: [
+    { head: "From", cell: (row) => <TableCell>{row.account}</TableCell> },
+    { head: "To", cell: (row) => <TableCell>{row.toAccount}</TableCell> },
+    { head: "For", cell: (row) => <TableCell>{row.goalId ? "Goal" : dash}</TableCell> },
+  ],
+};
+
+export default function ActivityPage({ searchParams }: { searchParams: Search }) {
   return (
     <Suspense fallback={<p className="text-muted-foreground">Loading…</p>}>
       <Activity searchParams={searchParams} />
@@ -24,11 +53,12 @@ export default function ActivityPage({ searchParams }: { searchParams: Promise<{
   );
 }
 
-async function Activity({ searchParams }: { searchParams: Promise<{ type?: string }> }) {
+async function Activity({ searchParams }: { searchParams: Search }) {
   const money = await getMoney();
   const userId = await getUserId();
-  const param = (await searchParams).type;
-  const type = types.find((t) => t === param);
+  const search = await searchParams;
+  const type = types.find((t) => t === search.type);
+  const { from, to } = parseRange(search.from, search.to);
   const { balances, choices, rows } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
     choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
@@ -42,10 +72,15 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .leftJoin(toAccounts, eq(transactions.toAccountId, toAccounts.id))
       .leftJoin(categories, eq(transactions.categoryId, categories.id))
-      .where(and(eq(transactions.userId, userId), type && eq(transactions.type, type)))
+      .where(and(eq(transactions.userId, userId), type && eq(transactions.type, type), from ? gte(transactions.date, from) : undefined, to ? lte(transactions.date, to) : undefined))
       .orderBy(desc(transactions.date), desc(transactions.createdAt)),
   }));
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
+  const typeHref = (t?: string) => {
+    const query = new URLSearchParams({ ...(t && { type: t }), ...(from && { from }), ...(to && { to }) }).toString();
+    return query ? `/activity?${query}` : "/activity";
+  };
+  const cols = columns[type ?? "all"];
 
   return (
     <>
@@ -62,7 +97,7 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
             {[undefined, ...types].map((t) => (
               <Link
                 key={t ?? "all"}
-                href={t ? `/activity?type=${t}` : "/activity"}
+                href={typeHref(t)}
                 aria-current={t === type ? "page" : undefined}
                 className={cn(
                   "rounded-full border px-3 py-1 text-sm capitalize text-muted-foreground hover:bg-accent hover:text-foreground",
@@ -73,17 +108,18 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
               </Link>
             ))}
           </nav>
+          <DateFilter path="/activity" today={today} from={from} to={to} keep={type ? { type } : undefined} />
           {rows.length === 0 ? (
-            <p className="rounded-xl border bg-surface p-6 text-muted-foreground">{type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}</p>
+            <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
+              {from || to ? `No ${type ? `${type} ` : ""}entries in this range.` : type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}
+            </p>
           ) : (
             <div className="rounded-xl border bg-surface">
               <Table>
                 <TableHeader>
                   <TableRow>
                     <TableHead className="pl-4">Date</TableHead>
-                    <TableHead>Payee</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Account</TableHead>
+                    {cols.map((col) => <TableHead key={col.head}>{col.head}</TableHead>)}
                     <TableHead className="text-right">Amount</TableHead>
                     <TableHead className="w-0" />
                   </TableRow>
@@ -95,11 +131,7 @@ async function Activity({ searchParams }: { searchParams: Promise<{ type?: strin
                     return (
                       <TableRow key={row.id}>
                         <TableCell className="pl-4 tabular-nums">{row.date}</TableCell>
-                        <TableCell>{row.payee ?? <span className="text-muted-foreground">—</span>}</TableCell>
-                        <TableCell className={cn(!row.category && !row.billId && !row.debtId && "text-muted-foreground")}>
-                          {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized"))}
-                        </TableCell>
-                        <TableCell>{where}</TableCell>
+                        {cols.map((col) => <Fragment key={col.head}>{col.cell(row)}</Fragment>)}
                         <TableCell className="text-right tabular-nums">{sign}{money(row.amount)}</TableCell>
                         <TableCell className="pr-4 text-right">
                           <DeleteEntry id={row.id} label={`${row.date} · ${where} · ${sign}${money(row.amount)}`} />
