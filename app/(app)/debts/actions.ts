@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const debtFields = ["id", "name", "total", "deadline", "paidBefore"] as const;
+const debtFields = ["id", "name", "direction", "total", "deadline", "paidBefore"] as const;
 const payFields = ["debtId", "accountId", "amount", "date"] as const;
 type Field = (typeof debtFields)[number] | (typeof payFields)[number];
 
@@ -29,6 +29,7 @@ const amount = z.string().transform((value, ctx) => {
 const debtInput = z.object({
   id: z.union([z.literal(""), z.uuid()]),
   name: z.string().trim().min(1, "Give the debt a name.").max(60, "Keep the name under 60 characters."),
+  direction: z.enum(["owe", "owed"], "Pick who owes whom."),
   total: amount,
   deadline: z.iso.date("Pick a deadline."),
   paidBefore: z.string().transform((value, ctx) => {
@@ -47,13 +48,13 @@ function fieldErrors(error: z.ZodError): FormState["errors"] {
   return Object.fromEntries(Object.entries(z.flattenError(error).fieldErrors).map(([field, messages]) => [field, (messages as string[])?.[0]]));
 }
 
-/** What's been paid through Keep tabs on, not counting what was paid before tracking. */
+/** What's been paid (or received) through Keep tabs on, not counting what came before tracking. */
 async function paidPayments(tx: Tx, debtId: string) {
   const [row] = await tx.select({ paid: sum(transactions.amount).mapWith(Number) }).from(transactions).where(eq(transactions.debtId, debtId));
   return row?.paid ?? 0;
 }
 
-/** Creates a debt, or edits one. The total can't drop below what's already paid. */
+/** Creates a debt, or edits one. The total can't drop below what's already paid, and the direction is fixed once it has payments. */
 export async function saveDebt(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -64,10 +65,14 @@ export async function saveDebt(_: FormState, formData: FormData): Promise<FormSt
   const { id, ...debt } = parsed.data;
   const errors = await withUser(userId, async (tx): Promise<FormState["errors"]> => {
     const own = and(eq(debts.id, id), eq(debts.userId, userId));
-    const [current] = id ? await tx.select({ id: debts.id }).from(debts).where(own).for("update") : [];
+    const [current] = id ? await tx.select({ id: debts.id, direction: debts.direction }).from(debts).where(own).for("update") : [];
     if (id && !current) return { name: "This debt is gone. Close and refresh." };
-    const paid = debt.paidBefore + (current ? await paidPayments(tx, current.id) : 0);
-    if (paid > debt.total) return { total: `Already paid ${money(paid)}. Enter at least that.` };
+    const payments = current ? await paidPayments(tx, current.id) : 0;
+    if (current && current.direction !== debt.direction && payments > 0) {
+      return { direction: "Has payments, so its direction can't change. Delete it and add a new one." };
+    }
+    const paid = debt.paidBefore + payments;
+    if (paid > debt.total) return { total: `Already ${debt.direction === "owed" ? "received" : "paid"} ${money(paid)}. Enter at least that.` };
     if (current) await tx.update(debts).set(debt).where(own);
     else await tx.insert(debts).values({ userId, ...debt });
   });
@@ -76,7 +81,7 @@ export async function saveDebt(_: FormState, formData: FormData): Promise<FormSt
   return { ok: true };
 }
 
-/** Its payments stay in Activity as plain expenses. */
+/** Its payments stay in Activity as plain expenses, and money received as plain income. */
 export async function deleteDebt(formData: FormData) {
   const userId = await getUserId();
   const id = z.uuid().parse(formData.get("id"));
@@ -84,7 +89,7 @@ export async function deleteDebt(formData: FormData) {
   refresh();
 }
 
-/** Saves an expense linked to the debt, up to what's left. */
+/** Saves an expense (you owe) or income (owed to you) linked to the debt, up to what's left. */
 export async function payDebt(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -101,11 +106,12 @@ export async function payDebt(_: FormState, formData: FormData): Promise<FormSta
     const from = accounts.find((account) => account.id === payment.accountId);
     if (!from) return { errors: { accountId: "Pick an account." } };
     const left = debt.total - debt.paidBefore - (await paidPayments(tx, debt.id));
-    if (payment.amount > left) return { errors: { amount: `Only ${money(left)} left to pay.` } };
-    if (balance(from.id)! < payment.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
+    const receiving = debt.direction === "owed";
+    if (payment.amount > left) return { errors: { amount: `Only ${money(left)} left to ${receiving ? "receive" : "pay"}.` } };
+    if (!receiving && balance(from.id)! < payment.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
 
     await tx.insert(transactions).values({
-      userId, type: "expense", amount: payment.amount, date: payment.date, accountId: from.id, debtId: debt.id, payee: debt.name,
+      userId, type: receiving ? "income" : "expense", amount: payment.amount, date: payment.date, accountId: from.id, debtId: debt.id, payee: debt.name,
     });
     return { ok: true, completed: payment.amount === left };
   });

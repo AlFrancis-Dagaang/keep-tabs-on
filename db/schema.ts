@@ -75,12 +75,14 @@ export const debts = pgTable(
     id: uuid().primaryKey().defaultRandom(),
     userId: uuid("user_id").notNull(),
     name: text().notNull(),
+    direction: text({ enum: ["owe", "owed"] }).notNull().default("owe"), // owe: you pay it; owed: someone pays you
     total: bigint({ mode: "number" }).notNull(), // centavos
     deadline: date({ mode: "string" }).notNull(),
-    paidBefore: bigint("paid_before", { mode: "number" }).notNull().default(0), // centavos paid before tracking started
+    paidBefore: bigint("paid_before", { mode: "number" }).notNull().default(0), // centavos paid (or received) before tracking started
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    check("debts_direction", sql`${t.direction} in ('owe', 'owed')`),
     check("debts_total", sql`${t.total} > 0`),
     check("debts_paid_before", sql`${t.paidBefore} between 0 and ${t.total}`),
     ownRows(t.userId),

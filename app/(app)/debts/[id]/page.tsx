@@ -9,6 +9,7 @@ import { accounts, debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
+import { directionLabels } from "@/lib/money";
 
 import { DebtProgress, PayDebt } from "../debt-form";
 import { getMoney } from "@/lib/settings";
@@ -38,30 +39,31 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
   }));
   if (!debt) notFound();
   const paid = debt.paidBefore + payments.reduce((total, payment) => total + payment.amount, 0);
+  const owed = debt.direction === "owed";
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 
   return (
     <>
       <Link href="/debts" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Debts</Link>
-      <PageHeader title={debt.name} description={`Deadline ${debt.deadline}`}>
-        <PayDebt debt={{ id: debt.id, name: debt.name, left: debt.total - paid }} accounts={balances.accounts} today={today} />
+      <PageHeader title={debt.name} description={`${directionLabels[debt.direction]} · Deadline ${debt.deadline}`}>
+        <PayDebt debt={{ id: debt.id, name: debt.name, left: debt.total - paid, direction: debt.direction }} accounts={balances.accounts} today={today} />
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
-        <DebtProgress id={debt.id} name={debt.name} paid={paid} total={debt.total} />
-        <div className="mt-2 text-sm tabular-nums">{money(paid)} of {money(debt.total)} paid</div>
+        <DebtProgress id={debt.id} name={debt.name} paid={paid} total={debt.total} direction={debt.direction} />
+        <div className="mt-2 text-sm tabular-nums">{money(paid)} of {money(debt.total)} {owed ? "received" : "paid"}</div>
         {debt.paidBefore > 0 && (
-          <div className="text-sm text-muted-foreground tabular-nums">Includes {money(debt.paidBefore)} paid before tracking</div>
+          <div className="text-sm text-muted-foreground tabular-nums">Includes {money(debt.paidBefore)} {owed ? "received" : "paid"} before tracking</div>
         )}
       </div>
       {payments.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No payments yet. Record one with Record payment.</p>
+        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">{owed ? "No receipts yet. Record one with Record receipt." : "No payments yet. Record one with Record payment."}</p>
       ) : (
         <div className="rounded-xl border bg-surface">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Date</TableHead>
-                <TableHead>From</TableHead>
+                <TableHead>{owed ? "To" : "From"}</TableHead>
                 <TableHead className="pr-4 text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>

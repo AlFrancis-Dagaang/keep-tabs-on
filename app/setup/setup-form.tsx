@@ -4,10 +4,10 @@ import { useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { type Currency, currencies, currencySymbol, repeatLabels } from "@/lib/money";
+import { type Currency, currencies, currencySymbol, directionLabels, repeatLabels } from "@/lib/money";
 import { finishSetup, type SetupRows } from "./actions";
 
-type Kind = "text" | "money" | "date" | "repeat" | "account";
+type Kind = "text" | "money" | "date" | "repeat" | "account" | "direction";
 type Section = {
   key: keyof SetupRows;
   title: string;
@@ -17,7 +17,7 @@ type Section = {
   start: Record<string, string>[];
 };
 
-const blank = (section: Section) => Object.fromEntries(section.fields.map((field) => [field.name, field.kind === "repeat" ? "monthly" : ""]));
+const blank = (section: Section) => Object.fromEntries(section.fields.map((field) => [field.name, field.kind === "repeat" ? "monthly" : field.kind === "direction" ? "owe" : ""]));
 const named = (names: string[]) => names.map((name) => ({ name, budget: "" }));
 
 const sections: Section[] = [
@@ -43,8 +43,9 @@ const sections: Section[] = [
       { name: "savedBefore", label: "Already saved (optional)", kind: "money" },
     ],
     start: [] },
-  { key: "debts", title: "Debts (optional)", hint: "Money you owe, like a loan or a credit card.", add: "Add debt",
+  { key: "debts", title: "Debts (optional)", hint: "Money you owe, like a loan or a credit card, or money owed to you.", add: "Add debt",
     fields: [
+      { name: "direction", label: "Type", kind: "direction" },
       { name: "name", label: "Name", kind: "text", placeholder: "Credit card" }, { name: "total", label: "Total owed", kind: "money" },
       { name: "deadline", label: "Pay off by", kind: "date" }, { name: "paidBefore", label: "Paid so far (optional)", kind: "money" },
     ],
@@ -104,7 +105,11 @@ export function SetupForm({ currency: initial }: { currency: Currency }) {
                 return (
                   <div key={field.name} className="grid gap-2">
                     <Label htmlFor={id}>{field.kind === "money" ? `${field.label} (${currencySymbol(currency)})` : field.label}</Label>
-                    {field.kind === "repeat" ? (
+                    {field.kind === "direction" ? (
+                      <select id={id} value={value} onChange={(event) => change(section.key, index, field.name, event.target.value)} className={selectClass}>
+                        {Object.entries(directionLabels).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
+                      </select>
+                    ) : field.kind === "repeat" ? (
                       <select id={id} value={value} onChange={(event) => change(section.key, index, field.name, event.target.value)} className={selectClass}>
                         {Object.entries(repeatLabels).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
                       </select>

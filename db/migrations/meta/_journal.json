@@ -57,6 +57,13 @@
       "when": 1794582545683,
       "tag": "0007_cuddly_scrambler",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794642250272,
+      "tag": "0008_remarkable_famine",
+      "breakpoints": true
     }
   ]
 }

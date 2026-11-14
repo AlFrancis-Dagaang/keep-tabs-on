@@ -7,6 +7,7 @@ import { debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
+import { directionLabels } from "@/lib/money";
 
 import { DebtForm, DebtProgress, DeleteDebt, PayDebt } from "./debt-form";
 import { getMoney } from "@/lib/settings";
@@ -26,7 +27,7 @@ async function Debts() {
     balances: await loadBalances(tx, userId),
     rows: await tx
       .select({
-        id: debts.id, name: debts.name, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore,
+        id: debts.id, name: debts.name, direction: debts.direction, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore,
         paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
       })
       .from(debts)
@@ -39,23 +40,24 @@ async function Debts() {
 
   return (
     <>
-      <PageHeader title="Debts" description="What you owe and how much is left.">
+      <PageHeader title="Debts" description="What you owe, what you're owed, and how much is left.">
         {balances.accounts.length > 0 && <DebtForm today={today} />}
       </PageHeader>
       {balances.accounts.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
-          Add an account first in <Link href="/accounts" className="underline">Accounts</Link>, then track the debts you pay from it.
+          Add an account first in <Link href="/accounts" className="underline">Accounts</Link>, then track the debts you pay from it or get repaid into it.
         </p>
       ) : rows.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No debts yet. Add a credit card, loan or money you owe a friend.</p>
+        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No debts yet. Add a credit card, a loan, or money a friend owes you.</p>
       ) : (
         <div className="rounded-xl border bg-surface">
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead className="pl-4">Debt</TableHead>
+                <TableHead>Type</TableHead>
                 <TableHead>Deadline</TableHead>
-                <TableHead>Paid</TableHead>
+                <TableHead>Progress</TableHead>
                 <TableHead className="w-0" />
               </TableRow>
             </TableHeader>
@@ -67,16 +69,17 @@ async function Debts() {
                     <Link href={`/debts/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.total)}</div>
                   </TableCell>
+                  <TableCell>{directionLabels[row.direction]}</TableCell>
                   <TableCell className="tabular-nums">{row.deadline}</TableCell>
                   <TableCell>
-                    <DebtProgress id={row.id} name={row.name} paid={row.paid} total={row.total} />
+                    <DebtProgress id={row.id} name={row.name} paid={row.paid} total={row.total} direction={row.direction} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
-                      {money(row.paid)} of {money(row.total)}
+                      {money(row.paid)} of {money(row.total)} {row.direction === "owed" ? "received" : "paid"}
                     </div>
                   </TableCell>
                   <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">
-                    <PayDebt debt={{ id: row.id, name: row.name, left: row.total - row.paid }} accounts={balances.accounts} today={today} />
-                    <DebtForm today={today} debt={row} />
+                    <PayDebt debt={{ id: row.id, name: row.name, left: row.total - row.paid, direction: row.direction }} accounts={balances.accounts} today={today} />
+                    <DebtForm today={today} debt={row} locked={row.paid > row.paidBefore} />
                     <DeleteDebt id={row.id} name={row.name} />
                   </TableCell>
                 </TableRow>

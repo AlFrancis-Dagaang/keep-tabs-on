@@ -9,7 +9,7 @@ import { accounts, bills, budgetMonths, categories, debts, goals, transactions }
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { billsDueSoon, budgetFor, manilaMonth, monthTotals, progressBlocks } from "@/lib/money";
+import { billsDueSoon, budgetFor, directionLabels, manilaMonth, monthTotals, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 
@@ -52,7 +52,7 @@ async function Overview() {
       .limit(5),
     debts: await tx
       .select({
-        id: debts.id, name: debts.name, total: debts.total,
+        id: debts.id, name: debts.name, direction: debts.direction, total: debts.total,
         paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
       })
       .from(debts)
@@ -149,10 +149,10 @@ async function Overview() {
         </MiniTable>
       </Section>
 
-      <Section title="Debts" href="/debts" empty={data.debts.length === 0 && "No debts. If you owe money, add it in Debts to track paying it off."}>
+      <Section title="Debts" href="/debts" empty={data.debts.length === 0 && "No debts. Add money you owe, or money owed to you, in Debts."}>
         <MiniTable>
           {data.debts.map((debt) => (
-            <ProgressRow key={debt.id} href={`/debts/${debt.id}`} name={debt.name} done={debt.paid} total={debt.total} verb="paid" />
+            <ProgressRow key={debt.id} href={`/debts/${debt.id}`} name={debt.name} tag={directionLabels[debt.direction]} done={debt.paid} total={debt.total} verb={debt.direction === "owed" ? "received" : "paid"} />
           ))}
         </MiniTable>
       </Section>
@@ -208,12 +208,13 @@ function MiniTable({ children }: { children: ReactNode }) {
 }
 
 // The name's link stretches over the row, like the Goals and Debts lists.
-async function ProgressRow({ href, name, done, total, verb }: { href: string; name: string; done: number; total: number; verb: string }) {
+async function ProgressRow({ href, name, tag, done, total, verb }: { href: string; name: string; tag?: string; done: number; total: number; verb: string }) {
   const money = await getMoney();
   return (
     <TableRow className="relative">
       <TableCell className="pl-4">
         <Link href={href} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{name}</Link>
+        {tag && <div className="text-sm text-muted-foreground">{tag}</div>}
       </TableCell>
       <TableCell className="pr-4">
         <PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${money(done)} of ${money(total)} ${verb}`} />

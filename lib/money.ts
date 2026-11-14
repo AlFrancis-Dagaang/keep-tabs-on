@@ -127,3 +127,5 @@ export function billsDueSoon(bills: (Pick<Bill, "nextDueDate" | "amount"> & { pa
   const due = bills.filter((bill) => bill.nextDueDate <= until);
   return { count: due.length, left: due.reduce((sum, bill) => sum + bill.amount - bill.paid, 0) };
 }
+
+export const directionLabels = { owe: "You owe", owed: "Owed to you" } as const;

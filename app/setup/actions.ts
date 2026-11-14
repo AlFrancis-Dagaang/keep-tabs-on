@@ -39,7 +39,7 @@ const rowSchemas = {
   income: z.object({ name: name.max(40) }),
   bills: z.object({ name, amount: positive, nextDueDate: date, repeat: z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"], "Pick how often it repeats.") }),
   goals: z.object({ name, target: positive, deadline: date, account: z.string().min(1, "Pick an account."), savedBefore: amountOrBlank }),
-  debts: z.object({ name, total: positive, deadline: date, paidBefore: amountOrBlank }),
+  debts: z.object({ direction: z.enum(["owe", "owed"], "Pick who owes whom."), name, total: positive, deadline: date, paidBefore: amountOrBlank }),
 };
 
 type Parsed = { [K in keyof typeof rowSchemas]: { index: number; row: z.output<(typeof rowSchemas)[K]> }[] };
@@ -109,7 +109,7 @@ export async function finishSetup(input: { currency: string; rows: SetupRows }):
       })));
     }
     if (rows.debts.length) {
-      await tx.insert(debts).values(rows.debts.map(({ row }) => ({ userId, name: row.name, total: row.total, deadline: row.deadline, paidBefore: row.paidBefore })));
+      await tx.insert(debts).values(rows.debts.map(({ row }) => ({ userId, name: row.name, direction: row.direction, total: row.total, deadline: row.deadline, paidBefore: row.paidBefore })));
     }
 
     await tx.insert(settings).values({ userId, currency: currency.data, setupDone: true })
