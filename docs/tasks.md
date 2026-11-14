@@ -71,9 +71,9 @@ Status: todo
 - [ ] At least one bill completes a cycle and rolls to the correct next due date, and one past month appears in budget history
 
 ## T-11: Debts owed to you
-Status: todo
-- [ ] A debt has a direction, "You owe" or "Owed to you", chosen when creating or editing it, on the Debts page and in setup; the name label reads "Who you owe" or "Who owes you"; every existing debt shows "You owe" and behaves as before; direction can't be changed once a debt has payments or receipts
-- [ ] Debts stays one page and one list; each row shows its direction label, and the Overview Debts table shows the same label
-- [ ] On an "Owed to you" debt, Receive adds the amount to the chosen account's balance, shows an income entry linked to the debt in Activity, and fills the progress bar (received / total); it can't go over what is still owed; paying a "You owe" debt works as before
-- [ ] Net worth stays the sum of account balances, on Overview and on Accounts; debts in either direction don't change it, and a received repayment raises it by the amount received
-- [ ] A received repayment doesn't change the Budget page
+Status: done
+- [x] A debt has a direction, "You owe" or "Owed to you", chosen when creating or editing it, on the Debts page and in setup; the name label reads "Who you owe" or "Who owes you"; every existing debt shows "You owe" and behaves as before; direction can't be changed once a debt has payments or receipts
+- [x] Debts stays one page and one list; each row shows its direction label, and the Overview Debts table shows the same label
+- [x] On an "Owed to you" debt, Receive adds the amount to the chosen account's balance, shows an income entry linked to the debt in Activity, and fills the progress bar (received / total); it can't go over what is still owed; paying a "You owe" debt works as before
+- [x] Net worth stays the sum of account balances, on Overview and on Accounts; debts in either direction don't change it, and a received repayment raises it by the amount received
+- [x] A received repayment doesn't change the Budget page
