@@ -9,6 +9,8 @@ const serif = Source_Serif_4({ subsets: ["latin"], weight: "500", variable: "--f
 export const metadata: Metadata = {
   title: "Keep tabs on",
   description: "Track your money across every account.",
+  icons: { apple: "/apple-icon.png" },
+  appleWebApp: { capable: true, title: "Keep tabs on" },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
