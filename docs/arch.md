@@ -25,7 +25,7 @@ Hosting | Vercel | Preview per branch, production on main
 All in Neon Postgres. Every table has user_id with RLS policies (Drizzle crudPolicy). Money is integer centavos.
 - users / sessions: managed by Neon Auth.
 - settings: currency (PHP | USD), setup_done. One row per user, created by first-run setup.
-- accounts: name, starting_balance.
+- accounts: name, starting_balance, include_in_net_worth (bool, default true). Net worth = sum of included accounts' balances.
 - categories: name, kind (spending | income).
 - transactions: type (income | expense | transfer), amount, date, account_id, to_account_id (transfers),
   category_id, payee, optional bill_id | debt_id | goal_id.

@@ -85,3 +85,10 @@ Status: done
 - [x] On Activity, filtering by a type shows only the columns that fit it: expense shows category and payee; income shows source; transfer shows from and to. The "All" view keeps one shared set of columns
 - [x] Dates use Asia/Manila, with a unit test at a month boundary and a test that the running balance ends at the account's current balance
 - [x] Account balances, Budget and Overview figures are unchanged for the same data (display only, no balance math touched)
+
+## T-13: Exclude accounts from net worth
+Status: done
+- [x] An account has an "Include in net worth" option, on by default, set when creating or editing it on the Accounts page
+- [x] Net worth on Overview and Accounts counts only included accounts; an excluded account still shows its balance, history, and works in transfers, bills, debts and goals as before
+- [x] The Accounts page marks excluded accounts, so the lower total is explained
+- [x] Existing accounts stay included; no balance, budget or entry changes; a unit test covers the net worth sum with and without an excluded account
