@@ -30,7 +30,7 @@ All in Neon Postgres. Every table has user_id with RLS policies (Drizzle crudPol
 - transactions: type (income | expense | transfer), amount, date, account_id, to_account_id (transfers),
   category_id, payee, optional bill_id | debt_id | goal_id.
 - bills: name, amount, next_due_date, repeat (weekly | biweekly | monthly | quarterly | yearly).
-- debts: name, total, deadline, paid_before.
+- debts: name, total, deadline, paid_before, direction (owe | owed). A repayment received on an owed debt is an income transaction with debt_id; the direction can't change once the debt has transactions.
 - goals: name, target, deadline, account_id, saved_before.
 - budget_months: month (first of the month), category_id, budget (null = limit removed). A row is written when a limit is set or changed; a month’s limit is the latest row at or before it.
 Balances, progress and budget spent are computed from transactions, never stored.

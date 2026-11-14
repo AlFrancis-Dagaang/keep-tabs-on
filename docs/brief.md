@@ -17,7 +17,7 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 - **Accounts:** balance = starting + income − expenses + transfers in − transfers out. Shows a net worth total. Editing a balance adjusts the starting balance.
 - **Activity:** income, expense and transfer entries, each with a category, a payee and an optional link to a bill, debt or goal. Filter by type, delete entries.
 - **Recurring bills:** amount, next due date, and a repeat interval (weekly, every 2 weeks, monthly, every 3 months, yearly). Partial payments are allowed. Paying in full rolls the next due date forward; the due date can always be edited.
-- **Debts:** total, deadline, amount paid before tracking, linked payments, progress and payment history.
+- **Debts:** money you owe or money owed to you, in one list with a type label. Total, deadline, amount paid (or received) before tracking, linked payments or receipts, progress and history. Receiving a repayment adds it to an account.
 - **Goals:** target, deadline, the account the money is saved in, and the amount already saved. Progress comes from linked transfers; history shows from and to.
 - **Budget:** monthly limits on spending categories only (bill and debt payments don't count). Shows the current month with a total. Past months are kept with budget, spent and saved per month and per category, and each month's budget amounts are saved as they were.
 - **Settings:** currency, manage categories.

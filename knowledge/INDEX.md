@@ -31,5 +31,6 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-08](tasks/T-08.md) — Overview: five stat cards incl. budget left, account tiles, mini tables, empty states everywhere
 - [T-09](tasks/T-09.md) — First-run setup and settings: settings table, /setup page, currency, start over
 - [T-10](tasks/T-10.md) — Ship and the done signal: PWA manifest and icons, production migrate and Vercel deploy, month of real use
+- [T-11](tasks/T-11.md) — Debts owed to you: debt direction, Receive as linked income, net worth = accounts + owed to you − you owe
 
 ## Retros
