@@ -92,3 +92,10 @@ Status: done
 - [x] Net worth on Overview and Accounts counts only included accounts; an excluded account still shows its balance, history, and works in transfers, bills, debts and goals as before
 - [x] The Accounts page marks excluded accounts, so the lower total is explained
 - [x] Existing accounts stay included; no balance, budget or entry changes; a unit test covers the net worth sum with and without an excluded account
+
+## T-14: Installments, outside transfers and notes
+Status: done
+- [x] Installments: a new Installments page lists fixed-term purchases, each with a name, total, number of months, monthly amount, due day and paying account. Pay logs an expense from that account linked to the installment, with no category, like a bill payment. The row shows "3 of 12 paid" with the pixel bar and the next due date, and is marked finished after the last payment
+- [x] Outside transfers: a transfer's "To" accepts one of your accounts or a free-text name. A transfer to a name takes the amount from the paying account, so net worth drops, shows in Activity as "Account → name", and does not count in Income this month, Expenses this month or Budget. Transfers between your own accounts work as before
+- [x] Notes: an optional note (up to 200 characters) on entries, debts, goals, installments and recurring bills, set in each create/edit form and shown as a muted line in the lists. Setup is unchanged
+- [x] Existing rows keep working with no balance, budget or entry changes; the migration is additive only; unit tests cover installment progress and the outside-transfer balance effect, and a transfer to a name can't make a balance negative

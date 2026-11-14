@@ -36,6 +36,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-11](tasks/T-11.md) — Debts owed to you: debt direction, Receive as linked income, net worth stays the account sum
 - [T-12](tasks/T-12.md) — Account history and Activity filters: per-account history with running balance, date filters, columns by type
 - [T-13](tasks/T-13.md) — Exclude accounts from net worth: per-account include switch, net worth counts included accounts only
+- [T-14](tasks/T-14.md) — Installments, outside transfers and notes: fixed-term purchases, transfers to a name, optional notes on five forms
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests

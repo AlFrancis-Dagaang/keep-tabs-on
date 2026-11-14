@@ -4,7 +4,7 @@
 Calm, warm and readable, like the Claude app. Notion-style layout: left sidebar navigation, page title with a short serif description, clean data tables. One playful element: the pixel progress bars.
 
 ## Layout
-- Sidebar: Overview, Accounts, Activity, Recurring bills, Goals, Debts, Budget, Settings, light/dark toggle.
+- Sidebar: Overview, Accounts, Activity, Recurring bills, Installments, Goals, Debts, Budget, Settings, light/dark toggle.
 - Mobile: the sidebar becomes a horizontal scrolling top bar.
 - Wide tables scroll sideways inside their panel; the page never scrolls sideways.
 - Edit and pay forms open in a centered modal.
