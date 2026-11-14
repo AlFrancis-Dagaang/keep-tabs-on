@@ -9,7 +9,7 @@ import { accounts, bills, budgetMonths, categories, debts, goals, transactions }
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { billsDueSoon, budgetFor, directionLabels, manilaMonth, monthTotals, progressBlocks } from "@/lib/money";
+import { billsDueSoon, budgetFor, directionLabels, manilaMonth, monthTotals, netWorth, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 
@@ -92,7 +92,6 @@ async function Overview() {
 
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
   const month = manilaMonth(new Date());
-  const netWorth = data.balances.accounts.reduce((total, account) => total + account.balance, 0);
   const { income, expenses } = monthTotals(month, data.entries);
   const dueSoon = billsDueSoon(data.bills.map((bill) => ({ ...bill, paid: bill.paid ?? 0 })), today);
   const budget = budgetFor(month, data.categories, data.limits, data.entries);
@@ -100,7 +99,7 @@ async function Overview() {
   return (
     <div className="grid gap-8">
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Card href="/accounts" label="Net worth" value={money(netWorth)} />
+        <Card href="/accounts" label="Net worth" value={money(netWorth(data.balances.accounts))} />
         <Card href="/activity?type=income" label="Income this month" value={money(income)} />
         <Card href="/activity?type=expense" label="Expenses this month" value={money(expenses)} />
         <Card href="/bills" label="Bills due in 7 days" value={money(dueSoon.left)} note={`${dueSoon.count} ${dueSoon.count === 1 ? "bill" : "bills"}`} />

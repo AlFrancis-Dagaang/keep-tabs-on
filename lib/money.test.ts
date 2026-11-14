@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatMoney, manilaMonth, monthRange, monthTotals, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatMoney, manilaMonth, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -45,6 +45,27 @@ describe("balanceOf", () => {
 
   it("ignores other accounts' entries", () => {
     expect(balanceOf({ id: "c", startingBalance: 700 }, entries)).toBe(700);
+  });
+});
+
+describe("netWorth", () => {
+  const rows = [
+    { balance: 100000, includeInNetWorth: true },
+    { balance: 15000, includeInNetWorth: true },
+    { balance: 500000, includeInNetWorth: false },
+  ];
+
+  it("sums every account when all are included", () => {
+    expect(netWorth(rows.map((row) => ({ ...row, includeInNetWorth: true })))).toBe(615000);
+  });
+
+  it("leaves out excluded accounts", () => {
+    expect(netWorth(rows)).toBe(115000);
+  });
+
+  it("is 0 with nothing included or no accounts", () => {
+    expect(netWorth(rows.map((row) => ({ ...row, includeInNetWorth: false })))).toBe(0);
+    expect(netWorth([])).toBe(0);
   });
 });
 

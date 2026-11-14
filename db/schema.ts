@@ -27,6 +27,7 @@ export const accounts = pgTable(
     userId: uuid("user_id").notNull(),
     name: text().notNull(),
     startingBalance: bigint("starting_balance", { mode: "number" }).notNull().default(0), // centavos
+    includeInNetWorth: boolean("include_in_net_worth").notNull().default(true),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [ownRows(t.userId)],

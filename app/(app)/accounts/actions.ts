@@ -12,7 +12,7 @@ import { parseMoney, startingForBalance } from "@/lib/money";
 export type FormState = {
   ok?: boolean;
   errors?: { name?: string; balance?: string };
-  values?: { name: string; balance: string }; // refills the form after React resets it
+  values?: { name: string; balance: string; include: boolean }; // refills the form after React resets it
 };
 
 const accountInput = z.object({
@@ -28,7 +28,8 @@ const accountInput = z.object({
 /** Adds an account, or renames it and sets its balance when the form has an id. */
 export async function saveAccount(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
-  const values = { name: String(formData.get("name") ?? ""), balance: String(formData.get("balance") ?? "") };
+  // An unchecked checkbox isn't sent, so presence means included.
+  const values = { name: String(formData.get("name") ?? ""), balance: String(formData.get("balance") ?? ""), include: formData.has("include") };
   const parsed = accountInput.safeParse({ id: formData.get("id") || undefined, ...values });
   if (!parsed.success) {
     const { fieldErrors } = z.flattenError(parsed.error);
@@ -36,12 +37,13 @@ export async function saveAccount(_: FormState, formData: FormData): Promise<For
   }
 
   const { id, name, balance } = parsed.data;
+  const includeInNetWorth = values.include;
   await withUser(userId, async (tx) => {
-    if (!id) return tx.insert(accounts).values({ userId, name, startingBalance: balance });
+    if (!id) return tx.insert(accounts).values({ userId, name, startingBalance: balance, includeInNetWorth });
     const { accounts: rows, entries } = await loadBalances(tx, userId, { lock: true });
     const account = rows.find((row) => row.id === id);
     if (account) {
-      await tx.update(accounts).set({ name, startingBalance: startingForBalance(account, entries, balance) })
+      await tx.update(accounts).set({ name, startingBalance: startingForBalance(account, entries, balance), includeInNetWorth })
         .where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
     }
   });

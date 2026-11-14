@@ -10,7 +10,7 @@ import type { Account } from "@/db/schema";
 import { toInput } from "@/lib/money";
 import { deleteAccount, saveAccount } from "./actions";
 
-type AccountRow = Pick<Account, "id" | "name"> & { balance: number };
+type AccountRow = Pick<Account, "id" | "name" | "includeInNetWorth"> & { balance: number };
 
 /** "Add account" with no account; "Edit" (name and balance) with one. */
 export function AccountForm({ account }: { account?: AccountRow }) {
@@ -69,6 +69,19 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
           aria-describedby={state.errors?.balance ? "balance-error" : undefined}
         />
         {state.errors?.balance && <p id="balance-error" className="text-sm text-destructive">{state.errors.balance}</p>}
+      </div>
+      <div className="flex items-start gap-2">
+        <input
+          id="include"
+          name="include"
+          type="checkbox"
+          className="mt-1 size-4 accent-primary"
+          defaultChecked={state.values?.include ?? account?.includeInNetWorth ?? true}
+        />
+        <div className="grid gap-1">
+          <Label htmlFor="include">Include in net worth</Label>
+          <p className="text-sm text-muted-foreground">Turn off for savings you don&apos;t count, like a tuition fund.</p>
+        </div>
       </div>
       <DialogFooter>
         <Button type="submit" disabled={pending}>

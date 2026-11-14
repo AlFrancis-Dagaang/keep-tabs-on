@@ -7,7 +7,7 @@ import { balanceOf, type Entry } from "@/lib/money";
 /** The user's accounts and entries. With lock, the accounts stay locked until the transaction ends, so two saves can't both pass a >= 0 check. */
 export async function loadBalances(tx: Tx, userId: string, { lock = false } = {}) {
   const accountQuery = tx
-    .select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance })
+    .select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance, includeInNetWorth: accounts.includeInNetWorth })
     .from(accounts).where(eq(accounts.userId, userId)).orderBy(asc(accounts.createdAt));
   const rows = await (lock ? accountQuery.for("update") : accountQuery);
   const entries: Entry[] = await tx

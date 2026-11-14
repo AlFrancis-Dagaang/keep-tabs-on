@@ -5,6 +5,7 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
+import { netWorth } from "@/lib/money";
 
 import { AccountForm, DeleteAccount } from "./account-form";
 import { getMoney } from "@/lib/settings";
@@ -35,7 +36,7 @@ async function AccountsTable() {
     );
   }
 
-  const netWorth = rows.reduce((sum, account) => sum + account.balance, 0);
+  const excluded = rows.filter((account) => !account.includeInNetWorth);
   return (
     <div className="rounded-xl border bg-surface">
       <Table>
@@ -52,6 +53,7 @@ async function AccountsTable() {
             <TableRow key={account.id} className="relative">
               <TableCell className="pl-4">
                 <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
+                {!account.includeInNetWorth && <div className="text-sm text-muted-foreground">Not in net worth</div>}
               </TableCell>
               <TableCell className="text-right tabular-nums">{money(account.balance)}</TableCell>
               <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">
@@ -63,8 +65,13 @@ async function AccountsTable() {
         </TableBody>
         <TableFooter>
           <TableRow>
-            <TableCell className="pl-4 font-medium">Net worth</TableCell>
-            <TableCell className="text-right font-medium tabular-nums">{money(netWorth)}</TableCell>
+            <TableCell className="pl-4 font-medium">
+              Net worth
+              {excluded.length > 0 && (
+                <div className="text-sm font-normal text-muted-foreground">Excludes {excluded.length} {excluded.length === 1 ? "account" : "accounts"}</div>
+              )}
+            </TableCell>
+            <TableCell className="text-right font-medium tabular-nums">{money(netWorth(rows))}</TableCell>
             <TableCell />
           </TableRow>
         </TableFooter>

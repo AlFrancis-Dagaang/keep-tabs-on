@@ -1,0 +1,1 @@
+ALTER TABLE "accounts" ADD COLUMN "include_in_net_worth" boolean DEFAULT true NOT NULL;

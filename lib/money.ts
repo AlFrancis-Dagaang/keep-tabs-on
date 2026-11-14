@@ -40,6 +40,11 @@ export function balanceOf(account: Pick<Account, "id" | "startingBalance">, entr
   }, account.startingBalance);
 }
 
+/** The sum of the balances of accounts counted in net worth. */
+export function netWorth(accounts: { balance: number; includeInNetWorth: boolean }[]): number {
+  return accounts.reduce((total, account) => total + (account.includeInNetWorth ? account.balance : 0), 0);
+}
+
 /** The starting balance that makes balanceOf(account) equal target. Can go below zero: it's only an adjustment. */
 export function startingForBalance(account: Pick<Account, "id" | "startingBalance">, entries: Entry[], target: number): number {
   return account.startingBalance + (target - balanceOf(account, entries));
