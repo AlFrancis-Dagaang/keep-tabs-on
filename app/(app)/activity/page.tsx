@@ -19,29 +19,31 @@ const types: Transaction["type"][] = ["income", "expense", "transfer"];
 const toAccounts = alias(accounts, "to_accounts");
 
 type Search = Promise<{ type?: string; from?: string; to?: string }>;
-type Row = Pick<Transaction, "type" | "payee" | "billId" | "debtId" | "goalId"> & { account: string; toAccount: string | null; category: string | null };
+type Row = Pick<Transaction, "type" | "payee" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId"> & { account: string; toAccount: string | null; category: string | null };
 
 const dash = <span className="text-muted-foreground">—</span>;
 const payee = { head: "Payee", cell: (row: Row) => <TableCell>{row.payee ?? dash}</TableCell> };
 const source = { ...payee, head: "Source" };
+const note = { head: "Note", cell: (row: Row) => <TableCell className="text-muted-foreground">{row.note}</TableCell> };
 const category = {
   head: "Category",
   cell: (row: Row) => (
-    <TableCell className={cn(!row.category && !row.billId && !row.debtId && "text-muted-foreground")}>
-      {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized"))}
+    <TableCell className={cn(!row.category && !row.billId && !row.debtId && !row.installmentId && "text-muted-foreground")}>
+      {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : row.installmentId ? "Installment" : "Uncategorized"))}
     </TableCell>
   ),
 };
-const account = { head: "Account", cell: (row: Row) => <TableCell>{row.type === "transfer" ? `${row.account} → ${row.toAccount}` : row.account}</TableCell> };
+const account = { head: "Account", cell: (row: Row) => <TableCell>{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</TableCell> };
 // Only the columns that fit the type; "All" mixes the three, so it keeps one shared set.
 const columns: Record<"all" | Transaction["type"], { head: string; cell: (row: Row) => React.ReactNode }[]> = {
-  all: [payee, category, account],
-  expense: [category, payee, account],
-  income: [category, source, account],
+  all: [payee, category, account, note],
+  expense: [category, payee, account, note],
+  income: [category, source, account, note],
   transfer: [
     { head: "From", cell: (row) => <TableCell>{row.account}</TableCell> },
-    { head: "To", cell: (row) => <TableCell>{row.toAccount}</TableCell> },
+    { head: "To", cell: (row) => <TableCell>{row.toAccount ?? row.toName}</TableCell> },
     { head: "For", cell: (row) => <TableCell>{row.goalId ? "Goal" : dash}</TableCell> },
+    note,
   ],
 };
 
@@ -66,7 +68,8 @@ async function Activity({ searchParams }: { searchParams: Search }) {
     rows: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, payee: transactions.payee,
-        account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId,
+        note: transactions.note, toName: transactions.toName,
+        account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -126,7 +129,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                 </TableHeader>
                 <TableBody>
                   {rows.map((row) => {
-                    const where = row.type === "transfer" ? `${row.account} → ${row.toAccount}` : row.account;
+                    const where = row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account;
                     const sign = { income: "+", expense: "−", transfer: "" }[row.type];
                     return (
                       <TableRow key={row.id}>

@@ -27,7 +27,7 @@ async function Debts() {
     balances: await loadBalances(tx, userId),
     rows: await tx
       .select({
-        id: debts.id, name: debts.name, direction: debts.direction, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore,
+        id: debts.id, name: debts.name, direction: debts.direction, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore, note: debts.note,
         paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
       })
       .from(debts)
@@ -68,6 +68,7 @@ async function Debts() {
                   <TableCell className="pl-4">
                     <Link href={`/debts/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.total)}</div>
+                    <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
                   <TableCell>{directionLabels[row.direction]}</TableCell>
                   <TableCell className="tabular-nums">{row.deadline}</TableCell>

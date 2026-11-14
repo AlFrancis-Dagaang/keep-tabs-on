@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { nextDueDate, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const billFields = ["id", "name", "amount", "nextDueDate", "repeat"] as const;
+const billFields = ["id", "name", "amount", "nextDueDate", "repeat", "note"] as const;
 const payFields = ["billId", "accountId", "amount", "date"] as const;
 type Field = (typeof billFields)[number] | (typeof payFields)[number];
 
@@ -32,6 +32,7 @@ const billInput = z.object({
   amount,
   nextDueDate: z.iso.date("Pick the next due date."),
   repeat: z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"], "Pick how often it repeats."),
+  note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 });
 const payInput = z.object({ billId: z.uuid(), accountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date.") });
 

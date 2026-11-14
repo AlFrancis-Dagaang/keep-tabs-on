@@ -13,7 +13,7 @@ import { progressBlocks, repeatLabels, toInput } from "@/lib/money";
 import { deleteBill, type FormState, payBill, saveBill } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
-type EditableBill = Pick<Bill, "id" | "name" | "amount" | "nextDueDate" | "repeat">;
+type EditableBill = Pick<Bill, "id" | "name" | "amount" | "nextDueDate" | "repeat" | "note">;
 
 export function BillProgress({ id, name, paid, amount }: { id: string; name: string; paid: number; amount: number }) {
   const { money } = useMoney();
@@ -77,6 +77,9 @@ function BillFields({ today, bill, onSaved }: { today: string; bill?: EditableBi
             ))}
           </SelectContent>
         </Select>
+      </Field>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={values?.note ?? bill?.note ?? undefined} {...invalid(state, "note")} />
       </Field>
       <DialogFooter>
         <Button type="submit" disabled={pending}>{bill ? "Save bill" : "Add bill"}</Button>

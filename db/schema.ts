@@ -60,12 +60,37 @@ export const bills = pgTable(
     dueDay: smallint("due_day").notNull(), // the day of the month the owner picked; monthly rolls land on it, clamped
     repeat: text({ enum: ["weekly", "biweekly", "monthly", "quarterly", "yearly"] }).notNull(),
     cycleStart: timestamp("cycle_start", { withTimezone: true }).notNull().defaultNow(), // payments after this count toward this cycle
+    note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check("bills_amount", sql`${t.amount} > 0`),
     check("bills_due_day", sql`${t.dueDay} between 1 and 31`),
     check("bills_repeat", sql`${t.repeat} in ('weekly', 'biweekly', 'monthly', 'quarterly', 'yearly')`),
+    ownRows(t.userId),
+  ],
+).enableRLS();
+
+export const installments = pgTable(
+  "installments",
+  {
+    id: uuid().primaryKey().defaultRandom(),
+    userId: uuid("user_id").notNull(),
+    name: text().notNull(),
+    monthlyAmount: bigint("monthly_amount", { mode: "number" }).notNull(), // centavos
+    months: smallint().notNull(),
+    paidBefore: smallint("paid_before").notNull().default(0), // months paid before tracking started
+    dueDay: smallint("due_day").notNull(), // like bills: monthly rolls land on it, clamped
+    nextDueDate: date("next_due_date", { mode: "string" }).notNull(),
+    accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where each payment comes from
+    note: text(),
+    createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [
+    check("installments_monthly_amount", sql`${t.monthlyAmount} > 0`),
+    check("installments_months", sql`${t.months} between 1 and 120`),
+    check("installments_paid_before", sql`${t.paidBefore} between 0 and ${t.months} - 1`),
+    check("installments_due_day", sql`${t.dueDay} between 1 and 31`),
     ownRows(t.userId),
   ],
 ).enableRLS();
@@ -80,6 +105,7 @@ export const debts = pgTable(
     total: bigint({ mode: "number" }).notNull(), // centavos
     deadline: date({ mode: "string" }).notNull(),
     paidBefore: bigint("paid_before", { mode: "number" }).notNull().default(0), // centavos paid (or received) before tracking started
+    note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -100,6 +126,7 @@ export const goals = pgTable(
     deadline: date({ mode: "string" }).notNull(),
     accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where the money is saved
     savedBefore: bigint("saved_before", { mode: "number" }).notNull().default(0), // centavos saved before tracking started
+    note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -140,10 +167,13 @@ export const transactions = pgTable(
     accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }),
     toAccountId: uuid("to_account_id").references(() => accounts.id, { onDelete: "restrict" }), // transfers only
     categoryId: uuid("category_id").references(() => categories.id, { onDelete: "set null" }),
+    toName: text("to_name"), // transfers only: someone outside the accounts, instead of toAccountId
     payee: text(),
+    note: text(),
     billId: uuid("bill_id").references(() => bills.id, { onDelete: "set null" }), // bill payments: expenses with no category
     debtId: uuid("debt_id").references(() => debts.id, { onDelete: "set null" }), // debt payments: expenses with no category
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }), // money added to a goal: transfers into its account
+    installmentId: uuid("installment_id").references(() => installments.id, { onDelete: "set null" }), // installment payments: expenses with no category
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
@@ -151,7 +181,8 @@ export const transactions = pgTable(
     check("transactions_amount", sql`${t.amount} > 0`),
     check(
       "transactions_transfer",
-      sql`(${t.type} = 'transfer') = (${t.toAccountId} is not null and ${t.toAccountId} <> ${t.accountId})`,
+      sql`(${t.type} = 'transfer') = ((${t.toAccountId} is not null and ${t.toAccountId} <> ${t.accountId}) or ${t.toName} is not null)
+        and not (${t.toAccountId} is not null and ${t.toName} is not null)`,
     ),
     ownRows(t.userId),
   ],
@@ -162,6 +193,7 @@ export type Account = typeof accounts.$inferSelect;
 export type Category = typeof categories.$inferSelect;
 export type Transaction = typeof transactions.$inferSelect;
 export type Bill = typeof bills.$inferSelect;
+export type Installment = typeof installments.$inferSelect;
 export type Debt = typeof debts.$inferSelect;
 export type Goal = typeof goals.$inferSelect;
 export type BudgetMonth = typeof budgetMonths.$inferSelect;

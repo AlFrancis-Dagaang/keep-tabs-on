@@ -11,6 +11,7 @@ const pages = [
   { href: "/accounts", label: "Accounts" },
   { href: "/activity", label: "Activity" },
   { href: "/bills", label: "Recurring bills" },
+  { href: "/installments", label: "Installments" },
   { href: "/goals", label: "Goals" },
   { href: "/debts", label: "Debts" },
   { href: "/budget", label: "Budget" },

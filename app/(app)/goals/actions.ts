@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const goalFields = ["id", "name", "target", "deadline", "accountId", "savedBefore"] as const;
+const goalFields = ["id", "name", "target", "deadline", "accountId", "savedBefore", "note"] as const;
 const addFields = ["goalId", "fromAccountId", "amount", "date"] as const;
 type Field = (typeof goalFields)[number] | (typeof addFields)[number];
 
@@ -37,6 +37,7 @@ const goalInput = z.object({
     if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
     return centavos ?? z.NEVER;
   }),
+  note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 });
 const addInput = z.object({ goalId: z.uuid(), fromAccountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date.") });
 

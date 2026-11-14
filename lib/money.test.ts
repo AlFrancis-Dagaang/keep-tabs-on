@@ -46,6 +46,13 @@ describe("balanceOf", () => {
   it("ignores other accounts' entries", () => {
     expect(balanceOf({ id: "c", startingBalance: 700 }, entries)).toBe(700);
   });
+
+  it("takes a transfer to someone outside the accounts out of the payer and credits nobody", () => {
+    const outside: Entry = { type: "transfer", amount: 30000, accountId: a, toAccountId: null };
+    expect(balanceOf({ id: a, startingBalance: 100000 }, [outside])).toBe(70000);
+    expect(balanceOf({ id: b, startingBalance: 0 }, [outside])).toBe(0);
+    expect(netWorth([a, b].map((id) => ({ balance: balanceOf({ id, startingBalance: 100000 }, [outside]), includeInNetWorth: true })))).toBe(170000);
+  });
 });
 
 describe("netWorth", () => {
@@ -112,6 +119,12 @@ describe("progressBlocks", () => {
     expect(progressBlocks(30000, 120000)).toBe(3);
     expect(progressBlocks(119999, 120000)).toBe(11);
     expect(progressBlocks(120000, 120000)).toBe(12);
+  });
+
+  it("counts months for an installment: 2 of 6 paid fills 4 blocks, 6 of 6 fills all 12", () => {
+    expect(progressBlocks(2, 6)).toBe(4);
+    expect(progressBlocks(5, 6)).toBe(10);
+    expect(progressBlocks(6, 6)).toBe(12);
   });
 });
 
@@ -189,6 +202,10 @@ describe("monthTotals", () => {
       { type: "expense", amount: 300, date: "2026-10-31" }, // last month
       { type: "transfer", amount: 400, date: "2026-11-15" },
     ])).toEqual({ income: 1000, expenses: 200 });
+  });
+
+  it("leaves out a transfer to someone outside the accounts like any other transfer", () => {
+    expect(monthTotals("2026-11-01", [{ type: "transfer", amount: 30000, date: "2026-11-15" }])).toEqual({ income: 0, expenses: 0 });
   });
 });
 

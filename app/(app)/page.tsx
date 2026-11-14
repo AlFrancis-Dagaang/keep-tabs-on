@@ -64,7 +64,7 @@ async function Overview() {
     recent: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, payee: transactions.payee,
-        account: accounts.name, toAccount: toAccounts.name, category: categories.name,
+        account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName, category: categories.name,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -163,7 +163,7 @@ async function Overview() {
               <TableCell className="pl-4 tabular-nums">{row.date}</TableCell>
               <TableCell>
                 {row.payee ?? row.category ?? <span className="text-muted-foreground">—</span>}
-                <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount}` : row.account}</div>
+                <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</div>
               </TableCell>
               <TableCell className="pr-4 text-right tabular-nums">{{ income: "+", expense: "−", transfer: "" }[row.type]}{money(row.amount)}</TableCell>
             </TableRow>

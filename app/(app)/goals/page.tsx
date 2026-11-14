@@ -27,7 +27,7 @@ async function Goals() {
     rows: await tx
       .select({
         id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, accountId: goals.accountId,
-        savedBefore: goals.savedBefore, account: accounts.name,
+        savedBefore: goals.savedBefore, note: goals.note, account: accounts.name,
         saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
       })
       .from(goals)
@@ -69,6 +69,7 @@ async function Goals() {
                   <TableCell className="pl-4">
                     <Link href={`/goals/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.target)}</div>
+                    <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
                   <TableCell className="tabular-nums">{row.deadline}</TableCell>
                   <TableCell>{row.account}</TableCell>

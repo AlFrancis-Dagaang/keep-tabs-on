@@ -39,8 +39,8 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
     rows: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, payee: transactions.payee,
-        accountId: transactions.accountId, toAccountId: transactions.toAccountId, account: accounts.name, toAccount: toAccounts.name,
-        category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId,
+        accountId: transactions.accountId, toAccountId: transactions.toAccountId, account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName,
+        category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -79,9 +79,9 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
             <TableBody>
               {shown.map((row) => {
                 const out = row.accountId === account.id;
-                const label = row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : "Uncategorized");
+                const label = row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : row.installmentId ? "Installment" : "Uncategorized");
                 const details = row.type === "transfer"
-                  ? `${row.goalId ? "Goal" : "Transfer"} ${out ? `to ${row.toAccount}` : `from ${row.account}`}`
+                  ? `${row.goalId ? "Goal" : "Transfer"} ${out ? `to ${row.toAccount ?? row.toName}` : `from ${row.account}`}`
                   : row.payee ? `${row.payee} · ${label}` : label;
                 return (
                   <TableRow key={row.id}>

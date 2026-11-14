@@ -10,7 +10,7 @@ import { withUser } from "@/lib/db";
 import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const fields = ["type", "accountId", "toAccountId", "categoryId", "amount", "date", "payee"] as const;
+const fields = ["type", "accountId", "toAccountId", "toName", "categoryId", "amount", "date", "payee", "note"] as const;
 type Field = (typeof fields)[number];
 
 export type FormState = {
@@ -29,14 +29,23 @@ const common = {
   amount,
   date: z.iso.date("Pick a date."),
   payee: z.string().trim().max(60, "Keep the payee under 60 characters.").transform((payee) => payee || null),
+  note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 };
 const entryInput = z.discriminatedUnion("type", [
   z.object({ type: z.enum(["income", "expense"]), categoryId: z.uuid("Pick a category."), ...common }),
-  z.object({ type: z.literal("transfer"), toAccountId: z.uuid("Pick the account it goes to."), ...common })
+  // Goes to one of your accounts, or to someone else by name: exactly one of the two.
+  z.object({
+    type: z.literal("transfer"),
+    toAccountId: z.union([z.literal(""), z.uuid("Pick the account it goes to.")]),
+    toName: z.string().trim().max(60, "Keep the name under 60 characters."),
+    ...common,
+  })
+    .refine((entry) => entry.toAccountId || entry.toName, { path: ["toAccountId"], message: "Pick the account it goes to, or enter a name." })
+    .refine((entry) => !(entry.toAccountId && entry.toName), { path: ["toAccountId"], message: "Pick an account or enter a name, not both." })
     .refine((entry) => entry.toAccountId !== entry.accountId, { path: ["toAccountId"], message: "Pick a different account." }),
 ]);
 
-/** Records an income, expense or transfer. Refuses when it would take an account below zero. */
+/** Records an income, expense or transfer (to an account or to a name). Refuses when it would take an account below zero. */
 export async function saveEntry(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -54,7 +63,7 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
     const from = accounts.find((account) => account.id === entry.accountId);
     if (!from) return { accountId: "Pick an account." };
     if (entry.type === "transfer") {
-      if (!accounts.some((account) => account.id === entry.toAccountId)) return { toAccountId: "Pick the account it goes to." };
+      if (entry.toAccountId && !accounts.some((account) => account.id === entry.toAccountId)) return { toAccountId: "Pick the account it goes to." };
     } else {
       const [category] = await tx.select({ kind: categories.kind }).from(categories)
         .where(and(eq(categories.id, entry.categoryId), eq(categories.userId, userId)));
@@ -63,7 +72,8 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
     if (entry.type !== "income" && balance(from.id)! < entry.amount) {
       return { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` };
     }
-    await tx.insert(transactions).values({ userId, ...entry });
+    const row = entry.type === "transfer" ? { ...entry, toAccountId: entry.toAccountId || null, toName: entry.toName || null } : entry;
+    await tx.insert(transactions).values({ userId, ...row });
   });
   if (errors) return { values, errors };
   refresh();

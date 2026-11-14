@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const debtFields = ["id", "name", "direction", "total", "deadline", "paidBefore"] as const;
+const debtFields = ["id", "name", "direction", "total", "deadline", "paidBefore", "note"] as const;
 const payFields = ["debtId", "accountId", "amount", "date"] as const;
 type Field = (typeof debtFields)[number] | (typeof payFields)[number];
 
@@ -37,6 +37,7 @@ const debtInput = z.object({
     if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
     return centavos ?? z.NEVER;
   }),
+  note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 });
 const payInput = z.object({ debtId: z.uuid(), accountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date.") });
 

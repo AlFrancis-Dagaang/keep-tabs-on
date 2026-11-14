@@ -40,6 +40,7 @@ function Fields({ accounts, categories, today, onSaved }: Options & { onSaved: (
   const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveEntry, {});
   const [type, setType] = useState<Transaction["type"]>("expense");
+  const [toOther, setToOther] = useState(false); // a transfer to someone outside your accounts
   useEffect(() => {
     if (state.ok) onSaved();
   }, [state, onSaved]);
@@ -63,7 +64,14 @@ function Fields({ accounts, categories, today, onSaved }: Options & { onSaved: (
       </Field>
       <AccountSelect label={type === "transfer" ? "From" : "Account"} name="accountId" accounts={accounts} state={state} />
       {type === "transfer" ? (
-        <AccountSelect label="To" name="toAccountId" accounts={accounts} state={state} />
+        <>
+          <AccountSelect label="To" name="toAccountId" accounts={accounts} state={state} other={{ chosen: toOther, onChange: setToOther, name: state.values?.toName }} />
+          {toOther && (
+            <Field label="Name" name="toName" state={state}>
+              <Input id="toName" name="toName" placeholder="Mom" defaultValue={state.values?.toName} {...invalid(state, "toName")} />
+            </Field>
+          )}
+        </>
       ) : (
         <Field label="Category" name="categoryId" state={state}>
           <Select key={kind} name="categoryId" defaultValue={state.values?.categoryId || undefined}>
@@ -92,6 +100,9 @@ function Fields({ accounts, categories, today, onSaved }: Options & { onSaved: (
       <Field label="Payee (optional)" name="payee" state={state}>
         <Input id="payee" name="payee" placeholder={type === "income" ? "Employer" : "Jollibee"} defaultValue={state.values?.payee} {...invalid(state, "payee")} />
       </Field>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={state.values?.note} {...invalid(state, "note")} />
+      </Field>
       <DialogFooter>
         <Button type="submit" disabled={pending}>Add entry</Button>
       </DialogFooter>
@@ -115,11 +126,21 @@ function Field({ label, name, state, children }: { label: string; name: FieldNam
   );
 }
 
-function AccountSelect({ label, name, accounts, state }: { label: string; name: "accountId" | "toAccountId"; accounts: Options["accounts"]; state: FormState }) {
+const OTHER = "other";
+
+// With `other`, the list ends in "Someone else…", which swaps the account for a free-text name (the select then sends nothing).
+function AccountSelect({ label, name, accounts, state, other }: {
+  label: string; name: "accountId" | "toAccountId"; accounts: Options["accounts"]; state: FormState;
+  other?: { chosen: boolean; onChange: (chosen: boolean) => void; name?: string };
+}) {
   const { money } = useMoney();
   return (
     <Field label={label} name={name} state={state}>
-      <Select name={name} defaultValue={state.values?.[name] || undefined}>
+      <Select
+        name={other?.chosen ? undefined : name}
+        defaultValue={(other?.chosen ? OTHER : state.values?.[name]) || undefined}
+        onValueChange={other && ((value) => other.onChange(value === OTHER))}
+      >
         <SelectTrigger id={name} className="w-full" {...invalid(state, name)}>
           <SelectValue placeholder="Pick an account" />
         </SelectTrigger>
@@ -129,6 +150,7 @@ function AccountSelect({ label, name, accounts, state }: { label: string; name: 
               {account.name} <span className="text-muted-foreground tabular-nums">{money(account.balance)}</span>
             </SelectItem>
           ))}
+          {other && <SelectItem value={OTHER}>Someone else…</SelectItem>}
         </SelectContent>
       </Select>
     </Field>

@@ -13,7 +13,7 @@ import { progressBlocks, toInput } from "@/lib/money";
 import { addToGoal, deleteGoal, type FormState, saveGoal } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
-type EditableGoal = Pick<Goal, "id" | "name" | "target" | "deadline" | "accountId" | "savedBefore">;
+type EditableGoal = Pick<Goal, "id" | "name" | "target" | "deadline" | "accountId" | "savedBefore" | "note">;
 
 export function GoalProgress({ id, name, saved, target }: { id: string; name: string; saved: number; target: number }) {
   const { money } = useMoney();
@@ -68,6 +68,9 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
       <Field label={`Already saved (${symbol})`} name="savedBefore" state={state}>
         <Input id="savedBefore" name="savedBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.savedBefore ?? (goal?.savedBefore ? toInput(goal.savedBefore) : undefined)} {...invalid(state, "savedBefore")} />
+      </Field>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={values?.note ?? goal?.note ?? undefined} {...invalid(state, "note")} />
       </Field>
       <DialogFooter>
         <Button type="submit" disabled={pending}>{goal ? "Save goal" : "Create goal"}</Button>

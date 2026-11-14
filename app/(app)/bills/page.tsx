@@ -27,7 +27,7 @@ async function Bills() {
     balances: await loadBalances(tx, userId),
     rows: await tx
       .select({
-        id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, repeat: bills.repeat,
+        id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, repeat: bills.repeat, note: bills.note,
         paid: sum(transactions.amount).mapWith(Number),
       })
       .from(bills)
@@ -69,6 +69,7 @@ async function Bills() {
                     <TableCell className="pl-4">
                       <div className="font-medium">{row.name}</div>
                       <div className="text-sm text-muted-foreground tabular-nums">{money(row.amount)}</div>
+                      <div className="text-sm text-muted-foreground">{row.note}</div>
                     </TableCell>
                     <TableCell>{repeatLabels[row.repeat]}</TableCell>
                     <TableCell className="tabular-nums">

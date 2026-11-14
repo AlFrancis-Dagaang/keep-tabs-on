@@ -2,7 +2,7 @@ import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
 import { eq } from "drizzle-orm";
 import { describe, expect, it } from "vitest";
-import { accounts, bills, budgetMonths, categories, debts, goals, transactions } from "../db/schema";
+import { accounts, bills, budgetMonths, categories, debts, goals, installments, transactions } from "../db/schema";
 import { withUser } from "./db";
 
 if (existsSync(".env.local")) process.loadEnvFile(".env.local");
@@ -61,6 +61,22 @@ describe.skipIf(!process.env.DATABASE_URL)("RLS", () => {
       expect(await withUser(a, (tx) => tx.select().from(bills))).toHaveLength(1);
     } finally {
       await withUser(a, (tx) => tx.delete(bills).where(eq(bills.id, bill.id)));
+    }
+  });
+
+  it("hides one user's installments from another", async () => {
+    const [a, b] = [randomUUID(), randomUUID()];
+    const [account] = await withUser(a, (tx) => tx.insert(accounts).values({ userId: a, name: "RLS test" }).returning());
+    const [installment] = await withUser(a, (tx) =>
+      tx.insert(installments).values({ userId: a, name: "RLS test", monthlyAmount: 100, months: 6, dueDay: 15, nextDueDate: "2026-11-15", accountId: account.id }).returning(),
+    );
+    try {
+      expect(await withUser(b, (tx) => tx.select().from(installments))).toEqual([]);
+      expect(await withUser(b, (tx) => tx.update(installments).set({ months: 1 }).where(eq(installments.id, installment.id)).returning())).toEqual([]);
+      expect(await withUser(a, (tx) => tx.select().from(installments))).toHaveLength(1);
+    } finally {
+      await withUser(a, (tx) => tx.delete(installments).where(eq(installments.id, installment.id)));
+      await withUser(a, (tx) => tx.delete(accounts).where(eq(accounts.id, account.id)));
     }
   });
 
