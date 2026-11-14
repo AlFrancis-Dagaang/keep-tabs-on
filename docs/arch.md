@@ -37,7 +37,9 @@ Balances, progress and budget spent are computed from transactions, never stored
 
 ## Deploy
 Vercel: production from main, a preview per branch. Neon: a production branch and a dev branch (local work and tests; see the 2026-11-14 decision).
-Migrations run with drizzle-kit over the direct (unpooled) owner connection; the app uses the restricted role's pooled URL.
+Live at https://keep-tabs-on-murex.vercel.app (Vercel picked the suffix; `keep-tabs-on.vercel.app` belongs to someone else). Production env vars (`DATABASE_URL`, `NEON_AUTH_BASE_URL`, `NEON_AUTH_COOKIE_SECRET`) are set in Vercel for the Production scope only; no Preview vars, since work happens on main.
+Neon Auth on the production branch trusts that URL and localhost, and uses Neon's shared Google app, so there is no Google redirect to register. A new URL needs `neonctl neon-auth domain add`.
+Migrations run by hand, never in the Vercel build: drizzle-kit over the direct (unpooled) owner connection; the app uses the restricted role's pooled URL.
 GitHub Actions (`.github/workflows/ci.yml`) runs lint, test and build on pull requests and pushes to main; Vercel deploys.
 
 ## Versions
