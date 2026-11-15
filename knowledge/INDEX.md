@@ -11,6 +11,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [State the exact scope in an option's label when asking the owner to choose](lessons/2026-11-13-state-scope-in-option-labels.md) — put the list or count in the label; ask open scope as its own question
 - [Check the database host before any DB command, and never run against production](lessons/2026-11-14-check-db-host.md) — read .env.local host; dev endpoint only
 - [Show a headline figure on the owner's real data before planning how it's defined](lessons/2026-11-14-show-figure-on-real-data.md) — worked example with real numbers, approved before building
+- [Read the deployment's regions field to see where functions run, not the region in the logs](lessons/2026-11-15-check-deployment-region.md) — get_deployment regions, not log region; state what evidence cannot show
 
 ## Decisions
 - [Stack](decisions/2026-11-09-stack.md) — Next.js + Neon/Drizzle + Neon Auth on Vercel; RLS via restricted role and per-request transaction
@@ -21,6 +22,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Migrate in the Vercel build](decisions/2026-11-14-migrate-in-vercel-build.md) — build runs db:migrate before next build; additive-only migrations
 - [Architecture update](decisions/2026-11-14-stack-2.md) — budget limits as a log, settings table, dev branch; updates the 2026-11-09 stack record
 - [Vercel and Neon share a region](decisions/2026-11-14-vercel-and-neon-same-region.md) — functions run in sin1 next to Neon; region ruled out as the cause of slow loads
+- [Pin Vercel functions to sin1](decisions/2026-11-15-pin-functions-to-sin1.md) — supersedes the same-region decision; deployment regions was iad1, vercel.json now pins sin1
 
 ## Best practices
 
