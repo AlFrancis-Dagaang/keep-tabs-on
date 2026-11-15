@@ -1,0 +1,185 @@
+<!doctype html>
+<!-- Covers: T-16. Throwaway mock of the Activity cards and the drawer; open mobile-preview.html for phone-width frames. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile mock: Activity + drawer</title>
+<style>
+:root{--bg:#FAF9F5;--surface:#fff;--raised:#F0EEE6;--border:#E3E1D8;--text:#1F1E1C;--muted:#6E6B63;--clay:#C96442}
+@media (prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#1F1F1E;--surface:#262624;--raised:#30302E;--border:#3A3A37;--text:#ECEAE3;--muted:#A3A19A}}
+:root[data-theme=dark]{--bg:#1F1F1E;--surface:#262624;--raised:#30302E;--border:#3A3A37;--text:#ECEAE3;--muted:#A3A19A}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:400 14px/1.4 "Instrument Sans",system-ui,sans-serif}
+.serif{font-family:"Source Serif 4",Georgia,serif;font-weight:500}
+svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+button{font:inherit;color:inherit;cursor:pointer}
+
+/* top bar (below md) */
+.topbar{position:sticky;top:0;z-index:10;display:flex;align-items:center;gap:8px;height:52px;padding:0 8px;background:var(--surface);border-bottom:1px solid var(--border)}
+.topbar .title{font-size:18px;flex:1}
+.icon-btn{display:grid;place-items:center;width:44px;height:44px;border:0;border-radius:8px;background:none}
+.icon-btn:active{background:var(--raised)}
+.icon-btn svg{width:20px;height:20px}
+
+/* drawer (shadcn sheet) */
+.scrim{position:fixed;inset:0;z-index:20;background:rgb(0 0 0/.45);opacity:0;pointer-events:none;transition:opacity .2s}
+.drawer{position:fixed;top:0;bottom:0;left:0;z-index:21;width:min(280px,82vw);display:flex;flex-direction:column;padding:12px;background:var(--surface);border-right:1px solid var(--border);transform:translateX(-100%);transition:transform .2s}
+body.open .scrim{opacity:1;pointer-events:auto}
+body.open .drawer{transform:none}
+.drawer-head{display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px 12px}
+.drawer nav{flex:1;display:flex;flex-direction:column;gap:2px;overflow-y:auto}
+.drawer nav a{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border-radius:8px;color:var(--muted);text-decoration:none}
+.drawer nav a[aria-current]{background:var(--raised);color:var(--text);font-weight:500}
+.drawer-foot{display:flex;flex-direction:column;gap:2px;padding-top:8px;border-top:1px solid var(--border)}
+.drawer-foot button{display:flex;align-items:center;gap:10px;min-height:44px;padding:0 12px;border:0;border-radius:8px;background:none;color:var(--muted);text-align:left}
+
+/* page */
+main{padding:16px;max-width:1100px;margin:0 auto}
+h1{margin:0;font-size:26px}
+.desc{margin:2px 0 16px;color:var(--muted);font-family:"Source Serif 4",Georgia,serif}
+.toolbar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pill{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:1px solid var(--border);border-radius:999px;background:var(--surface)}
+.pill[aria-pressed=true]{background:var(--raised);font-weight:500}
+.btn{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 14px;border:0;border-radius:8px;background:var(--clay);color:#fff;font-weight:500}
+.btn.sec{background:var(--raised);color:var(--text)}
+.btn.sm{min-height:36px}
+.add{width:100%;justify-content:center;margin-bottom:12px}
+
+/* shared table, as in components/ui/table.tsx */
+.panel{border:1px solid var(--border);border-radius:12px;background:var(--surface);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 12px;text-align:left;font-weight:500;color:var(--muted);border-bottom:1px solid var(--border)}
+td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+tr:last-child td{border-bottom:0}
+.num{font-variant-numeric:tabular-nums}
+.r{text-align:right}
+.muted{color:var(--muted)}
+.tag{display:inline-block;margin-left:6px;padding:0 8px;border-radius:999px;background:var(--clay);color:#fff;font-size:11px;font-weight:500}
+.sub{display:block;font-size:12px;color:var(--muted)}
+.income{color:var(--clay)}
+
+/* below md: each row becomes a card, using data-label */
+@media (max-width:767px){
+  main{padding:12px}
+  .panel{border:0;background:none;overflow:visible}
+  thead{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)} /* header stays for screen readers */
+  table,tbody{display:block}
+  tr{display:grid;grid-template-columns:1fr auto;gap:4px 12px;margin-bottom:10px;padding:12px;border:1px solid var(--border);border-radius:12px;background:var(--surface)}
+  td{display:flex;justify-content:space-between;gap:12px;padding:0;border:0}
+  td[data-label]::before{content:attr(data-label);color:var(--muted);flex:none}
+  td[data-label=Date]{grid-column:1;display:block;font-weight:500}
+  td[data-label=Date]::before,td[data-label=Amount]::before{content:none}
+  td[data-label=Amount]{grid-column:2;grid-row:1;font-size:16px;font-weight:600;justify-content:flex-end}
+  td:not([data-label=Date]):not([data-label=Amount]):not(.actions){grid-column:1/-1}
+  td.actions{grid-column:1/-1;justify-content:flex-start;gap:8px;margin-top:6px;padding-top:10px;border-top:1px solid var(--border)}
+  td.actions .btn{flex:1;justify-content:center}
+}
+@media (min-width:768px){
+  .topbar{display:none}
+  .desktop-note{display:block}
+  td.actions{white-space:nowrap}
+}
+.desktop-note{display:none;margin-bottom:12px;color:var(--muted);font-size:12px}
+.hint{margin:16px 0 0;color:var(--muted);font-size:12px}
+</style>
+</head>
+<body>
+<svg style="display:none"><defs>
+ <symbol id="menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+ <symbol id="x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+ <symbol id="plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+ <symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+ <symbol id="pencil" viewBox="0 0 24 24"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></symbol>
+ <symbol id="trash" viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"/></symbol>
+ <symbol id="moon" viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z"/></symbol>
+ <symbol id="out" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></symbol>
+ <symbol id="i1" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol>
+ <symbol id="i2" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M3 10l9-6 9 6"/></symbol>
+ <symbol id="i3" viewBox="0 0 24 24"><path d="M8 3 4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
+ <symbol id="i4" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+ <symbol id="i5" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M8 14h8"/></symbol>
+ <symbol id="i6" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/></symbol>
+ <symbol id="i7" viewBox="0 0 24 24"><path d="M12 8v8M9 11h6"/><circle cx="12" cy="12" r="9"/></symbol>
+ <symbol id="i8" viewBox="0 0 24 24"><path d="M19 5c-1.5 0-3 .5-4 2-2-1-6-1-8 1-1 1-1 3 0 4v4h3v-2h4v2h3v-4c1-.5 2-1.500 2-3Z"/></symbol>
+ <symbol id="i9" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></symbol>
+</defs></svg>
+
+<header class="topbar">
+  <button class="icon-btn" id="open" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><svg><use href="#menu"/></svg></button>
+  <span class="title serif">Activity</span>
+</header>
+
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-label="Menu">
+  <div class="drawer-head"><span class="serif" style="font-size:20px">Keep tabs on</span>
+    <button class="icon-btn" id="close" aria-label="Close menu"><svg><use href="#x"/></svg></button></div>
+  <nav id="nav"></nav>
+  <div class="drawer-foot">
+    <button id="theme"><svg><use href="#moon"/></svg>Toggle dark mode</button>
+    <button><svg><use href="#out"/></svg>Sign out</button>
+  </div>
+</aside>
+
+<main>
+  <h1 class="serif">Activity</h1>
+  <p class="desc">Every income, expense and transfer, newest first.</p>
+  <p class="desktop-note">Wide screen: the same markup stays a table. Narrow your window below 768px, or open this on your phone.</p>
+
+  <button class="btn add"><svg><use href="#plus"/></svg>Add entry</button>
+  <div class="toolbar">
+    <button class="pill"><svg><use href="#cal"/></svg>November 2026</button>
+    <button class="pill" aria-pressed="true">All</button>
+    <button class="pill">Expense</button>
+    <button class="pill">Income</button>
+    <button class="pill">Transfer</button>
+  </div>
+
+  <div class="panel">
+  <table>
+    <thead><tr><th>Date</th><th>Payee</th><th>Category</th><th>Account</th><th>Note</th><th class="r">Amount</th><th><span class="sr">Actions</span></th></tr></thead>
+    <tbody>
+      <tr>
+        <td data-label="Date" class="num">Nov 15, 2026<span class="tag">Today</span><span class="sub">4:12 PM</span></td>
+        <td data-label="Payee">Jollibee</td><td data-label="Category">Food</td><td data-label="Account">GCash</td><td data-label="Note" class="muted">Lunch with team</td>
+        <td data-label="Amount" class="num r">−₱285.00</td>
+        <td class="actions"><button class="btn sec sm"><svg><use href="#pencil"/></svg>Edit</button><button class="btn sec sm"><svg><use href="#trash"/></svg>Remove</button></td>
+      </tr>
+      <tr>
+        <td data-label="Date" class="num">Nov 15, 2026<span class="tag">Today</span><span class="sub">9:03 AM</span></td>
+        <td data-label="Payee">Acme Corp</td><td data-label="Category">Salary</td><td data-label="Account">BDO Savings</td><td data-label="Note" class="muted">Nov 15 payday</td>
+        <td data-label="Amount" class="num r income">+₱32,500.00</td>
+        <td class="actions"><button class="btn sec sm"><svg><use href="#pencil"/></svg>Edit</button><button class="btn sec sm"><svg><use href="#trash"/></svg>Remove</button></td>
+      </tr>
+      <tr>
+        <td data-label="Date" class="num">Nov 14, 2026<span class="sub">7:48 PM</span></td>
+        <td data-label="Payee">—</td><td data-label="Category">Goal</td><td data-label="Account">BDO Savings → Emergency fund</td><td data-label="Note" class="muted">Monthly top-up</td>
+        <td data-label="Amount" class="num r">₱5,000.00</td>
+        <td class="actions"><button class="btn sec sm"><svg><use href="#pencil"/></svg>Edit</button><button class="btn sec sm"><svg><use href="#trash"/></svg>Remove</button></td>
+      </tr>
+      <tr>
+        <td data-label="Date" class="num">Nov 12, 2026<span class="sub">12:30 PM</span></td>
+        <td data-label="Payee">Meralco</td><td data-label="Category">Bill</td><td data-label="Account">GCash</td><td data-label="Note" class="muted">&nbsp;</td>
+        <td data-label="Amount" class="num r">−₱2,140.50</td>
+        <td class="actions"><button class="btn sec sm"><svg><use href="#pencil"/></svg>Edit</button><button class="btn sec sm"><svg><use href="#trash"/></svg>Remove</button></td>
+      </tr>
+    </tbody>
+  </table>
+  </div>
+  <p class="hint">Prototype only: no data, nothing saves. Rows use the real columns (All view: payee, category, account, note).</p>
+</main>
+
+<script>
+const pages=[["Overview","i1"],["Accounts","i2"],["Activity","i3"],["Recurring bills","i4"],["Installments","i5"],["Goals","i6"],["Debts","i7"],["Budget","i8"],["Settings","i9"]];
+const nav=document.getElementById("nav"),b=document.body;
+nav.innerHTML=pages.map(([l,i])=>`<a href="#" ${l==="Activity"?'aria-current="page"':""}><svg><use href="#${i}"/></svg>${l}</a>`).join("");
+const set=o=>{b.classList.toggle("open",o);document.getElementById("open").setAttribute("aria-expanded",o)};
+open.onclick=()=>set(true);close.onclick=scrim.onclick=()=>set(false);
+nav.onclick=e=>{if(e.target.closest("a")){e.preventDefault();set(false)}}; // closes on navigate
+addEventListener("keydown",e=>e.key==="Escape"&&set(false));
+theme.onclick=()=>{const r=document.documentElement,d=r.dataset.theme==="dark"||(!r.dataset.theme&&matchMedia("(prefers-color-scheme:dark)").matches);r.dataset.theme=d?"light":"dark"};
+if(/dark|light/.test(location.hash))document.documentElement.dataset.theme=location.hash.slice(1);
+</script>
+<style>.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}</style>
+</body>
+</html>
