@@ -77,10 +77,6 @@ async function Overview() {
     categories: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind }).from(categories).where(eq(categories.userId, userId)),
     limits: await tx.select({ categoryId: budgetMonths.categoryId, month: budgetMonths.month, budget: budgetMonths.budget })
       .from(budgetMonths).where(eq(budgetMonths.userId, userId)),
-    entries: await tx.select({
-      type: transactions.type, amount: transactions.amount, date: transactions.date,
-      categoryId: transactions.categoryId, billId: transactions.billId, debtId: transactions.debtId,
-    }).from(transactions).where(eq(transactions.userId, userId)),
   }));
 
   if (data.balances.accounts.length === 0) {
@@ -93,9 +89,9 @@ async function Overview() {
 
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
   const month = manilaMonth(new Date());
-  const { income, expenses } = monthTotals(month, data.entries);
+  const { income, expenses } = monthTotals(month, data.balances.entries);
   const dueSoon = billsDueSoon(data.bills.map((bill) => ({ ...bill, paid: bill.paid ?? 0 })), today);
-  const budget = budgetFor(month, data.categories, data.limits, data.entries);
+  const budget = budgetFor(month, data.categories, data.limits, data.balances.entries);
 
   return (
     <div className="grid gap-8">
