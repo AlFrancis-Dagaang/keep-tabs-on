@@ -5,8 +5,9 @@ Calm, warm and readable, like the Claude app. Notion-style layout: left sidebar 
 
 ## Layout
 - Sidebar: Overview, Accounts, Activity, Recurring bills, Installments, Goals, Debts, Budget, Settings, light/dark toggle.
-- Mobile: the sidebar becomes a horizontal scrolling top bar.
-- Wide tables scroll sideways inside their panel; the page never scrolls sideways.
+- Mobile (below 768px): the sidebar becomes a top bar with a hamburger that opens a drawer (page links with icons, theme toggle, Sign out); it closes on navigate. No bottom tab bar.
+- Mobile tables: each row is a card (title, labelled fields, amount top right, actions); Overview mini-tables are compact lists. From 768px up they are tables.
+- Between 768px and their width, wide tables scroll sideways inside their panel; the page never scrolls sideways.
 - Edit and pay forms open in a centered modal.
 
 ## Colors

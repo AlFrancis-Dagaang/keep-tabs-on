@@ -114,3 +114,13 @@ Status: todo
 - [ ] Activity time: Activity and the account history list show the time each entry was logged beside its date, from the entry's created time, labelled as logged time; no schema change
 - [ ] Edit entries: an income, expense or transfer can be edited from Activity and the account history page (type, account, amount, date, category, payee, note); an edit that would take an account below zero is refused, balances stay correct on both sides of a transfer (including to a name), and entries linked to a bill, debt, goal or installment are not editable; a unit test covers the balance effect of an edit, and the rule is proved on dev
 - [ ] Existing entries, balances, Budget and Overview figures are unchanged for the same data; the migration, if any, is additive only
+
+## T-16: Mobile layout, cards and a drawer
+Status: done
+- [x] Below 768px every table page shows each row as a card: title, labelled fields, amount top right, then actions. Pages: Activity, account history, Accounts, Recurring bills, Installments, Goals, goal detail, Debts, debt detail, Budget, Settings. From 768px up they stay tables, unchanged
+- [x] The cards come from the shared `components/ui/table.tsx` plus a `data-label` on each cell, not from a second card list per page. The header row is hidden visually but stays for screen readers; the table roles are set explicitly so `display: block` rows are still announced as rows
+- [x] Below 768px the sidebar becomes a top bar with a hamburger that opens a sheet drawer: the nine page links with icons (current page marked), the theme toggle and Sign out; it closes on navigate, on the backdrop, and on Esc. From 768px up the sidebar is unchanged
+- [x] The Overview mini-tables become compact lists below 768px (no labels)
+- [x] At 360px wide no page scrolls sideways; buttons and links in cards and the drawer are at least 44px tall
+- [x] Display only: no balance, budget, entry or schema change; `pnpm lint`, `pnpm test` and `pnpm build` pass
+- [x] Looked at on a phone or at 390px, signed in, light and dark, on every page above
