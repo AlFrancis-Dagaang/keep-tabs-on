@@ -104,3 +104,13 @@ Status: done
 - [x] App icon: a row of 5 square blocks, 3 white and 2 darker orange, on the clay background, in `icon-192.png`, `icon-512.png`, `apple-icon.png` and `favicon.ico`, inside the maskable safe zone
 - [x] Sign-in page: a centered card with the app icon, the name in the serif font, the tagline and a clay "Continue with Google" button, in light and dark mode
 - [x] Sign out: a "Sign out" button at the bottom of the sidebar (icon only in the phone top bar) ends the session and returns to the sign-in page
+
+## T-15: Activity polish, dates in words and editing entries
+Status: todo
+- [ ] Dates: every date the app shows is in words, like "Jan 2, 2027", on Activity, account history, Overview, Recurring bills, Installments, Goals, Debts and Budget, through one helper with a unit test (including a month boundary and a date-only string in Asia/Manila); form date inputs stay native
+- [ ] Wording: every user-facing "Delete" is "Remove" (buttons, dialog titles, confirmations, screen-reader labels), on every page; behaviour is unchanged
+- [ ] Icons: simple lucide icons on each sidebar page and on the action buttons (Add, Edit, Remove, Pay); every icon-only button has an accessible name
+- [ ] Month picker: the From/To inputs and the "This month" and "Last month" pills become a grid month picker (a button showing "November 2026" that opens a year header with previous and next arrows, a 4×3 month grid and a "This month" row); months before the earliest entry and after the current month (Asia/Manila) are dimmed and can't be picked, and the current month is easy to find; From/To stay under a small "Custom range" for single days and ranges; it works with the Activity type filter and on the account history pages
+- [ ] Activity time: Activity and the account history list show the time each entry was logged beside its date, from the entry's created time, labelled as logged time; no schema change
+- [ ] Edit entries: an income, expense or transfer can be edited from Activity and the account history page (type, account, amount, date, category, payee, note); an edit that would take an account below zero is refused, balances stay correct on both sides of a transfer (including to a name), and entries linked to a bill, debt, goal or installment are not editable; a unit test covers the balance effect of an edit, and the rule is proved on dev
+- [ ] Existing entries, balances, Budget and Overview figures are unchanged for the same data; the migration, if any, is additive only

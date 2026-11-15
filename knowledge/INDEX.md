@@ -40,6 +40,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-12](tasks/T-12.md) — Account history and Activity filters: per-account history with running balance, date filters, columns by type
 - [T-13](tasks/T-13.md) — Exclude accounts from net worth: per-account include switch, net worth counts included accounts only
 - [T-14](tasks/T-14.md) — Installments, outside transfers and notes: fixed-term purchases, transfers to a name, optional notes on five forms
+- [T-15](tasks/T-15.md) — Activity polish, dates in words and editing entries: month picker, logged time, Remove wording, icons, edit plain entries
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests
