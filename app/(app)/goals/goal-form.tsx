@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
+import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -27,7 +28,7 @@ export function GoalForm({ today, accounts, goal }: { today: string; accounts: A
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {goal ? <Button variant="ghost" size="sm">Edit</Button> : <Button size="sm">Create goal</Button>}
+        {goal ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Create goal</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -86,7 +87,7 @@ export function AddMoney(props: { goal: { id: string; name: string; accountId: s
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" disabled={props.goal.left === 0}>Add money</Button>
+        <Button variant="secondary" size="sm" disabled={props.goal.left === 0}><Banknote />Add money</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -123,7 +124,7 @@ function AddFields({ goal, accounts, today, onSaved }: { goal: { id: string; acc
         <Input id="date" name="date" type="date" defaultValue={values?.date ?? today} {...invalid(state, "date")} />
       </Field>
       <DialogFooter>
-        <Button type="submit" disabled={pending}>Add money</Button>
+        <Button type="submit" disabled={pending}><Banknote />Add money</Button>
       </DialogFooter>
     </form>
   );
@@ -133,11 +134,11 @@ export function DeleteGoal({ id, name }: { id: string; name: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">Delete</Button>
+        <Button variant="ghost" size="sm"><Trash2 />Remove</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {name}?</DialogTitle>
+          <DialogTitle>Remove {name}?</DialogTitle>
           <DialogDescription>Its transfers stay in Activity. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form action={deleteGoal}>
@@ -146,7 +147,7 @@ export function DeleteGoal({ id, name }: { id: string; name: string }) {
             <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button type="submit" variant="destructive">Delete goal</Button>
+            <Button type="submit" variant="destructive">Remove goal</Button>
           </DialogFooter>
         </form>
       </DialogContent>

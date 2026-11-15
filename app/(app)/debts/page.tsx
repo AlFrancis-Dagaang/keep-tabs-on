@@ -8,7 +8,7 @@ import { debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { directionLabels } from "@/lib/money";
+import { directionLabels, formatDate } from "@/lib/money";
 
 import { DebtForm, DebtProgress, DeleteDebt, PayDebt } from "./debt-form";
 import { getMoney } from "@/lib/settings";
@@ -72,7 +72,7 @@ async function Debts() {
                     <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
                   <TableCell>{directionLabels[row.direction]}</TableCell>
-                  <TableCell className="tabular-nums">{row.deadline}</TableCell>
+                  <TableCell className="tabular-nums">{formatDate(row.deadline)}</TableCell>
                   <TableCell>
                     <DebtProgress id={row.id} name={row.name} paid={row.paid} total={row.total} direction={row.direction} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">

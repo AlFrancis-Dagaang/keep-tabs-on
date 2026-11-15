@@ -70,7 +70,7 @@ export async function saveDebt(_: FormState, formData: FormData): Promise<FormSt
     if (id && !current) return { name: "This debt is gone. Close and refresh." };
     const payments = current ? await paidPayments(tx, current.id) : 0;
     if (current && current.direction !== debt.direction && payments > 0) {
-      return { direction: "Has payments, so its direction can't change. Delete it and add a new one." };
+      return { direction: "Has payments, so its direction can't change. Remove it and add a new one." };
     }
     const paid = debt.paidBefore + payments;
     if (paid > debt.total) return { total: `Already ${debt.direction === "owed" ? "received" : "paid"} ${money(paid)}. Enter at least that.` };

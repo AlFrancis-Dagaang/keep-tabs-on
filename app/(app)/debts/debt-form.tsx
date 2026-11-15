@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
+import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -28,7 +29,7 @@ export function DebtForm({ today, debt, locked = false }: { today: string; debt?
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {debt ? <Button variant="ghost" size="sm">Edit</Button> : <Button size="sm">Add debt</Button>}
+        {debt ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Add debt</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -101,7 +102,7 @@ export function PayDebt(props: { debt: { id: string; name: string; left: number;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" disabled={props.debt.left === 0}>{owed ? "Record receipt" : "Record payment"}</Button>
+        <Button variant="secondary" size="sm" disabled={props.debt.left === 0}><Banknote />{owed ? "Record receipt" : "Record payment"}</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -160,11 +161,11 @@ export function DeleteDebt({ id, name }: { id: string; name: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">Delete</Button>
+        <Button variant="ghost" size="sm"><Trash2 />Remove</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {name}?</DialogTitle>
+          <DialogTitle>Remove {name}?</DialogTitle>
           <DialogDescription>Its payments stay in Activity as expenses, and money received as income. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form action={deleteDebt}>
@@ -173,7 +174,7 @@ export function DeleteDebt({ id, name }: { id: string; name: string }) {
             <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button type="submit" variant="destructive">Delete debt</Button>
+            <Button type="submit" variant="destructive">Remove debt</Button>
           </DialogFooter>
         </form>
       </DialogContent>

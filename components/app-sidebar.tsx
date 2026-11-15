@@ -4,19 +4,20 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "cn";
+import { ArrowLeftRight, CalendarClock, CalendarRange, HandCoins, Landmark, LayoutDashboard, PiggyBank, Settings, Target } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const pages = [
-  { href: "/", label: "Overview" },
-  { href: "/accounts", label: "Accounts" },
-  { href: "/activity", label: "Activity" },
-  { href: "/bills", label: "Recurring bills" },
-  { href: "/installments", label: "Installments" },
-  { href: "/goals", label: "Goals" },
-  { href: "/debts", label: "Debts" },
-  { href: "/budget", label: "Budget" },
-  { href: "/settings", label: "Settings" },
+  { href: "/", label: "Overview", icon: LayoutDashboard },
+  { href: "/accounts", label: "Accounts", icon: Landmark },
+  { href: "/activity", label: "Activity", icon: ArrowLeftRight },
+  { href: "/bills", label: "Recurring bills", icon: CalendarClock },
+  { href: "/installments", label: "Installments", icon: CalendarRange },
+  { href: "/goals", label: "Goals", icon: Target },
+  { href: "/debts", label: "Debts", icon: HandCoins },
+  { href: "/budget", label: "Budget", icon: PiggyBank },
+  { href: "/settings", label: "Settings", icon: Settings },
 ];
 
 // A left sidebar from md up; below that, a top bar that scrolls sideways on its own.
@@ -41,7 +42,7 @@ function CurrentLinks() {
 }
 
 function Links({ pathname }: { pathname: string | null }) {
-  return pages.map(({ href, label }) => {
+  return pages.map(({ href, label, icon: Icon }) => {
     const current = pathname === href || !!pathname?.startsWith(`${href}/`); // keeps Debts lit on /debts/[id]
     return (
       <Link
@@ -49,10 +50,11 @@ function Links({ pathname }: { pathname: string | null }) {
         href={href}
         aria-current={current ? "page" : undefined}
         className={cn(
-          "shrink-0 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-foreground",
+          "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-foreground",
           current && "bg-accent font-medium text-foreground",
         )}
       >
+        <Icon className="size-4" />
         {label}
       </Link>
     );

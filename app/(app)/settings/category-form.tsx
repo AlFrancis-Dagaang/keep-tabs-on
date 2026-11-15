@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -17,6 +18,7 @@ export function CategoryForm({ kind, category }: { kind: Category["kind"]; categ
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant={category ? "ghost" : "default"} size="sm">
+          {category ? <Pencil /> : <Plus />}
           {category ? "Rename" : "Add category"}
         </Button>
       </DialogTrigger>
@@ -68,12 +70,13 @@ export function DeleteCategory({ category }: { category: CategoryRow }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          Delete
+          <Trash2 />
+          Remove
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {category.name}?</DialogTitle>
+          <DialogTitle>Remove {category.name}?</DialogTitle>
           <DialogDescription>Entries keep their amounts and show as Uncategorized. Its budget history goes too. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
@@ -88,7 +91,7 @@ export function DeleteCategory({ category }: { category: CategoryRow }) {
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
             <Button type="submit" variant="destructive">
-              Delete category
+              Remove category
             </Button>
           </DialogFooter>
         </form>

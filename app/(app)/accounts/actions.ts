@@ -58,11 +58,11 @@ export async function deleteAccount(formData: FormData): Promise<{ error?: strin
   const error = await withUser(userId, async (tx) => {
     const [used] = await tx.select({ id: transactions.id }).from(transactions)
       .where(and(eq(transactions.userId, userId), or(eq(transactions.accountId, id), eq(transactions.toAccountId, id)))).limit(1);
-    if (used) return "Delete its entries in Activity first.";
+    if (used) return "Remove its entries in Activity first.";
     const [goal] = await tx.select({ id: goals.id }).from(goals).where(and(eq(goals.userId, userId), eq(goals.accountId, id))).limit(1);
-    if (goal) return "Move or delete its goals first.";
+    if (goal) return "Move or remove its goals first.";
     const [installment] = await tx.select({ id: installments.id }).from(installments).where(and(eq(installments.userId, userId), eq(installments.accountId, id))).limit(1);
-    if (installment) return "Move or delete its installments first.";
+    if (installment) return "Move or remove its installments first.";
     await tx.delete(accounts).where(and(eq(accounts.id, id), eq(accounts.userId, userId)));
   });
   if (error) return { error };

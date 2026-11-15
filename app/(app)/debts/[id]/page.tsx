@@ -10,7 +10,7 @@ import { accounts, debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { directionLabels } from "@/lib/money";
+import { directionLabels, formatDate } from "@/lib/money";
 
 import { DebtProgress, PayDebt } from "../debt-form";
 import { getMoney } from "@/lib/settings";
@@ -46,7 +46,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <Link href="/debts" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Debts</Link>
-      <PageHeader title={debt.name} description={`${directionLabels[debt.direction]} · Deadline ${debt.deadline}`}>
+      <PageHeader title={debt.name} description={`${directionLabels[debt.direction]} · Deadline ${formatDate(debt.deadline)}`}>
         <PayDebt debt={{ id: debt.id, name: debt.name, left: debt.total - paid, direction: debt.direction }} accounts={balances.accounts} today={today} />
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
@@ -71,7 +71,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
             <TableBody>
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
-                  <TableCell className="pl-4 tabular-nums">{payment.date}</TableCell>
+                  <TableCell className="pl-4 tabular-nums">{formatDate(payment.date)}</TableCell>
                   <TableCell>{payment.account}</TableCell>
                   <TableCell className="pr-4 text-right tabular-nums">{money(payment.amount)}</TableCell>
                 </TableRow>

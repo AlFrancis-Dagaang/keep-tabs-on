@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,6 +20,7 @@ export function AccountForm({ account }: { account?: AccountRow }) {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant={account ? "ghost" : "default"} size="sm">
+          {account ? <Pencil /> : <Plus />}
           {account ? "Edit" : "Add account"}
         </Button>
       </DialogTrigger>
@@ -102,12 +104,13 @@ export function DeleteAccount({ account }: { account: AccountRow }) {
       }}>
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          Delete
+          <Trash2 />
+          Remove
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {account.name}?</DialogTitle>
+          <DialogTitle>Remove {account.name}?</DialogTitle>
           <DialogDescription>This removes the account and its balance from your net worth. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
@@ -124,7 +127,7 @@ export function DeleteAccount({ account }: { account: AccountRow }) {
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
             <Button type="submit" variant="destructive">
-              Delete account
+              Remove account
             </Button>
           </DialogFooter>
         </form>

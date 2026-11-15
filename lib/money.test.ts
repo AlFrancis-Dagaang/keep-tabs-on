@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatMoney, manilaMonth, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, manilaMonth, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -257,5 +257,21 @@ describe("accountHistory", () => {
 
   it("is empty when there are no entries", () => {
     expect(accountHistory({ id: a, startingBalance: 700 }, [])).toEqual([]);
+  });
+});
+
+describe("formatDate", () => {
+  it("writes a date-only string in words, without shifting the day", () => {
+    expect(formatDate("2027-01-02")).toBe("Jan 2, 2027");
+    expect(formatDate("2026-12-31")).toBe("Dec 31, 2026");
+    expect(formatDate("2027-01-01")).toBe("Jan 1, 2027");
+    expect(formatDate("2028-02-29")).toBe("Feb 29, 2028");
+  });
+});
+
+describe("formatTime", () => {
+  it("reads the moment on the Manila clock, across UTC midnight", () => {
+    expect(formatTime(new Date("2026-11-15T16:30:00Z"))).toBe("12:30 AM");
+    expect(formatTime(new Date("2026-11-15T07:42:00Z"))).toBe("3:42 PM");
   });
 });

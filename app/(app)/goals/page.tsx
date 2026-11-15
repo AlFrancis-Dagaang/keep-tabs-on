@@ -10,6 +10,7 @@ import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
 
 import { AddMoney, DeleteGoal, GoalForm, GoalProgress } from "./goal-form";
+import { formatDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 export default function GoalsPage() {
@@ -72,7 +73,7 @@ async function Goals() {
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.target)}</div>
                     <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
-                  <TableCell className="tabular-nums">{row.deadline}</TableCell>
+                  <TableCell className="tabular-nums">{formatDate(row.deadline)}</TableCell>
                   <TableCell>{row.account}</TableCell>
                   <TableCell>
                     <GoalProgress id={row.id} name={row.name} saved={row.saved} target={row.target} />

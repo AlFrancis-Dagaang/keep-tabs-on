@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
+import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -19,7 +20,7 @@ export function InstallmentForm({ today, accounts, installment }: { today: strin
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {installment ? <Button variant="ghost" size="sm">Edit</Button> : <Button size="sm">Add installment</Button>}
+        {installment ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Add installment</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -94,7 +95,7 @@ export function PayInstallment(props: { installment: { id: string; name: string;
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Record payment</Button>
+        <Button variant="secondary" size="sm"><Banknote />Record payment</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -131,11 +132,11 @@ export function DeleteInstallment({ id, name }: { id: string; name: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">Delete</Button>
+        <Button variant="ghost" size="sm"><Trash2 />Remove</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {name}?</DialogTitle>
+          <DialogTitle>Remove {name}?</DialogTitle>
           <DialogDescription>Its payments stay in Activity as expenses. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form action={deleteInstallment}>
@@ -144,7 +145,7 @@ export function DeleteInstallment({ id, name }: { id: string; name: string }) {
             <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button type="submit" variant="destructive">Delete installment</Button>
+            <Button type="submit" variant="destructive">Remove installment</Button>
           </DialogFooter>
         </form>
       </DialogContent>

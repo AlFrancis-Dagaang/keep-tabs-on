@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
+import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -30,7 +31,7 @@ export function BillForm({ today, bill }: { today: string; bill?: EditableBill }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        {bill ? <Button variant="ghost" size="sm">Edit</Button> : <Button size="sm">Add bill</Button>}
+        {bill ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Add bill</Button>}
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -94,7 +95,7 @@ export function PayBill(props: { bill: { id: string; name: string; left: number 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant="secondary" size="sm">Record payment</Button>
+        <Button variant="secondary" size="sm"><Banknote />Record payment</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -151,11 +152,11 @@ export function DeleteBill({ id, name }: { id: string; name: string }) {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">Delete</Button>
+        <Button variant="ghost" size="sm"><Trash2 />Remove</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete {name}?</DialogTitle>
+          <DialogTitle>Remove {name}?</DialogTitle>
           <DialogDescription>Its payments stay in Activity as expenses. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form action={deleteBill}>
@@ -164,7 +165,7 @@ export function DeleteBill({ id, name }: { id: string; name: string }) {
             <DialogClose asChild>
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
-            <Button type="submit" variant="destructive">Delete bill</Button>
+            <Button type="submit" variant="destructive">Remove bill</Button>
           </DialogFooter>
         </form>
       </DialogContent>

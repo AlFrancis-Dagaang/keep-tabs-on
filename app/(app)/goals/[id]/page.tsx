@@ -13,6 +13,7 @@ import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
 
 import { AddMoney, GoalProgress } from "../goal-form";
+import { formatDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const toAccounts = alias(accounts, "to_accounts");
@@ -52,7 +53,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <Link href="/goals" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Goals</Link>
-      <PageHeader title={goal.name} description={`Deadline ${goal.deadline} · Saved in ${goal.account}`}>
+      <PageHeader title={goal.name} description={`Deadline ${formatDate(goal.deadline)} · Saved in ${goal.account}`}>
         <AddMoney goal={{ id: goal.id, name: goal.name, accountId: goal.accountId, left: goal.target - saved }} accounts={balances.accounts} today={today} />
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
@@ -78,7 +79,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
             <TableBody>
               {transfers.map((transfer) => (
                 <TableRow key={transfer.id}>
-                  <TableCell className="pl-4 tabular-nums">{transfer.date}</TableCell>
+                  <TableCell className="pl-4 tabular-nums">{formatDate(transfer.date)}</TableCell>
                   <TableCell>{transfer.from}</TableCell>
                   <TableCell>{transfer.to}</TableCell>
                   <TableCell className="pr-4 text-right tabular-nums">{money(transfer.amount)}</TableCell>

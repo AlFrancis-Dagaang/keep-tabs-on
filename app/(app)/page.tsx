@@ -2,6 +2,7 @@ import { and, asc, desc, eq, gt, sql, sum } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
+import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { PixelBar } from "@/components/pixel-bar";
@@ -10,7 +11,7 @@ import { accounts, bills, budgetMonths, categories, debts, goals, transactions }
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { billsDueSoon, budgetFor, directionLabels, manilaMonth, monthTotals, netWorth, progressBlocks } from "@/lib/money";
+import { billsDueSoon, budgetFor, directionLabels, formatDate, manilaMonth, monthTotals, netWorth, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 
@@ -126,7 +127,7 @@ async function Overview() {
             <TableRow key={bill.id}>
               <TableCell className="pl-4 font-medium">{bill.name}</TableCell>
               <TableCell className="tabular-nums">
-                {bill.nextDueDate}
+                {formatDate(bill.nextDueDate)}
                 {bill.nextDueDate < today && (
                   <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">Overdue</span>
                 )}
@@ -157,7 +158,7 @@ async function Overview() {
         <MiniTable>
           {data.recent.map((row) => (
             <TableRow key={row.id}>
-              <TableCell className="pl-4 tabular-nums">{row.date}</TableCell>
+              <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} /></TableCell>
               <TableCell>
                 {row.payee ?? row.category ?? <span className="text-muted-foreground">—</span>}
                 <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</div>

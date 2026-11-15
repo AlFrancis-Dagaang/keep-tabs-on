@@ -44,6 +44,12 @@ Theme follows the system light/dark setting, with a manual toggle.
 - App icon: 5 blocks in a row, 3 white and 2 darker orange, on clay.
 - Sign-in: a centered card with the icon, the serif name, the tagline and a clay Google button. Sign out sits at the bottom of the sidebar.
 
+## Dates, icons and wording
+- Dates are shown in words, "Jan 2, 2027" (`formatDate`); form date inputs stay native. Rows dated today carry a small "Today" tag. Activity and account history show the logged time as a muted second line.
+- Icons are lucide, 16px, before the text (never instead of it), decorative. Sidebar pages and Add, Edit, Remove and Record payment buttons have one.
+- Removing something says "Remove", never "Delete".
+- Month picker: a button with the selected month ("November 2026") opens a year header with arrows, a 4×3 month grid, "This month", "Month to date" and "All dates". Months before the earliest entry or after the current one are dimmed; the current month is underlined. Single days and ranges sit under "Custom range".
+
 ## Overview page
 Four stat cards (net worth, income this month, expenses this month, bills due in 7 days), then mini tables for accounts, upcoming bills, goals, debts and recent activity.
 

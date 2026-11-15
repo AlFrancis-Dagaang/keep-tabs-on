@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
+import { Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ export function EntryForm(options: Options) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm">Add entry</Button>
+        <Button size="sm"><Plus />Add entry</Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -170,12 +171,13 @@ export function DeleteEntry({ id, label }: { id: string; label: string }) {
     >
       <DialogTrigger asChild>
         <Button variant="ghost" size="sm">
-          Delete
+          <Trash2 />
+          Remove
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Delete this entry?</DialogTitle>
+          <DialogTitle>Remove this entry?</DialogTitle>
           <DialogDescription>{label}. The account balances change back. This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
@@ -192,7 +194,7 @@ export function DeleteEntry({ id, label }: { id: string; label: string }) {
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
             <Button type="submit" variant="destructive">
-              Delete entry
+              Remove entry
             </Button>
           </DialogFooter>
         </form>

@@ -160,3 +160,16 @@ export function accountHistory<T extends Entry>(account: Pick<Account, "id" | "s
     return { ...entry, change, balanceAfter: balance };
   });
 }
+
+const dateFormat = new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
+const timeFormat = new Intl.DateTimeFormat("en-US", { hour: "numeric", minute: "2-digit", timeZone: "Asia/Manila" });
+
+/** "2027-01-02" → "Jan 2, 2027". Read as UTC so the server's zone never shifts the day. */
+export function formatDate(date: string): string {
+  return dateFormat.format(new Date(`${date}T00:00:00Z`));
+}
+
+/** The clock time of a moment on the Asia/Manila clock: "3:42 PM". */
+export function formatTime(moment: Date): string {
+  return timeFormat.format(moment);
+}

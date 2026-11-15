@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 import { DateFilter } from "@/components/date-filter";
+import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -39,7 +40,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
     // shortcut: loads every entry of the account, add paging when one account passes a few thousand rows.
     rows: await tx
       .select({
-        id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, payee: transactions.payee, note: transactions.note,
+        id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee, note: transactions.note,
         accountId: transactions.accountId, toAccountId: transactions.toAccountId, account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName,
         category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
       })
@@ -61,7 +62,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
     <>
       <Link href="/accounts" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Accounts</Link>
       <PageHeader title={account.name} description={`Balance ${money(current)}`} />
-      <DateFilter path={`/accounts/${account.id}`} today={today} from={from} to={to} />
+      <DateFilter path={`/accounts/${account.id}`} today={today} min={rows[0]?.date ?? today} from={from} to={to} />
       {shown.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
           {history.length === 0 ? "No entries yet. Log one in Activity." : "No entries in this range."}
@@ -86,7 +87,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
                   : row.payee ? `${row.payee} · ${label}` : label;
                 return (
                   <TableRow key={row.id}>
-                    <TableCell className="pl-4 tabular-nums">{row.date}</TableCell>
+                    <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} loggedAt={row.createdAt} /></TableCell>
                     <TableCell>
                       {details}
                       {row.note && <p className="text-sm text-muted-foreground">{row.note}</p>}

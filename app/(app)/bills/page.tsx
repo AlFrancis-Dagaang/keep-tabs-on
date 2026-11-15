@@ -8,7 +8,7 @@ import { bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { repeatLabels } from "@/lib/money";
+import { formatDate, repeatLabels } from "@/lib/money";
 
 import { BillForm, BillProgress, DeleteBill, PayBill } from "./bill-form";
 import { getMoney } from "@/lib/settings";
@@ -74,7 +74,7 @@ async function Bills() {
                     </TableCell>
                     <TableCell>{repeatLabels[row.repeat]}</TableCell>
                     <TableCell className="tabular-nums">
-                      {row.nextDueDate}
+                      {formatDate(row.nextDueDate)}
                       {row.nextDueDate < today && (
                         <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">Overdue</span>
                       )}

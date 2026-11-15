@@ -9,7 +9,7 @@ import { accounts, installments, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { progressBlocks } from "@/lib/money";
+import { formatDate, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 import { DeleteInstallment, InstallmentForm, PayInstallment } from "./installment-form";
@@ -82,7 +82,7 @@ async function Installments() {
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">Finished</span>
                       ) : (
                         <>
-                          {row.nextDueDate}
+                          {formatDate(row.nextDueDate)}
                           {row.nextDueDate < today && (
                             <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">Overdue</span>
                           )}
