@@ -66,7 +66,7 @@ function CategoryTable({ title, kind, rows }: { title: string; kind: Category["k
       {rows.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No {kind} categories yet. Add one with Add category.</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -78,7 +78,7 @@ function CategoryTable({ title, kind, rows }: { title: string; kind: Category["k
               {rows.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="pl-4">{category.name}</TableCell>
-                  <TableCell className="pr-4 text-right whitespace-nowrap">
+                  <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
                     <CategoryForm kind={kind} category={category} />
                     <DeleteCategory category={category} />
                   </TableCell>

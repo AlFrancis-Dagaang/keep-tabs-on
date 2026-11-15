@@ -51,7 +51,7 @@ async function Debts() {
       ) : rows.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No debts yet. Add a credit card, a loan, or money a friend owes you.</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -71,15 +71,15 @@ async function Debts() {
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.total)}</div>
                     <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
-                  <TableCell>{directionLabels[row.direction]}</TableCell>
-                  <TableCell className="tabular-nums">{formatDate(row.deadline)}</TableCell>
-                  <TableCell>
+                  <TableCell data-label="Type">{directionLabels[row.direction]}</TableCell>
+                  <TableCell data-label="Deadline" className="tabular-nums">{formatDate(row.deadline)}</TableCell>
+                  <TableCell data-label="Progress">
                     <DebtProgress id={row.id} name={row.name} paid={row.paid} total={row.total} direction={row.direction} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                       {money(row.paid)} of {money(row.total)} {row.direction === "owed" ? "received" : "paid"}
                     </div>
                   </TableCell>
-                  <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">
+                  <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
                     <PayDebt debt={{ id: row.id, name: row.name, left: row.total - row.paid, direction: row.direction }} accounts={balances.accounts} today={today} />
                     <DebtForm today={today} debt={row} locked={row.paid > row.paidBefore} />
                     <DeleteDebt id={row.id} name={row.name} />

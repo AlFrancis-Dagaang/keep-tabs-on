@@ -53,7 +53,7 @@ async function Goals() {
       ) : rows.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No goals yet. Create one: an emergency fund, a trip, a new phone.</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -73,15 +73,15 @@ async function Goals() {
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.target)}</div>
                     <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
-                  <TableCell className="tabular-nums">{formatDate(row.deadline)}</TableCell>
-                  <TableCell>{row.account}</TableCell>
-                  <TableCell>
+                  <TableCell data-label="Deadline" className="tabular-nums">{formatDate(row.deadline)}</TableCell>
+                  <TableCell data-label="Saved in">{row.account}</TableCell>
+                  <TableCell data-label="Saved">
                     <GoalProgress id={row.id} name={row.name} saved={row.saved} target={row.target} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                       {money(row.saved)} of {money(row.target)}
                     </div>
                   </TableCell>
-                  <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">
+                  <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
                     <AddMoney goal={{ id: row.id, name: row.name, accountId: row.accountId, left: row.target - row.saved }} accounts={balances.accounts} today={today} />
                     <GoalForm today={today} accounts={balances.accounts} goal={row} />
                     <DeleteGoal id={row.id} name={row.name} />

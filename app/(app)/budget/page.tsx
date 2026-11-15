@@ -98,7 +98,7 @@ async function Totals({ month, leftLabel }: { month: Month; leftLabel: string })
 async function CategoryTable({ month, editable = false, leftLabel = "Left" }: { month: Month; editable?: boolean; leftLabel?: string }) {
   const money = await getMoney();
   return (
-    <div className="rounded-xl border bg-surface">
+    <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
       <Table>
         <TableHeader>
           <TableRow>
@@ -113,7 +113,7 @@ async function CategoryTable({ month, editable = false, leftLabel = "Left" }: { 
           {month.rows.map((row) => (
             <TableRow key={row.id}>
               <TableCell className="pl-4 font-medium">{row.name}</TableCell>
-              <TableCell>
+              <TableCell data-label="Spent">
                 {row.budget !== null && (
                   <PixelBar
                     blocks={progressBlocks(row.spent, row.budget)}
@@ -123,12 +123,12 @@ async function CategoryTable({ month, editable = false, leftLabel = "Left" }: { 
                 )}
                 <div className="mt-1 text-sm tabular-nums">{money(row.spent)}</div>
               </TableCell>
-              <TableCell className="text-right tabular-nums">{row.budget === null ? "No limit" : money(row.budget)}</TableCell>
-              <TableCell className={`text-right tabular-nums ${editable ? "" : "pr-4"} ${row.left !== null && row.left < 0 ? "text-destructive" : ""}`}>
+              <TableCell data-label="Budget" className="text-right tabular-nums">{row.budget === null ? "No limit" : money(row.budget)}</TableCell>
+              <TableCell data-label={leftLabel} className={`text-right tabular-nums ${editable ? "" : "pr-4"} ${row.left !== null && row.left < 0 ? "text-destructive" : ""}`}>
                 {row.left === null ? "—" : money(row.left)}
               </TableCell>
               {editable && (
-                <TableCell className="pr-4 text-right whitespace-nowrap">
+                <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
                   <LimitForm category={row} />
                 </TableCell>
               )}

@@ -10,7 +10,7 @@ export function SignOutButton() {
   return (
     <Button
       variant="ghost"
-      className="text-muted-foreground max-md:size-9 max-md:px-0 md:justify-start"
+      className="justify-start text-muted-foreground max-md:h-11"
       aria-label="Sign out"
       onClick={async () => {
         await authClient.signOut();
@@ -19,7 +19,7 @@ export function SignOutButton() {
       }}
     >
       <LogOut />
-      <span className="max-md:hidden">Sign out</span>
+      Sign out
     </Button>
   );
 }

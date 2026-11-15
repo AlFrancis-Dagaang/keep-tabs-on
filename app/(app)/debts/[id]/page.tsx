@@ -59,7 +59,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
       {payments.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">{owed ? "No receipts yet. Record one with Record receipt." : "No payments yet. Record one with Record payment."}</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -72,8 +72,8 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
                   <TableCell className="pl-4 tabular-nums">{formatDate(payment.date)}</TableCell>
-                  <TableCell>{payment.account}</TableCell>
-                  <TableCell className="pr-4 text-right tabular-nums">{money(payment.amount)}</TableCell>
+                  <TableCell data-label={owed ? "To" : "From"}>{payment.account}</TableCell>
+                  <TableCell data-card="end" className="pr-4 text-right tabular-nums">{money(payment.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

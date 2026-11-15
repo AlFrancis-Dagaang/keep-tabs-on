@@ -24,27 +24,26 @@ type Search = Promise<{ type?: string; from?: string; to?: string }>;
 type Row = Pick<Transaction, "type" | "payee" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId"> & { account: string; toAccount: string | null; category: string | null };
 
 const dash = <span className="text-muted-foreground">—</span>;
-const payee = { head: "Payee", cell: (row: Row) => <TableCell>{row.payee ?? dash}</TableCell> };
-const source = { ...payee, head: "Source" };
-const note = { head: "Note", cell: (row: Row) => <TableCell className="text-muted-foreground">{row.note}</TableCell> };
+const payee = (head: string) => ({ head, cell: (row: Row) => <TableCell data-label={head}>{row.payee ?? dash}</TableCell> });
+const note = { head: "Note", cell: (row: Row) => <TableCell data-label={row.note ? "Note" : undefined} className="text-muted-foreground">{row.note}</TableCell> };
 const category = {
   head: "Category",
   cell: (row: Row) => (
-    <TableCell className={cn(!row.category && !row.billId && !row.debtId && !row.installmentId && "text-muted-foreground")}>
+    <TableCell data-label="Category" className={cn(!row.category && !row.billId && !row.debtId && !row.installmentId && "text-muted-foreground")}>
       {row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : row.installmentId ? "Installment" : "Uncategorized"))}
     </TableCell>
   ),
 };
-const account = { head: "Account", cell: (row: Row) => <TableCell>{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</TableCell> };
+const account = { head: "Account", cell: (row: Row) => <TableCell data-label="Account">{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</TableCell> };
 // Only the columns that fit the type; "All" mixes the three, so it keeps one shared set.
 const columns: Record<"all" | Transaction["type"], { head: string; cell: (row: Row) => React.ReactNode }[]> = {
-  all: [payee, category, account, note],
-  expense: [category, payee, account, note],
-  income: [category, source, account, note],
+  all: [payee("Payee"), category, account, note],
+  expense: [category, payee("Payee"), account, note],
+  income: [category, payee("Source"), account, note],
   transfer: [
-    { head: "From", cell: (row) => <TableCell>{row.account}</TableCell> },
-    { head: "To", cell: (row) => <TableCell>{row.toAccount ?? row.toName}</TableCell> },
-    { head: "For", cell: (row) => <TableCell>{row.goalId ? "Goal" : dash}</TableCell> },
+    { head: "From", cell: (row) => <TableCell data-label="From">{row.account}</TableCell> },
+    { head: "To", cell: (row) => <TableCell data-label="To">{row.toAccount ?? row.toName}</TableCell> },
+    { head: "For", cell: (row) => <TableCell data-label="For">{row.goalId ? "Goal" : dash}</TableCell> },
     note,
   ],
 };
@@ -120,7 +119,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
               {from || to ? `No ${type ? `${type} ` : ""}entries in this range.` : type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}
             </p>
           ) : (
-            <div className="rounded-xl border bg-surface">
+            <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -138,8 +137,8 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                       <TableRow key={row.id}>
                         <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} loggedAt={row.createdAt} /></TableCell>
                         {cols.map((col) => <Fragment key={col.head}>{col.cell(row)}</Fragment>)}
-                        <TableCell className="text-right tabular-nums">{sign}{money(row.amount)}</TableCell>
-                        <TableCell className="pr-4 text-right">
+                        <TableCell data-card="end" className="text-right tabular-nums">{sign}{money(row.amount)}</TableCell>
+                        <TableCell data-card="actions" className="pr-4 text-right">
                           <DeleteEntry id={row.id} label={`${formatDate(row.date)} · ${where} · ${sign}${money(row.amount)}`} />
                         </TableCell>
                       </TableRow>

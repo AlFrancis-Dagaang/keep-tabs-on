@@ -55,7 +55,7 @@ async function Installments() {
       ) : rows.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No installments yet. Add a phone, an appliance or anything you pay in monthly parts.</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -76,8 +76,8 @@ async function Installments() {
                       <div className="text-sm text-muted-foreground tabular-nums">{money(row.monthlyAmount)} × {row.months} = {money(row.monthlyAmount * row.months)}</div>
                       <div className="text-sm text-muted-foreground">{row.note}</div>
                     </TableCell>
-                    <TableCell>{row.account}</TableCell>
-                    <TableCell className="tabular-nums">
+                    <TableCell data-label="Paid from">{row.account}</TableCell>
+                    <TableCell data-label="Next due" className="tabular-nums">
                       {finished ? (
                         <span className="rounded-full bg-secondary px-2 py-0.5 text-xs font-medium text-secondary-foreground">Finished</span>
                       ) : (
@@ -89,11 +89,11 @@ async function Installments() {
                         </>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="Progress">
                       <PixelBar blocks={progressBlocks(row.paid, row.months)} label={`${row.name}: ${row.paid} of ${row.months} paid`} />
                       <div className="mt-1 text-sm text-muted-foreground tabular-nums">{row.paid} of {row.months} paid</div>
                     </TableCell>
-                    <TableCell className="pr-4 text-right whitespace-nowrap">
+                    <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
                       {!finished && <PayInstallment installment={row} today={today} />}
                       <InstallmentForm today={today} accounts={balances.accounts} installment={row} />
                       <DeleteInstallment id={row.id} name={row.name} />

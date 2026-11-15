@@ -66,7 +66,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
       {transfers.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No money added yet. Move some in with Add money.</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -80,9 +80,9 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
               {transfers.map((transfer) => (
                 <TableRow key={transfer.id}>
                   <TableCell className="pl-4 tabular-nums">{formatDate(transfer.date)}</TableCell>
-                  <TableCell>{transfer.from}</TableCell>
-                  <TableCell>{transfer.to}</TableCell>
-                  <TableCell className="pr-4 text-right tabular-nums">{money(transfer.amount)}</TableCell>
+                  <TableCell data-label="From">{transfer.from}</TableCell>
+                  <TableCell data-label="To">{transfer.to}</TableCell>
+                  <TableCell data-card="end" className="pr-4 text-right tabular-nums">{money(transfer.amount)}</TableCell>
                 </TableRow>
               ))}
             </TableBody>

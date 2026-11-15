@@ -51,7 +51,7 @@ async function Bills() {
       ) : rows.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No bills yet. Add rent, internet or a subscription.</p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -72,20 +72,20 @@ async function Bills() {
                       <div className="text-sm text-muted-foreground tabular-nums">{money(row.amount)}</div>
                       <div className="text-sm text-muted-foreground">{row.note}</div>
                     </TableCell>
-                    <TableCell>{repeatLabels[row.repeat]}</TableCell>
-                    <TableCell className="tabular-nums">
+                    <TableCell data-label="Repeats">{repeatLabels[row.repeat]}</TableCell>
+                    <TableCell data-label="Next due" className="tabular-nums">
                       {formatDate(row.nextDueDate)}
                       {row.nextDueDate < today && (
                         <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">Overdue</span>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell data-label="This cycle">
                       <BillProgress id={row.id} name={row.name} paid={paid} amount={row.amount} />
                       <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                         {money(paid)} of {money(row.amount)}
                       </div>
                     </TableCell>
-                    <TableCell className="pr-4 text-right whitespace-nowrap">
+                    <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
                       <PayBill bill={{ id: row.id, name: row.name, left: row.amount - paid }} accounts={balances.accounts} today={today} />
                       <BillForm today={today} bill={row} />
                       <DeleteBill id={row.id} name={row.name} />

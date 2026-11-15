@@ -39,7 +39,7 @@ async function AccountsTable() {
 
   const excluded = rows.filter((account) => !account.includeInNetWorth);
   return (
-    <div className="rounded-xl border bg-surface">
+    <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
       <Table>
         <TableHeader>
           <TableRow>
@@ -56,8 +56,8 @@ async function AccountsTable() {
                 <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
                 {!account.includeInNetWorth && <div className="text-sm text-muted-foreground">Not in net worth</div>}
               </TableCell>
-              <TableCell className="text-right tabular-nums">{money(account.balance)}</TableCell>
-              <TableCell className="relative z-10 pr-4 text-right whitespace-nowrap">
+              <TableCell data-card="end" className="text-right tabular-nums">{money(account.balance)}</TableCell>
+              <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
                 <AccountForm account={account} />
                 <DeleteAccount account={account} />
               </TableCell>

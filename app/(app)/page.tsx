@@ -197,7 +197,7 @@ function Section({ title, href, empty, children }: { title: string; href: string
 function MiniTable({ children }: { children: ReactNode }) {
   return (
     <div className="rounded-xl border bg-surface">
-      <Table>
+      <Table list>
         <TableBody>{children}</TableBody>
       </Table>
     </div>

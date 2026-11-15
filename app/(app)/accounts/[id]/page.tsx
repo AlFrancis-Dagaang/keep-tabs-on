@@ -68,7 +68,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
           {history.length === 0 ? "No entries yet. Log one in Activity." : "No entries in this range."}
         </p>
       ) : (
-        <div className="rounded-xl border bg-surface">
+        <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
           <Table>
             <TableHeader>
               <TableRow>
@@ -88,12 +88,12 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
                 return (
                   <TableRow key={row.id}>
                     <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} loggedAt={row.createdAt} /></TableCell>
-                    <TableCell>
+                    <TableCell data-label="Details">
                       {details}
                       {row.note && <p className="text-sm text-muted-foreground">{row.note}</p>}
                     </TableCell>
-                    <TableCell className="text-right tabular-nums">{row.change > 0 ? "+" : "−"}{money(Math.abs(row.change))}</TableCell>
-                    <TableCell className="pr-4 text-right tabular-nums">{money(row.balanceAfter)}</TableCell>
+                    <TableCell data-card="end" className="text-right tabular-nums">{row.change > 0 ? "+" : "−"}{money(Math.abs(row.change))}</TableCell>
+                    <TableCell data-label="Balance" className="pr-4 text-right tabular-nums">{money(row.balanceAfter)}</TableCell>
                   </TableRow>
                 );
               })}
