@@ -7,7 +7,7 @@ import { z } from "zod";
 import { DeleteEntry, EditPayment } from "@/app/(app)/activity/entry-form";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -85,13 +85,12 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
                 <TableRow key={transfer.id}>
                   <TableCell className="pl-4 tabular-nums">
                     {formatDate(transfer.date)}
-                    <RowMenu name={`transfer on ${formatDate(transfer.date)}`} labels={["Edit", "Remove"]} />
                   </TableCell>
                   <TableCell data-label="From">{transfer.from}</TableCell>
                   <TableCell data-label="To">{transfer.to}</TableCell>
                   <TableCell data-label={transfer.note ? "Note" : undefined} className="text-muted-foreground">{transfer.note}</TableCell>
                   <TableCell data-card="end" className="text-right tabular-nums">{money(transfer.amount)}</TableCell>
-                  <TableCell data-card="actions" className="pr-4 text-right max-md:hidden">
+                  <TableCell data-card="actions" className="pr-4 text-right">
                     <RowActions
                       items={[
                         // The goal's own account can't be the one money comes from.

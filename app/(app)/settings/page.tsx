@@ -2,7 +2,7 @@ import { asc, eq } from "drizzle-orm";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { categories, type Category } from "@/db/schema";
@@ -80,9 +80,8 @@ function CategoryTable({ title, kind, rows }: { title: string; kind: Category["k
                 <TableRow key={category.id}>
                   <TableCell className="pl-4">
                     {category.name}
-                    <RowMenu name={category.name} labels={["Rename", "Remove"]} />
                   </TableCell>
-                  <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap max-md:hidden">
+                  <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
                     <RowActions items={[{ label: "Rename", node: <CategoryForm kind={kind} category={category} /> }, { label: "Remove", node: <DeleteCategory category={category} /> }]} />
                   </TableCell>
                 </TableRow>

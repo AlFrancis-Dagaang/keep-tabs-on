@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -73,7 +73,6 @@ async function Goals() {
                     <Link href={`/goals/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.target)}</div>
                     <div className="text-sm text-muted-foreground">{row.note}</div>
-                    <RowMenu name={row.name} labels={["Edit", "Remove"]} />
                   </TableCell>
                   <TableCell data-label="Deadline" className="tabular-nums">{formatDate(row.deadline)}</TableCell>
                   <TableCell data-label="Saved in">{row.account}</TableCell>

@@ -7,7 +7,7 @@ import { DateFilter } from "@/components/date-filter";
 import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, categories, transactions, type Transaction } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -137,11 +137,10 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                     return (
                       <TableRow key={row.id}>
                         <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} loggedAt={row.createdAt} />
-                          <RowMenu name={`${where} on ${formatDate(row.date)}`} labels={isLinked(row) ? ["Remove"] : ["Edit", "Remove"]} />
                         </TableCell>
                         {cols.map((col) => <Fragment key={col.head}>{col.cell(row)}</Fragment>)}
                         <TableCell data-card="end" className="text-right tabular-nums">{sign}{money(row.amount)}</TableCell>
-                        <TableCell data-card="actions" className="pr-4 text-right max-md:hidden">
+                        <TableCell data-card="actions" className="pr-4 text-right">
                           <RowActions
                             items={[
                               { label: "Edit", node: !isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} /> },

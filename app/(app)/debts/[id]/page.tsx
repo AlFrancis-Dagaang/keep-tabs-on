@@ -6,7 +6,7 @@ import { z } from "zod";
 import { DeleteEntry, EditPayment } from "@/app/(app)/activity/entry-form";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -77,12 +77,11 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
                 <TableRow key={payment.id}>
                   <TableCell className="pl-4 tabular-nums">
                     {formatDate(payment.date)}
-                    <RowMenu name={`${owed ? "receipt" : "payment"} on ${formatDate(payment.date)}`} labels={["Edit", "Remove"]} />
                   </TableCell>
                   <TableCell data-label={owed ? "To" : "From"}>{payment.account}</TableCell>
                   <TableCell data-label={payment.note ? "Note" : undefined} className="text-muted-foreground">{payment.note}</TableCell>
                   <TableCell data-card="end" className="text-right tabular-nums">{money(payment.amount)}</TableCell>
-                  <TableCell data-card="actions" className="pr-4 text-right max-md:hidden">
+                  <TableCell data-card="actions" className="pr-4 text-right">
                     <RowActions
                       items={[
                         { label: "Edit", node: <EditPayment payment={payment} accounts={balances.accounts} accountLabel={owed ? "Received in" : "Paid from"} /> },

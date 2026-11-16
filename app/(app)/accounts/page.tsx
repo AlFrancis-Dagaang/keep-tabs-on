@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { AccountIcon } from "@/components/account-icon";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
@@ -62,10 +62,9 @@ async function AccountsTable() {
                     {!account.includeInNetWorth && <div className="text-sm text-muted-foreground">Not in net worth</div>}
                   </div>
                 </div>
-                <RowMenu name={account.name} labels={["Edit", "Remove"]} />
               </TableCell>
               <TableCell data-card="end" className="text-right tabular-nums">{money(account.balance)}</TableCell>
-              <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap max-md:hidden">
+              <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
                 <RowActions items={[{ label: "Edit", node: <AccountForm account={account} /> }, { label: "Remove", node: <DeleteAccount account={account} /> }]} />
               </TableCell>
             </TableRow>

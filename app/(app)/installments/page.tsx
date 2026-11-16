@@ -3,7 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { PixelBar } from "@/components/pixel-bar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, installments, transactions } from "@/db/schema";
@@ -76,7 +76,6 @@ async function Installments() {
                       <Link href={`/installments/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
                       <div className="text-sm text-muted-foreground tabular-nums">{money(row.monthlyAmount)} × {row.months} = {money(row.monthlyAmount * row.months)}</div>
                       <div className="text-sm text-muted-foreground">{row.note}</div>
-                      <RowMenu name={row.name} labels={["Edit", "Remove"]} />
                     </TableCell>
                     <TableCell data-label="Paid from">{row.account}</TableCell>
                     <TableCell data-label="Next due" className="tabular-nums">
@@ -95,7 +94,7 @@ async function Installments() {
                       <PixelBar blocks={progressBlocks(row.paid, row.months)} label={`${row.name}: ${row.paid} of ${row.months} paid`} />
                       <div className="mt-1 text-sm text-muted-foreground tabular-nums">{row.paid} of {row.months} paid</div>
                     </TableCell>
-                    <TableCell data-card="actions" className={`relative z-10 pr-4 text-right whitespace-nowrap${finished ? " max-md:hidden" : ""}`}>
+                    <TableCell data-card="actions" className={`relative z-10 pr-4 text-right whitespace-nowrap${finished ? "" : ""}`}>
                       {!finished && <PayInstallment installment={row} today={today} />}
                       <RowActions items={[{ label: "Edit", node: <InstallmentForm today={today} accounts={balances.accounts} installment={row} /> }, { label: "Remove", node: <DeleteInstallment id={row.id} name={row.name} /> }]} />
                     </TableCell>

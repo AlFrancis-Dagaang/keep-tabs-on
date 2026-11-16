@@ -1,5 +1,5 @@
 import { DeleteEntry, EditPayment } from "@/app/(app)/activity/entry-form";
-import { RowActions, RowMenu } from "@/components/row-menu";
+import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { formatDate } from "@/lib/money";
 
@@ -27,12 +27,11 @@ export function PaymentHistory({ rows, money, accounts }: {
             <TableRow key={row.id}>
               <TableCell className="pl-4 tabular-nums">
                 {formatDate(row.date)}
-                <RowMenu name={`payment on ${formatDate(row.date)}`} labels={["Edit", "Remove"]} />
               </TableCell>
               <TableCell data-label="Paid from">{row.account}</TableCell>
               <TableCell data-label={row.note ? "Note" : undefined} className="text-muted-foreground">{row.note}</TableCell>
               <TableCell data-card="end" className="text-right tabular-nums">{money(row.amount)}</TableCell>
-              <TableCell data-card="actions" className="pr-4 text-right max-md:hidden">
+              <TableCell data-card="actions" className="pr-4 text-right">
                 <RowActions
                   items={[
                     { label: "Edit", node: <EditPayment payment={row} accounts={accounts} amountLocked={row.locked} /> },
