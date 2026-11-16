@@ -3,11 +3,12 @@ import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { Fragment, Suspense } from "react";
 import { cn } from "cn";
-import { DateFilter } from "@/components/date-filter";
 import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
+import { MonthPicker } from "@/components/month-picker";
 import { PageHeader } from "@/components/page-header";
 import { RowActions } from "@/components/row-actions";
+import { TypeFilter } from "@/components/type-filter";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, categories, transactions, type Transaction } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -99,22 +100,10 @@ async function Activity({ searchParams }: { searchParams: Search }) {
         </p>
       ) : (
         <>
-          <nav aria-label="Filter by type" className="mb-4 flex flex-wrap gap-2">
-            {[undefined, ...types].map((t) => (
-              <Link
-                key={t ?? "all"}
-                href={typeHref(t)}
-                aria-current={t === type ? "page" : undefined}
-                className={cn(
-                  "rounded-full border px-3 py-1 text-sm capitalize text-muted-foreground hover:bg-accent hover:text-foreground",
-                  t === type && "bg-accent font-medium text-foreground",
-                )}
-              >
-                {t ?? "All"}
-              </Link>
-            ))}
-          </nav>
-          <DateFilter path="/activity" today={today} min={earliest ?? today} from={from} to={to} keep={type ? { type } : undefined} />
+          <div className="mb-4 flex gap-2 max-md:[&>button]:flex-1">
+            <TypeFilter items={[undefined, ...types].map((t) => ({ label: t ?? "All types", href: typeHref(t), current: t === type }))} />
+            <MonthPicker path="/activity" today={today} min={earliest ?? today} from={from} to={to} keep={type ? { type } : undefined} />
+          </div>
           {rows.length === 0 ? (
             <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
               {from || to ? `No ${type ? `${type} ` : ""}entries in this range.` : type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}
