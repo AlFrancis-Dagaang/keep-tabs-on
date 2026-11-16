@@ -24,6 +24,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Architecture update](decisions/2026-11-14-stack-2.md) — budget limits as a log, settings table, dev branch; updates the 2026-11-09 stack record
 - [Vercel and Neon share a region](decisions/2026-11-14-vercel-and-neon-same-region.md) — functions run in sin1 next to Neon; region ruled out as the cause of slow loads
 - [Pin Vercel functions to sin1](decisions/2026-11-15-pin-functions-to-sin1.md) — supersedes the same-region decision; deployment regions was iad1, vercel.json now pins sin1
+- [Edit and undo linked payments](decisions/2026-11-16-edit-and-undo-payments.md) — which payment fields change, due-date roll-back via one marker column, amount locks on bills
 
 ## Best practices
 
@@ -44,6 +45,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-15](tasks/T-15.md) — Activity polish, dates in words and editing entries: month picker, logged time, Remove wording, icons, edit plain entries
 - [T-16](tasks/T-16.md) — Mobile layout, cards and a drawer: tables become cards below 768px, sidebar becomes a top bar with a drawer
 - [T-17](tasks/T-17.md) — Bill and installment detail pages: payment history with date filter, linked from the list rows
+- [T-18](tasks/T-18.md) — Edit or undo linked payments: edit from the history rows, due-date roll-back on remove, one additive marker column
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests
