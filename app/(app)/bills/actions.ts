@@ -109,10 +109,12 @@ export async function payBill(_: FormState, formData: FormData): Promise<FormSta
     if (payment.amount > left) return { errors: { amount: `Only ${money(left)} left this cycle.` } };
     if (balance(from.id)! < payment.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
 
+    const completed = payment.amount === left;
     await tx.insert(transactions).values({
       userId, type: "expense", amount: payment.amount, date: payment.date, accountId: from.id, billId: bill.id, payee: bill.name, note: payment.note,
+      // The cycle it closes: kept in SQL (a JS Date drops microseconds) so removing this payment can reopen that cycle.
+      rolledCycleStart: completed ? sql`(select cycle_start from bills where id = ${bill.id})` : null,
     });
-    const completed = payment.amount === left;
     if (completed) {
       // now() is the transaction's start, the same as this payment's created_at, so it counts toward the cycle it closed.
       await tx.update(bills).set({ nextDueDate: nextDueDate(bill.nextDueDate, bill.repeat, bill.dueDay), cycleStart: sql`now()` })

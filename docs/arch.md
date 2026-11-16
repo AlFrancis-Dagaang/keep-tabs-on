@@ -28,7 +28,7 @@ All in Neon Postgres. Every table has user_id with RLS policies (Drizzle crudPol
 - accounts: name, starting_balance, include_in_net_worth (bool, default true). Net worth = sum of included accounts' balances.
 - categories: name, kind (spending | income).
 - transactions: type (income | expense | transfer), amount, date, account_id, to_account_id (transfers),
-  category_id, payee, note, optional bill_id | debt_id | goal_id | installment_id. A transfer goes to to_account_id or, for someone outside the accounts, to_name (never both); the latter only lowers the paying account.
+  category_id, payee, note, optional bill_id | debt_id | goal_id | installment_id, rolled_cycle_start (on the bill payment that closed a cycle: the cycle_start it replaced, so removing it reopens the cycle). A transfer goes to to_account_id or, for someone outside the accounts, to_name (never both); the latter only lowers the paying account.
 - installments: name, monthly_amount, months, paid_before (months), due_day, next_due_date, account_id, note. Paid = paid_before + linked expenses; each payment is an expense with installment_id.
 - bills: name, amount, next_due_date, repeat (weekly | biweekly | monthly | quarterly | yearly).
 - note (optional text, max 200) also sits on bills, debts and goals.

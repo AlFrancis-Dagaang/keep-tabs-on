@@ -3,8 +3,10 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
+import { DeleteEntry, EditPayment } from "@/app/(app)/activity/entry-form";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { RowActions, RowMenu } from "@/components/row-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -32,7 +34,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
     debt: (await tx.select().from(debts).where(and(eq(debts.id, id.data), eq(debts.userId, userId))))[0],
     balances: await loadBalances(tx, userId),
     payments: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name })
+      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name, accountId: transactions.accountId })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(eq(transactions.debtId, id.data))
@@ -66,16 +68,31 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
                 <TableHead className="pl-4">Date</TableHead>
                 <TableHead>{owed ? "To" : "From"}</TableHead>
                 <TableHead>Note</TableHead>
-                <TableHead className="pr-4 text-right">Amount</TableHead>
+                <TableHead className="text-right">Amount</TableHead>
+                <TableHead className="w-0" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {payments.map((payment) => (
                 <TableRow key={payment.id}>
-                  <TableCell className="pl-4 tabular-nums">{formatDate(payment.date)}</TableCell>
+                  <TableCell className="pl-4 tabular-nums">
+                    {formatDate(payment.date)}
+                    <RowMenu name={`${owed ? "receipt" : "payment"} on ${formatDate(payment.date)}`} labels={["Edit", "Remove"]} />
+                  </TableCell>
                   <TableCell data-label={owed ? "To" : "From"}>{payment.account}</TableCell>
                   <TableCell data-label={payment.note ? "Note" : undefined} className="text-muted-foreground">{payment.note}</TableCell>
-                  <TableCell data-card="end" className="pr-4 text-right tabular-nums">{money(payment.amount)}</TableCell>
+                  <TableCell data-card="end" className="text-right tabular-nums">{money(payment.amount)}</TableCell>
+                  <TableCell data-card="actions" className="pr-4 text-right max-md:hidden">
+                    <RowActions
+                      items={[
+                        { label: "Edit", node: <EditPayment payment={payment} accounts={balances.accounts} accountLabel={owed ? "Received in" : "Paid from"} /> },
+                        {
+                          label: "Remove",
+                          node: <DeleteEntry id={payment.id} what={owed ? "receipt" : "payment"} label={`${formatDate(payment.date)} · ${payment.account} · ${money(payment.amount)}`} consequence={`${money(payment.amount)} goes back to what's left.`} />,
+                        },
+                      ]}
+                    />
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>

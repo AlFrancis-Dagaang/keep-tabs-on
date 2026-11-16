@@ -174,6 +174,7 @@ export const transactions = pgTable(
     debtId: uuid("debt_id").references(() => debts.id, { onDelete: "set null" }), // debt payments: expenses with no category
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }), // money added to a goal: transfers into its account
     installmentId: uuid("installment_id").references(() => installments.id, { onDelete: "set null" }), // installment payments: expenses with no category
+    rolledCycleStart: timestamp("rolled_cycle_start", { withTimezone: true }), // the bill payment that closed a cycle: the cycle_start it replaced, so a remove can reopen it
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

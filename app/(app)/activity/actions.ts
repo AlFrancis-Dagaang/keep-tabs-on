@@ -1,13 +1,13 @@
 "use server";
 
-import { and, eq } from "drizzle-orm";
+import { and, count, eq, gt, ne, sql, sum } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { categories, transactions } from "@/db/schema";
+import { bills, categories, debts, goals, installments, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { balancesAfterEdit, isLinked, parseMoney } from "@/lib/money";
+import { balancesAfterEdit, installmentDueAfterRemove, isLinked, maxPaymentAmount, parseMoney, previousDueDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const fields = ["type", "accountId", "toAccountId", "toName", "categoryId", "amount", "date", "payee", "note"] as const;
@@ -96,7 +96,65 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
   return { ok: true };
 }
 
-/** Refuses when the money it brought in is already spent: the account would drop below zero. */
+const paymentInput = z.object({ accountId: common.accountId, amount, date: common.date, note: common.note });
+
+/** Edits the amount, date, account and note of a bill, installment, debt or goal payment. Progress and due dates follow the cycle and the count, never the date. */
+export async function editPayment(_: FormState, formData: FormData): Promise<FormState> {
+  const userId = await getUserId();
+  const money = await getMoney();
+  const values = Object.fromEntries(fields.map((field) => [field, String(formData.get(field) ?? "")])) as Record<Field, string>;
+  const id = z.uuid().parse(formData.get("id"));
+  const parsed = paymentInput.safeParse(values);
+  if (!parsed.success) {
+    const { fieldErrors } = z.flattenError(parsed.error);
+    return { values, errors: Object.fromEntries(Object.entries(fieldErrors).map(([field, messages]) => [field, messages?.[0]])) };
+  }
+
+  const payment = parsed.data;
+  const errors = await withUser(userId, async (tx): Promise<FormState["errors"]> => {
+    const { accounts, entries } = await loadBalances(tx, userId, { lock: true });
+    const [old] = await tx.select().from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+    if (!old || !isLinked(old)) return { amount: "This payment no longer exists." };
+    // FKs skip RLS, so only an account found among the user's own rows gets saved.
+    if (!accounts.some((account) => account.id === payment.accountId)) return { accountId: "Pick an account." };
+    const others = async (link: ReturnType<typeof eq>) => {
+      const [row] = await tx.select({ n: sum(transactions.amount).mapWith(Number) }).from(transactions).where(and(link, ne(transactions.id, id)));
+      return row?.n ?? 0;
+    };
+    let max: number | undefined;
+    if (old.billId) {
+      const [bill] = await tx.select({ amount: bills.amount, open: sql<boolean>`${transactions.createdAt} > ${bills.cycleStart}` })
+        .from(transactions).innerJoin(bills, eq(transactions.billId, bills.id)).where(eq(transactions.id, id));
+      if (!bill) return { amount: "This bill is gone. Close and refresh." };
+      // Only the open cycle's payments change amount: an edit can't finish a cycle or change one already closed.
+      if (!bill.open && payment.amount !== old.amount) return { amount: "The amount is locked: this payment is in a finished cycle. Remove it and record it again." };
+      if (bill.open) {
+        const [row] = await tx.select({ n: sum(transactions.amount).mapWith(Number) }).from(transactions).innerJoin(bills, eq(transactions.billId, bills.id))
+          .where(and(eq(bills.id, old.billId), gt(transactions.createdAt, bills.cycleStart), ne(transactions.id, id)));
+        max = maxPaymentAmount(bill.amount, row?.n ?? 0, true);
+      }
+    } else if (old.debtId) {
+      const [debt] = await tx.select({ total: debts.total, paidBefore: debts.paidBefore }).from(debts).where(eq(debts.id, old.debtId));
+      if (debt) max = maxPaymentAmount(debt.total - debt.paidBefore, await others(eq(transactions.debtId, old.debtId)));
+    } else if (old.goalId) {
+      const [goal] = await tx.select({ target: goals.target, savedBefore: goals.savedBefore, accountId: goals.accountId }).from(goals).where(eq(goals.id, old.goalId));
+      if (goal) {
+        if (payment.accountId === goal.accountId) return { accountId: "Pick an account other than the one the goal is saved in." };
+        max = maxPaymentAmount(goal.target - goal.savedBefore, await others(eq(transactions.goalId, old.goalId)));
+      }
+    }
+    if (max !== undefined && payment.amount > max) return { amount: `Only ${money(max)} fits.` };
+    // The edit can lower the old account, the new one or a goal's account, so every account is rechecked.
+    const short = balancesAfterEdit(accounts, entries, id, { ...entries.find((entry) => entry.id === id)!, ...payment });
+    if (short) return { amount: `This would take ${short.name} below zero.` };
+    await tx.update(transactions).set({ accountId: payment.accountId, amount: payment.amount, date: payment.date, note: payment.note }).where(eq(transactions.id, id));
+  });
+  if (errors) return { values, errors };
+  refresh();
+  return { ok: true };
+}
+
+/** Refuses when the money it brought in is already spent: the account would drop below zero. A bill payment that closed a cycle reopens it, and an installment payment steps its due date back. */
 export async function deleteEntry(formData: FormData): Promise<{ error?: string }> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -110,6 +168,31 @@ export async function deleteEntry(formData: FormData): Promise<{ error?: string 
     if (credited && balance(credited)! < entry.amount) {
       const account = accounts.find((row) => row.id === credited)!;
       return `${account.name} has only ${money(account.balance)} left, so this can't be undone.`;
+    }
+    if (entry.billId) {
+      const [bill] = await tx.select().from(bills).where(eq(bills.id, entry.billId)).for("update");
+      // The payment that closed a cycle has the same created_at as the bill's cycle_start (one transaction's now()), compared in SQL.
+      const [closing] = await tx.select({ id: transactions.id }).from(transactions).innerJoin(bills, eq(transactions.billId, bills.id))
+        .where(and(eq(transactions.id, id), eq(transactions.createdAt, bills.cycleStart)));
+      if (bill && closing) {
+        if (!entry.rolledCycleStart) return "This payment closed a cycle before undo was tracked, so it can't be removed.";
+        const [next] = await tx.select({ n: count() }).from(transactions).innerJoin(bills, eq(transactions.billId, bills.id))
+          .where(and(eq(bills.id, bill.id), gt(transactions.createdAt, bills.cycleStart)));
+        if (next.n) return "The next cycle already has payments. Remove those first.";
+        await tx.update(bills).set({
+          nextDueDate: previousDueDate(bill.nextDueDate, bill.repeat, bill.dueDay),
+          cycleStart: sql`(select rolled_cycle_start from transactions where id = ${id})`,
+        }).where(eq(bills.id, bill.id));
+      }
+    }
+    if (entry.installmentId) {
+      const [installment] = await tx.select().from(installments).where(eq(installments.id, entry.installmentId)).for("update");
+      if (installment) {
+        const [paid] = await tx.select({ n: count() }).from(transactions).where(eq(transactions.installmentId, installment.id));
+        await tx.update(installments)
+          .set({ nextDueDate: installmentDueAfterRemove(installment.nextDueDate, installment.dueDay, installment.paidBefore + paid.n, installment.months) })
+          .where(eq(installments.id, installment.id));
+      }
     }
     await tx.delete(transactions).where(own);
   });

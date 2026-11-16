@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, isLinked, manilaMonth, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -110,6 +110,36 @@ describe("nextDueDate", () => {
     expect(nextDueDate("2027-02-28", "monthly", 31)).toBe("2027-03-31");
     expect(nextDueDate("2026-11-30", "quarterly", 30)).toBe("2027-02-28");
     expect(nextDueDate("2028-02-29", "yearly", 29)).toBe("2029-02-28");
+  });
+});
+
+describe("previousDueDate", () => {
+  it("undoes nextDueDate for every repeat, across a year end and a February clamp", () => {
+    for (const [date, repeat, day] of [
+      ["2026-11-11", "weekly", 11], ["2026-12-31", "weekly", 31], ["2026-11-25", "biweekly", 25], ["2026-11-15", "monthly", 15],
+      ["2026-12-15", "monthly", 15], ["2027-01-31", "monthly", 31], ["2027-02-28", "monthly", 31], ["2026-11-30", "quarterly", 30], ["2028-02-29", "yearly", 29],
+    ] as const) {
+      expect(previousDueDate(nextDueDate(date, repeat, day), repeat, day)).toBe(date);
+    }
+  });
+
+  it("returns to the due day after a clamped month", () => {
+    expect(previousDueDate("2027-03-31", "monthly", 31)).toBe("2027-02-28");
+    expect(previousDueDate("2027-01-15", "monthly", 15)).toBe("2026-12-15");
+  });
+});
+
+describe("installmentDueAfterRemove", () => {
+  it("steps back a month, but not when the final payment is removed", () => {
+    expect(installmentDueAfterRemove("2026-12-15", 15, 3, 12)).toBe("2026-11-15");
+    expect(installmentDueAfterRemove("2026-12-15", 15, 12, 12)).toBe("2026-12-15");
+  });
+});
+
+describe("maxPaymentAmount", () => {
+  it("leaves room for the other payments, and a bill's payment keeps its cycle open", () => {
+    expect(maxPaymentAmount(100000, 40000)).toBe(60000);
+    expect(maxPaymentAmount(100000, 40000, true)).toBe(59999);
   });
 });
 

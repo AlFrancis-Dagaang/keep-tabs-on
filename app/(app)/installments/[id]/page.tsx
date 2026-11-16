@@ -10,8 +10,9 @@ import { PaymentHistory } from "@/components/payment-history";
 import { PixelBar } from "@/components/pixel-bar";
 import { accounts, installments, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
+import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatDate, parseRange, progressBlocks } from "@/lib/money";
+import { formatDate, parseRange, previousDueDate, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 import { PayInstallment } from "../installment-form";
@@ -32,7 +33,7 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
   if (!id.success) notFound();
   const { from, to } = parseRange((await searchParams).from, (await searchParams).to);
   const userId = await getUserId();
-  const { installment, first, total, payments } = await withUser(userId, async (tx) => ({
+  const { installment, balances, first, total, payments } = await withUser(userId, async (tx) => ({
     installment: (await tx
       .select({
         id: installments.id, name: installments.name, monthlyAmount: installments.monthlyAmount, months: installments.months,
@@ -42,10 +43,11 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
       .from(installments)
       .innerJoin(accounts, eq(installments.accountId, accounts.id))
       .where(and(eq(installments.id, id.data), eq(installments.userId, userId))))[0],
+    balances: await loadBalances(tx, userId),
     first: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.installmentId, id.data)))[0]?.date,
     total: (await tx.select({ n: count() }).from(transactions).where(eq(transactions.installmentId, id.data)))[0].n,
     payments: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name })
+      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name, accountId: transactions.accountId })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(and(eq(transactions.installmentId, id.data), from ? gte(transactions.date, from) : undefined, to ? lte(transactions.date, to) : undefined))
@@ -78,7 +80,15 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
           {first ? "No payments in this range." : "No payments yet. Record one with Record payment."}
         </p>
       ) : (
-        <PaymentHistory rows={payments} money={money} />
+        <PaymentHistory
+          rows={payments.map((payment) => ({
+            ...payment,
+            locked: false,
+            consequence: `${paid - 1} of ${installment.months} paid.${paid >= installment.months ? "" : ` Next payment goes back to ${formatDate(previousDueDate(installment.nextDueDate, "monthly", installment.dueDay))}.`}`,
+          }))}
+          money={money}
+          accounts={balances.accounts}
+        />
       )}
     </>
   );

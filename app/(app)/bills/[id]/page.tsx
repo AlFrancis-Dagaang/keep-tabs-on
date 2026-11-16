@@ -1,4 +1,4 @@
-import { and, desc, eq, gt, gte, lte, min, sum } from "drizzle-orm";
+import { and, desc, eq, gt, gte, lte, min, sql, sum } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -11,7 +11,7 @@ import { accounts, bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatDate, parseRange, repeatLabels } from "@/lib/money";
+import { formatDate, parseRange, previousDueDate, repeatLabels } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 import { BillProgress, PayBill } from "../bill-form";
@@ -36,7 +36,7 @@ async function BillDetail({ params, searchParams }: { params: Promise<{ id: stri
     // The cycle sum is the list's own query for one bill, compared in SQL.
     bill: (await tx
       .select({
-        id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, repeat: bills.repeat, note: bills.note,
+        id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, dueDay: bills.dueDay, repeat: bills.repeat, note: bills.note,
         paid: sum(transactions.amount).mapWith(Number),
       })
       .from(bills)
@@ -46,9 +46,14 @@ async function BillDetail({ params, searchParams }: { params: Promise<{ id: stri
     balances: await loadBalances(tx, userId),
     first: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.billId, id.data)))[0]?.date,
     payments: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name })
+      .select({
+        id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name, accountId: transactions.accountId,
+        // Compared in SQL: the payment that closed the last cycle has the same created_at as cycle_start.
+        open: sql<boolean>`${transactions.createdAt} > ${bills.cycleStart}`, closing: sql<boolean>`${transactions.createdAt} = ${bills.cycleStart}`,
+      })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
+      .innerJoin(bills, eq(transactions.billId, bills.id))
       .where(and(eq(transactions.billId, id.data), from ? gte(transactions.date, from) : undefined, to ? lte(transactions.date, to) : undefined))
       .orderBy(desc(transactions.date), desc(transactions.createdAt)),
   }));
@@ -72,7 +77,19 @@ async function BillDetail({ params, searchParams }: { params: Promise<{ id: stri
           {first ? "No payments in this range." : "No payments yet. Record one with Record payment."}
         </p>
       ) : (
-        <PaymentHistory rows={payments} money={money} />
+        <PaymentHistory
+          rows={payments.map((payment) => ({
+            ...payment,
+            locked: !payment.open,
+            consequence: payment.open
+              ? "This cycle's total goes down."
+              : payment.closing
+                ? `${bill.name}'s next payment goes back to ${formatDate(previousDueDate(bill.nextDueDate, bill.repeat, bill.dueDay))}.`
+                : "The due date doesn't change.",
+          }))}
+          money={money}
+          accounts={balances.accounts}
+        />
       )}
     </>
   );

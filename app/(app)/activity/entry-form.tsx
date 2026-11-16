@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Category, Transaction } from "@/db/schema";
 import { toInput } from "@/lib/money";
-import { deleteEntry, saveEntry, type FormState } from "./actions";
+import { deleteEntry, editPayment, saveEntry, type FormState } from "./actions";
 
 type Options = {
   accounts: { id: string; name: string; balance: number }[];
@@ -171,7 +171,71 @@ function AccountSelect({ label, name, accounts, state, other }: {
   );
 }
 
-export function DeleteEntry({ id, label }: { id: string; label: string }) {
+type PaymentToEdit = { id: string; amount: number; date: string; accountId: string; note: string | null };
+
+/** Edit on a bill, installment, debt or goal payment: amount, date, account and note. `amountLocked` shows the amount but can't change it. */
+export function EditPayment({ payment, accounts, accountLabel = "Paid from", amountLocked = false }: {
+  payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel?: string; amountLocked?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="ghost" size="sm">
+          <Pencil />
+          Edit
+        </Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Edit payment</DialogTitle>
+          <DialogDescription>Change this payment. The account balances and progress follow.</DialogDescription>
+        </DialogHeader>
+        <PaymentFields payment={payment} accounts={accounts} accountLabel={accountLabel} amountLocked={amountLocked} onSaved={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PaymentFields({ payment, accounts, accountLabel, amountLocked, onSaved }: {
+  payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel: string; amountLocked: boolean; onSaved: () => void;
+}) {
+  const { symbol } = useMoney();
+  const [saved, action, pending] = useActionState(editPayment, {});
+  const state: FormState = { ...saved, values: saved.values ?? {
+    type: "", accountId: payment.accountId, toAccountId: "", toName: "", categoryId: "", amount: toInput(payment.amount), date: payment.date, payee: "", note: payment.note ?? "",
+  } };
+  useEffect(() => {
+    if (saved.ok) onSaved();
+  }, [saved, onSaved]);
+
+  return (
+    <form key={JSON.stringify(saved.values ?? {})} action={action} className="grid grid-cols-1 gap-4">
+      <input type="hidden" name="id" value={payment.id} />
+      <Field label={`Amount (${symbol})`} name="amount" state={state}>
+        {/* readOnly, not disabled, so the amount is still sent */}
+        <Input id="amount" name="amount" inputMode="decimal" className="tabular-nums" defaultValue={state.values?.amount} readOnly={amountLocked} {...invalid(state, "amount")} />
+        {amountLocked && <p className="text-sm text-muted-foreground">Locked: this payment is in a finished cycle. Remove it and record it again to change the amount.</p>}
+      </Field>
+      <Field label="Date" name="date" state={state}>
+        <Input id="date" name="date" type="date" defaultValue={state.values?.date} {...invalid(state, "date")} />
+      </Field>
+      <AccountSelect label={accountLabel} name="accountId" accounts={accounts} state={state} />
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={state.values?.note} {...invalid(state, "note")} />
+      </Field>
+      <DialogFooter>
+        <DialogClose asChild>
+          <Button type="button" variant="secondary">Cancel</Button>
+        </DialogClose>
+        <Button type="submit" disabled={pending}>Save</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+/** `what` and `consequence` word the confirm for a payment ("Remove this payment?", what changes) instead of an entry. */
+export function DeleteEntry({ id, label, what = "entry", consequence }: { id: string; label: string; what?: string; consequence?: string }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
   return (
@@ -190,8 +254,8 @@ export function DeleteEntry({ id, label }: { id: string; label: string }) {
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Remove this entry?</DialogTitle>
-          <DialogDescription>{label}. The account balances change back. This can&apos;t be undone.</DialogDescription>
+          <DialogTitle>Remove this {what}?</DialogTitle>
+          <DialogDescription>{label}. {consequence ?? "The account balances change back."} This can&apos;t be undone.</DialogDescription>
         </DialogHeader>
         <form
           action={async (formData) => {
@@ -207,7 +271,7 @@ export function DeleteEntry({ id, label }: { id: string; label: string }) {
               <Button variant="secondary">Cancel</Button>
             </DialogClose>
             <Button type="submit" variant="destructive">
-              Remove entry
+              Remove {what}
             </Button>
           </DialogFooter>
         </form>

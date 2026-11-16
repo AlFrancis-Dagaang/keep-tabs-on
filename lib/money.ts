@@ -78,6 +78,27 @@ export function nextDueDate(date: string, repeat: Bill["repeat"], dueDay: number
   return new Date(Date.UTC(year, target, Math.min(dueDay, daysInTarget))).toISOString().slice(0, 10);
 }
 
+/** The due date before this one: the exact inverse of nextDueDate, so removing the payment that rolled a bill puts it back. */
+export function previousDueDate(date: string, repeat: Bill["repeat"], dueDay: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  if (repeat === "weekly" || repeat === "biweekly") {
+    return new Date(Date.UTC(year, month - 1, day - (repeat === "weekly" ? 7 : 14))).toISOString().slice(0, 10);
+  }
+  const target = month - 1 - monthsPerRepeat[repeat];
+  const daysInTarget = new Date(Date.UTC(year, target + 1, 0)).getUTCDate();
+  return new Date(Date.UTC(year, target, Math.min(dueDay, daysInTarget))).toISOString().slice(0, 10);
+}
+
+/** Removing an installment payment steps the due date back a month, except the final payment, which never rolled it. */
+export function installmentDueAfterRemove(date: string, dueDay: number, paidBefore: number, months: number): string {
+  return paidBefore >= months ? date : previousDueDate(date, "monthly", dueDay);
+}
+
+/** The most an edited payment may be: what's left of the cap after the others. A bill's payment keeps its cycle open, so one centavo less. */
+export function maxPaymentAmount(cap: number, others: number, keepOpen = false): number {
+  return cap - others - (keepOpen ? 1 : 0);
+}
+
 /** How many of a progress bar's 12 blocks are filled. A block shows only once it's earned; all 12 only when fully paid. */
 export function progressBlocks(paid: number, amount: number): number {
   return Math.min(12, Math.floor((paid * 12) / amount));

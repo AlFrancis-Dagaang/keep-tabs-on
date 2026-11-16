@@ -1,0 +1,1 @@
+ALTER TABLE "transactions" ADD COLUMN "rolled_cycle_start" timestamp with time zone;
