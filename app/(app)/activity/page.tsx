@@ -145,7 +145,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                           <RowActions
                             items={[
                               { label: "Edit", node: !isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} /> },
-                              { label: "Remove", node: <DeleteEntry id={row.id} label={`${formatDate(row.date)} · ${where} · ${sign}${money(row.amount)}`} /> },
+                              { label: "Remove", node: <DeleteEntry id={row.id} label={`${formatDate(row.date)} · ${where} · ${sign}${money(row.amount)}`} consequence={isLinked(row) ? "The bill, installment, debt or goal goes back too, and a due date it moved rolls back." : undefined} /> },
                             ]}
                           />
                         </TableCell>
