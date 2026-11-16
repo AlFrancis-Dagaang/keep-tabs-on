@@ -12,6 +12,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Check the database host before any DB command, and never run against production](lessons/2026-11-14-check-db-host.md) — read .env.local host; dev endpoint only
 - [Show a headline figure on the owner's real data before planning how it's defined](lessons/2026-11-14-show-figure-on-real-data.md) — worked example with real numbers, approved before building
 - [Read the deployment's regions field to see where functions run, not the region in the logs](lessons/2026-11-15-check-deployment-region.md) — get_deployment regions, not log region; state what evidence cannot show
+- [Show a mock of the placement before building a new UI element](lessons/2026-11-16-mock-placement-first.md) — when the plan doesn't name a position, show 2–3 placements and get a pick first
 
 ## Decisions
 - [Stack](decisions/2026-11-09-stack.md) — Next.js + Neon/Drizzle + Neon Auth on Vercel; RLS via restricted role and per-request transaction
@@ -42,6 +43,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-14](tasks/T-14.md) — Installments, outside transfers and notes: fixed-term purchases, transfers to a name, optional notes on five forms
 - [T-15](tasks/T-15.md) — Activity polish, dates in words and editing entries: month picker, logged time, Remove wording, icons, edit plain entries
 - [T-16](tasks/T-16.md) — Mobile layout, cards and a drawer: tables become cards below 768px, sidebar becomes a top bar with a drawer
+- [T-17](tasks/T-17.md) — Bill and installment detail pages: payment history with date filter, linked from the list rows
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests

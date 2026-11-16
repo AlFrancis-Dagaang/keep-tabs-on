@@ -124,3 +124,19 @@ Status: done
 - [x] At 360px wide no page scrolls sideways; buttons and links in cards and the drawer are at least 44px tall
 - [x] Display only: no balance, budget, entry or schema change; `pnpm lint`, `pnpm test` and `pnpm build` pass
 - [x] Looked at on a phone or at 390px, signed in, light and dark, on every page above
+
+## T-17: Bill and installment detail pages
+Status: done
+- [x] Bills: each row on Recurring bills links to `/bills/[id]` (the name is the link, same as Debts). The page shows the amount, repeat, next due date, this cycle's pixel progress and the Pay button, then a history of every payment (date, paying account, amount, note), newest first. Paying a bill, installment, debt or goal has an optional Note saved on the payment and shown in its history. A bill with no payments shows a short empty message; an unknown id, or another user's, gives a 404
+- [x] Installments: each row on Installments links to `/installments/[id]`. The page shows "3 of 12 paid" with the pixel bar, the monthly amount, due day, paying account and the next due date (or "Finished"), then the payment history like the bill page (the pay dialog also has the optional Note), with the months paid before tracking as a muted line
+- [x] Date filter: both history lists use the shared month picker and Custom range, driven by the URL. The progress and totals at the top stay over all payments; the filter only hides history rows, as on the account history page
+- [x] No schema, balance, budget or due-date change; the only write change is the optional payment note (`transactions.note` already exists); below 768px the histories show as cards from the shared table; `pnpm lint`, `pnpm test` and `pnpm build` pass
+- [x] Mobile cards: below 768px, Edit and Remove move into a "⋯" menu on every card that has them (Accounts, Bills, Debts, Goals, Installments, Activity, Settings, Budget), with an `aria-label` naming the item and a tap target of about 44px; the main action (Pay, Add money, Add entry) stays visible, Remove keeps its confirm dialog, desktop rows are unchanged; any new dependency is approved before it is installed
+- [x] Looked at signed in on dev with real payments, light and dark, at 390px and desktop, including a 404 for a made-up id
+
+## T-18: Edit or undo bill, debt, goal and installment payments
+Status: todo
+- [ ] Design first: a decision in `knowledge/decisions/` says which fields of a linked payment can change, and what happens to the bill's or installment's next due date and to debt and goal progress on an edit and on a remove. I approve it before any code
+- [ ] A payment can be edited from its row in the history on its bill, installment, debt or goal page (amount, date, account, note). Progress and the next due date follow the edit; an edit that would take an account below zero is refused
+- [ ] Removing a bill or installment payment rolls the next due date back when that payment was the one that rolled it; debt and goal progress follow a remove, as today
+- [ ] Linked rows on Activity either get the same edit or keep their read-only rule, as the decision says. A unit test covers the due-date and progress effect, the rules are proved on dev with the real actions, and the migration, if any, is additive only
