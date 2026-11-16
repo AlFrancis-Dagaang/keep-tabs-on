@@ -225,12 +225,12 @@ async function ProgressRow({ href, name, tag, done, total, verb }: { href: strin
   const money = await getMoney();
   return (
     <TableRow className="relative">
-      <TableCell className="pl-4">
+      <TableCell className="px-4 whitespace-normal [overflow-wrap:anywhere]">
         <Link href={href} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{name}</Link>
         {tag && <div className="text-sm text-muted-foreground">{tag}</div>}
-      </TableCell>
-      <TableCell className="pr-4">
-        <PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${money(done)} of ${money(total)} ${verb}`} />
+        <div className="mt-1.5">
+          <PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${money(done)} of ${money(total)} ${verb}`} />
+        </div>
         <div className="mt-1 text-sm text-muted-foreground tabular-nums">{money(done)} of {money(total)} {verb} · {Math.min(100, Math.floor((done * 100) / total))}%</div>
       </TableCell>
     </TableRow>
