@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
+import { AccountIcon } from "@/components/account-icon";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { RowActions, RowMenu } from "@/components/row-menu";
@@ -54,8 +55,13 @@ async function AccountsTable() {
           {rows.map((account) => (
             <TableRow key={account.id} className="relative">
               <TableCell className="pl-4">
-                <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
-                {!account.includeInNetWorth && <div className="text-sm text-muted-foreground">Not in net worth</div>}
+                <div className="flex items-center gap-2">
+                  <AccountIcon icon={account.icon} name={account.name} />
+                  <div>
+                    <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
+                    {!account.includeInNetWorth && <div className="text-sm text-muted-foreground">Not in net worth</div>}
+                  </div>
+                </div>
                 <RowMenu name={account.name} labels={["Edit", "Remove"]} />
               </TableCell>
               <TableCell data-card="end" className="text-right tabular-nums">{money(account.balance)}</TableCell>

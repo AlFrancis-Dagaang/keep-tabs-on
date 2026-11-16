@@ -3,15 +3,17 @@
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { AccountIcon } from "@/components/account-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Account } from "@/db/schema";
+import { cashKey, logos, tileColors } from "@/lib/account-icons";
 import { toInput } from "@/lib/money";
 import { deleteAccount, saveAccount } from "./actions";
 
-type AccountRow = Pick<Account, "id" | "name" | "includeInNetWorth"> & { balance: number };
+type AccountRow = Pick<Account, "id" | "name" | "includeInNetWorth" | "icon"> & { balance: number };
 
 /** "Add account" with no account; "Edit" (name and balance) with one. */
 export function AccountForm({ account }: { account?: AccountRow }) {
@@ -39,6 +41,7 @@ export function AccountForm({ account }: { account?: AccountRow }) {
 function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => void }) {
   const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveAccount, {});
+  const [name, setName] = useState(account?.name ?? "");
   useEffect(() => {
     if (state.ok) onSaved();
   }, [state, onSaved]);
@@ -53,6 +56,7 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
           name="name"
           placeholder="BPI savings"
           defaultValue={state.values?.name ?? account?.name}
+          onChange={(event) => setName(event.target.value)}
           aria-invalid={!!state.errors?.name}
           aria-describedby={state.errors?.name ? "name-error" : undefined}
         />
@@ -72,6 +76,29 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
         />
         {state.errors?.balance && <p id="balance-error" className="text-sm text-destructive">{state.errors.balance}</p>}
       </div>
+      <fieldset className="grid gap-2">
+        <legend className="text-sm font-medium">Icon <span className="font-normal text-muted-foreground">(optional)</span></legend>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { value: "", label: "None" },
+            ...logos.map((logo) => ({ value: logo.key, label: logo.label })),
+            { value: cashKey, label: "Cash" },
+            ...Object.keys(tileColors).map((color) => ({ value: `tile:${color}`, label: `${color} tile` })),
+          ].map((option) => (
+            <label key={option.value} title={option.label} className="relative grid size-11 cursor-pointer place-items-center rounded-lg border bg-surface has-[:checked]:ring-2 has-[:checked]:ring-primary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring">
+              <input
+                type="radio"
+                name="icon"
+                value={option.value}
+                aria-label={option.label}
+                className="absolute inset-0 cursor-pointer opacity-0"
+                defaultChecked={option.value === (state.values?.icon ?? account?.icon ?? "")}
+              />
+              {option.value === "" ? <span className="text-xs text-muted-foreground">None</span> : <AccountIcon icon={option.value} name={name || "A"} />}
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <div className="flex items-start gap-2">
         <input
           id="include"

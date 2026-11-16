@@ -2,16 +2,17 @@ import { and, asc, desc, eq, gt, sql, sum } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
+import { AccountIcon } from "@/components/account-icon";
 import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { PixelBar } from "@/components/pixel-bar";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { accounts, bills, budgetMonths, categories, debts, goals, transactions } from "@/db/schema";
+import { accounts, bills, categories, debts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { billsDueSoon, budgetFor, directionLabels, formatDate, manilaMonth, monthTotals, netWorth, progressBlocks } from "@/lib/money";
+import { billsDueSoon, billStatus, directionLabels, formatDate, manilaMonth, monthChange, monthTotals, netWorth, previousMonth, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 
@@ -75,9 +76,6 @@ async function Overview() {
       .where(eq(transactions.userId, userId))
       .orderBy(desc(transactions.date), desc(transactions.createdAt))
       .limit(5),
-    categories: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind }).from(categories).where(eq(categories.userId, userId)),
-    limits: await tx.select({ categoryId: budgetMonths.categoryId, month: budgetMonths.month, budget: budgetMonths.budget })
-      .from(budgetMonths).where(eq(budgetMonths.userId, userId)),
   }));
 
   if (data.balances.accounts.length === 0) {
@@ -92,99 +90,117 @@ async function Overview() {
   const month = manilaMonth(new Date());
   const { income, expenses } = monthTotals(month, data.balances.entries);
   const dueSoon = billsDueSoon(data.bills.map((bill) => ({ ...bill, paid: bill.paid ?? 0 })), today);
-  const budget = budgetFor(month, data.categories, data.limits, data.balances.entries);
+  const last = monthTotals(previousMonth(month), data.balances.entries);
+
+  const incomeChange = monthChange(income, last.income);
+  const expensesChange = monthChange(expenses, last.expenses);
+  const counted = data.balances.accounts.filter((account) => account.includeInNetWorth).length;
 
   return (
     <div className="grid gap-8">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-        <Card href="/accounts" label="Net worth" value={money(netWorth(data.balances.accounts))} />
-        <Card href="/activity?type=income" label="Income this month" value={money(income)} />
-        <Card href="/activity?type=expense" label="Expenses this month" value={money(expenses)} />
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+        <Card href="/accounts" label="Net worth" value={money(netWorth(data.balances.accounts))} note={`Across ${counted} ${counted === 1 ? "account" : "accounts"}`} />
+        <Card href="/activity?type=income" label="Income this month" value={money(income)} note={changeNote(incomeChange)} />
+        <Card href="/activity?type=expense" label="Expenses this month" value={money(expenses)} note={changeNote(expensesChange)}>
+          {income > 0 && (
+            <PixelBar blocks={progressBlocks(expenses, income)} over={expenses > income} label={`${money(expenses)} spent of ${money(income)} income this month`} />
+          )}
+        </Card>
         <Card href="/bills" label="Bills due in 7 days" value={money(dueSoon.left)} note={`${dueSoon.count} ${dueSoon.count === 1 ? "bill" : "bills"}`} />
-        <Card
-          href="/budget"
-          label="Budget left"
-          value={budget.budget === 0 ? "—" : money(budget.left)}
-          note={budget.budget === 0 ? "No limits set" : `of ${money(budget.budget)}`}
-          warn={budget.left < 0}
-        />
       </div>
 
-      <Section title="Accounts" href="/accounts">
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-          {data.balances.accounts.map((account) => (
-            <Link key={account.id} href="/accounts" className="rounded-xl border bg-surface p-4 hover:bg-accent">
-              <div className="text-sm text-muted-foreground">{account.name}</div>
-              <div className="font-serif text-xl tabular-nums">{money(account.balance)}</div>
-            </Link>
-          ))}
-        </div>
-      </Section>
+      <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr_1fr]">
+        <Section title="Accounts" href="/accounts">
+          <MiniTable>
+            {data.balances.accounts.map((account) => (
+              <TableRow key={account.id} className="relative">
+                <TableCell className="pl-4">
+                  <span className="flex items-center gap-2">
+                    <AccountIcon icon={account.icon} name={account.name} />
+                    <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
+                  </span>
+                </TableCell>
+                <TableCell className="pr-4 text-right tabular-nums">{money(account.balance)}</TableCell>
+              </TableRow>
+            ))}
+          </MiniTable>
+        </Section>
 
-      <Section title="Upcoming bills" href="/bills" empty={data.bills.length === 0 && "No bills yet. Add rent, internet or a subscription in Recurring bills."}>
-        <MiniTable>
-          {data.bills.slice(0, 5).map((bill) => (
-            <TableRow key={bill.id}>
-              <TableCell className="pl-4 font-medium">{bill.name}</TableCell>
-              <TableCell className="tabular-nums">
-                {formatDate(bill.nextDueDate)}
-                {bill.nextDueDate < today && (
-                  <span className="ml-2 rounded-full bg-primary px-2 py-0.5 text-xs font-medium text-primary-foreground">Overdue</span>
-                )}
-              </TableCell>
-              <TableCell className="pr-4 text-right tabular-nums">{money(bill.amount - (bill.paid ?? 0))} left</TableCell>
-            </TableRow>
-          ))}
-        </MiniTable>
-      </Section>
+        <Section title="Upcoming bills" href="/bills" empty={data.bills.length === 0 && "No bills yet. Add rent, internet or a subscription in Recurring bills."}>
+          <MiniTable>
+            {data.bills.slice(0, 5).map((bill) => {
+              const status = billStatus(bill.nextDueDate, today);
+              return (
+                <TableRow key={bill.id}>
+                  <TableCell className="pl-4 font-medium">{bill.name}</TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatDate(bill.nextDueDate)}
+                    <span className={`ml-2 rounded-full px-2 py-0.5 text-xs font-medium ${status === "overdue" ? "bg-primary text-primary-foreground" : "bg-secondary"}`}>
+                      {{ overdue: "Overdue", soon: "Due soon", upcoming: "Upcoming" }[status]}
+                    </span>
+                  </TableCell>
+                  <TableCell className="pr-4 text-right tabular-nums">{money(bill.amount - (bill.paid ?? 0))} left</TableCell>
+                </TableRow>
+              );
+            })}
+          </MiniTable>
+        </Section>
 
-      <Section title="Goals" href="/goals" empty={data.goals.length === 0 && "No goals yet. Create one in Goals: an emergency fund, a trip, a new phone."}>
-        <MiniTable>
-          {data.goals.map((goal) => (
-            <ProgressRow key={goal.id} href={`/goals/${goal.id}`} name={goal.name} done={goal.saved} total={goal.target} verb="saved" />
-          ))}
-        </MiniTable>
-      </Section>
+        <Section title="Goals" href="/goals" empty={data.goals.length === 0 && "No goals yet. Create one in Goals: an emergency fund, a trip, a new phone."}>
+          <MiniTable>
+            {data.goals.map((goal) => (
+              <ProgressRow key={goal.id} href={`/goals/${goal.id}`} name={goal.name} done={goal.saved} total={goal.target} verb="saved" />
+            ))}
+          </MiniTable>
+        </Section>
 
-      <Section title="Debts" href="/debts" empty={data.debts.length === 0 && "No debts. Add money you owe, or money owed to you, in Debts."}>
-        <MiniTable>
-          {data.debts.map((debt) => (
-            <ProgressRow key={debt.id} href={`/debts/${debt.id}`} name={debt.name} tag={directionLabels[debt.direction]} done={debt.paid} total={debt.total} verb={debt.direction === "owed" ? "received" : "paid"} />
-          ))}
-        </MiniTable>
-      </Section>
+        <Section title="Debts" href="/debts" empty={data.debts.length === 0 && "No debts. Add money you owe, or money owed to you, in Debts."}>
+          <MiniTable>
+            {data.debts.map((debt) => (
+              <ProgressRow key={debt.id} href={`/debts/${debt.id}`} name={debt.name} tag={directionLabels[debt.direction]} done={debt.paid} total={debt.total} verb={debt.direction === "owed" ? "received" : "paid"} />
+            ))}
+          </MiniTable>
+        </Section>
 
-      <Section title="Recent activity" href="/activity" empty={data.recent.length === 0 && "No entries yet. Log what comes in and goes out with Add entry in Activity."}>
-        <MiniTable>
-          {data.recent.map((row) => (
-            <TableRow key={row.id}>
-              <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} /></TableCell>
-              <TableCell>
-                {row.payee ?? row.category ?? <span className="text-muted-foreground">—</span>}
-                <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</div>
-              </TableCell>
-              <TableCell className="pr-4 text-right tabular-nums">{{ income: "+", expense: "−", transfer: "" }[row.type]}{money(row.amount)}</TableCell>
-            </TableRow>
-          ))}
-        </MiniTable>
-      </Section>
+        <Section className="lg:col-span-2" title="Recent activity" href="/activity" empty={data.recent.length === 0 && "No entries yet. Log what comes in and goes out with Add entry in Activity."}>
+          <MiniTable>
+            {data.recent.map((row) => (
+              <TableRow key={row.id}>
+                <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} /></TableCell>
+                <TableCell>
+                  {row.payee ?? row.category ?? <span className="text-muted-foreground">—</span>}
+                  <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</div>
+                </TableCell>
+                <TableCell className="pr-4 text-right tabular-nums">{{ income: "+", expense: "−", transfer: "" }[row.type]}{money(row.amount)}</TableCell>
+              </TableRow>
+            ))}
+          </MiniTable>
+        </Section>
+      </div>
     </div>
   );
 }
 
-function Card({ href, label, value, note, warn = false }: { href: string; label: string; value: string; note?: string; warn?: boolean }) {
+/** "↑ 12% vs last month"; nothing when last month had no figure to compare with. */
+function changeNote(change: number | null) {
+  return change === null ? undefined : `${change >= 0 ? "↑" : "↓"} ${Math.abs(change)}% vs last month`;
+}
+
+// Equal-height cards: the note sits at the bottom, so a card without a bar leaves no gap.
+function Card({ href, label, value, note, children }: { href: string; label: string; value: string; note?: string; children?: ReactNode }) {
   return (
-    <Link href={href} className="rounded-xl border bg-surface p-4 hover:bg-accent">
+    <Link href={href} className="flex flex-col rounded-xl border bg-surface p-4 hover:bg-accent">
       <div className="text-sm text-muted-foreground">{label}</div>
-      <div className={`font-serif text-xl tabular-nums ${warn ? "text-destructive" : ""}`}>{value}</div>
-      {note && <div className="text-sm text-muted-foreground">{note}</div>}
+      <div className="font-serif text-xl tabular-nums">{value}</div>
+      {children && <div className="mt-2">{children}</div>}
+      <div className="mt-auto min-h-5 pt-1 text-sm text-muted-foreground">{note}</div>
     </Link>
   );
 }
 
-function Section({ title, href, empty, children }: { title: string; href: string; empty?: string | false; children: ReactNode }) {
+function Section({ title, href, empty, className, children }: { title: string; href: string; empty?: string | false; className?: string; children: ReactNode }) {
   return (
-    <section>
+    <section className={`flex flex-col ${className ?? ""}`}>
       <div className="mb-3 flex items-baseline justify-between gap-4">
         <h2 className="font-serif text-xl">{title}</h2>
         <Link href={href} className="text-sm text-muted-foreground underline-offset-4 hover:underline">View all</Link>
@@ -196,7 +212,7 @@ function Section({ title, href, empty, children }: { title: string; href: string
 
 function MiniTable({ children }: { children: ReactNode }) {
   return (
-    <div className="rounded-xl border bg-surface">
+    <div className="flex-1 rounded-xl border bg-surface">
       <Table list>
         <TableBody>{children}</TableBody>
       </Table>
@@ -215,7 +231,7 @@ async function ProgressRow({ href, name, tag, done, total, verb }: { href: strin
       </TableCell>
       <TableCell className="pr-4">
         <PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${money(done)} of ${money(total)} ${verb}`} />
-        <div className="mt-1 text-sm text-muted-foreground tabular-nums">{money(done)} of {money(total)} {verb}</div>
+        <div className="mt-1 text-sm text-muted-foreground tabular-nums">{money(done)} of {money(total)} {verb} · {Math.min(100, Math.floor((done * 100) / total))}%</div>
       </TableCell>
     </TableRow>
   );

@@ -28,6 +28,7 @@ export const accounts = pgTable(
     name: text().notNull(),
     startingBalance: bigint("starting_balance", { mode: "number" }).notNull().default(0), // centavos
     includeInNetWorth: boolean("include_in_net_worth").notNull().default(true),
+    icon: text(), // a key from lib/account-icons.ts, or null for the generic icon
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [ownRows(t.userId)],

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, billStatus, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthChange, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, previousMonth, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -343,5 +343,39 @@ describe("isLinked", () => {
   it("is true when a bill, debt, goal or installment made the entry", () => {
     expect(isLinked(none)).toBe(false);
     for (const key of Object.keys(none)) expect(isLinked({ ...none, [key]: "x" })).toBe(true);
+  });
+});
+
+describe("previousMonth", () => {
+  it("steps back across a year boundary", () => {
+    expect(previousMonth("2026-11-01")).toBe("2026-10-01");
+    expect(previousMonth("2026-01-01")).toBe("2025-12-01");
+  });
+});
+
+describe("monthChange", () => {
+  it("is the rounded percent against last month", () => {
+    expect(monthChange(38000, 33929)).toBe(12);
+    expect(monthChange(125000, 10000)).toBe(1150);
+    expect(monthChange(50, 100)).toBe(-50);
+  });
+
+  it("is null when last month had nothing", () => {
+    expect(monthChange(20000, 0)).toBeNull();
+    expect(monthChange(0, 0)).toBeNull();
+  });
+});
+
+describe("billStatus", () => {
+  it("is overdue before today, soon through three days out, then upcoming", () => {
+    expect(billStatus("2026-11-15", "2026-11-16")).toBe("overdue");
+    expect(billStatus("2026-11-16", "2026-11-16")).toBe("soon");
+    expect(billStatus("2026-11-19", "2026-11-16")).toBe("soon");
+    expect(billStatus("2026-11-20", "2026-11-16")).toBe("upcoming");
+  });
+
+  it("counts days across a month boundary", () => {
+    expect(billStatus("2026-12-01", "2026-11-29")).toBe("soon");
+    expect(billStatus("2026-12-03", "2026-11-29")).toBe("upcoming");
   });
 });

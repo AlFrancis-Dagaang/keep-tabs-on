@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
+import { AccountIcon } from "@/components/account-icon";
 import { DateFilter } from "@/components/date-filter";
 import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
@@ -40,7 +41,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
     balances: await loadBalances(tx, userId),
     choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
       .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
-    account: (await tx.select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance })
+    account: (await tx.select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance, icon: accounts.icon })
       .from(accounts).where(and(eq(accounts.id, id.data), eq(accounts.userId, userId))))[0],
     // shortcut: loads every entry of the account, add paging when one account passes a few thousand rows.
     rows: await tx
@@ -66,7 +67,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
   return (
     <>
       <Link href="/accounts" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Accounts</Link>
-      <PageHeader title={account.name} description={`Balance ${money(current)}`} />
+      <PageHeader title={account.name} icon={<AccountIcon icon={account.icon} name={account.name} />} description={`Balance ${money(current)}`} />
       <DateFilter path={`/accounts/${account.id}`} today={today} min={rows[0]?.date ?? today} from={from} to={to} />
       {shown.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
