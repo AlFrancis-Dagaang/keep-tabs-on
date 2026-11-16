@@ -7,7 +7,7 @@ import { categories, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { parseMoney } from "@/lib/money";
+import { balancesAfterEdit, isLinked, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const fields = ["type", "accountId", "toAccountId", "toName", "categoryId", "amount", "date", "payee", "note"] as const;
@@ -45,11 +45,12 @@ const entryInput = z.discriminatedUnion("type", [
     .refine((entry) => entry.toAccountId !== entry.accountId, { path: ["toAccountId"], message: "Pick a different account." }),
 ]);
 
-/** Records an income, expense or transfer (to an account or to a name). Refuses when it would take an account below zero. */
+/** Records an income, expense or transfer (to an account or to a name), or with an id edits one. Refuses when it would take an account below zero. */
 export async function saveEntry(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
   const values = Object.fromEntries(fields.map((field) => [field, String(formData.get(field) ?? "")])) as Record<Field, string>;
+  const id = formData.get("id") ? z.uuid().parse(formData.get("id")) : undefined;
   const parsed = entryInput.safeParse(values);
   if (!parsed.success) {
     const { fieldErrors } = z.flattenError(parsed.error);
@@ -58,7 +59,13 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
 
   const entry = parsed.data;
   const errors = await withUser(userId, async (tx): Promise<FormState["errors"]> => {
-    const { accounts, balance } = await loadBalances(tx, userId, { lock: true });
+    const { accounts, entries, balance } = await loadBalances(tx, userId, { lock: true });
+    if (id) {
+      const [old] = await tx.select({ billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId })
+        .from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+      if (!old) return { type: "This entry no longer exists." };
+      if (isLinked(old)) return { type: "Entries made by a bill, debt, goal or installment can't be edited." };
+    }
     // FKs skip RLS, so only ids found among the user's own rows get saved.
     const from = accounts.find((account) => account.id === entry.accountId);
     if (!from) return { accountId: "Pick an account." };
@@ -69,11 +76,20 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
         .where(and(eq(categories.id, entry.categoryId), eq(categories.userId, userId)));
       if (category?.kind !== (entry.type === "income" ? "income" : "spending")) return { categoryId: "Pick a category." };
     }
-    if (entry.type !== "income" && balance(from.id)! < entry.amount) {
-      return { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` };
+    const row = entry.type === "transfer"
+      ? { ...entry, categoryId: null, toAccountId: entry.toAccountId || null, toName: entry.toName || null }
+      : { ...entry, toAccountId: null, toName: null };
+    if (id) {
+      // An edit can lower the old account, the new one or a transfer's target, so every account is rechecked.
+      const short = balancesAfterEdit(accounts, entries, id, row);
+      if (short) return { amount: `This would take ${short.name} below zero.` };
+      await tx.update(transactions).set(row).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
+    } else {
+      if (entry.type !== "income" && balance(from.id)! < entry.amount) {
+        return { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` };
+      }
+      await tx.insert(transactions).values({ userId, ...row });
     }
-    const row = entry.type === "transfer" ? { ...entry, toAccountId: entry.toAccountId || null, toName: entry.toName || null } : entry;
-    await tx.insert(transactions).values({ userId, ...row });
   });
   if (errors) return { values, errors };
   refresh();

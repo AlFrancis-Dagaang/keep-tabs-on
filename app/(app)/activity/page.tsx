@@ -12,7 +12,7 @@ import { accounts, categories, transactions, type Transaction } from "@/db/schem
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { formatDate, parseRange } from "@/lib/money";
+import { formatDate, isLinked, parseRange } from "@/lib/money";
 
 import { DeleteEntry, EntryForm } from "./entry-form";
 import { getMoney } from "@/lib/settings";
@@ -69,7 +69,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
     earliest: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.userId, userId)))[0].date,
     rows: await tx
       .select({
-        id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee,
+        id: transactions.id, type: transactions.type, accountId: transactions.accountId, toAccountId: transactions.toAccountId, categoryId: transactions.categoryId, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee,
         note: transactions.note, toName: transactions.toName,
         account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
       })
@@ -139,6 +139,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                         {cols.map((col) => <Fragment key={col.head}>{col.cell(row)}</Fragment>)}
                         <TableCell data-card="end" className="text-right tabular-nums">{sign}{money(row.amount)}</TableCell>
                         <TableCell data-card="actions" className="pr-4 text-right">
+                          {!isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} />}
                           <DeleteEntry id={row.id} label={`${formatDate(row.date)} · ${where} · ${sign}${money(row.amount)}`} />
                         </TableCell>
                       </TableRow>

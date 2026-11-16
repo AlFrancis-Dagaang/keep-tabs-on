@@ -40,6 +40,17 @@ export function balanceOf(account: Pick<Account, "id" | "startingBalance">, entr
   }, account.startingBalance);
 }
 
+/** Entries made by a bill, debt, goal or installment drive their progress and due dates, so they can't be edited. */
+export function isLinked(entry: Pick<Transaction, "billId" | "debtId" | "goalId" | "installmentId">): boolean {
+  return !!(entry.billId || entry.debtId || entry.goalId || entry.installmentId);
+}
+
+/** The first account an edit would take below zero, with the balance it would end at; undefined when the edit is safe. */
+export function balancesAfterEdit(accounts: Pick<Account, "id" | "name" | "startingBalance">[], entries: (Entry & { id: string })[], id: string, next: Entry) {
+  const after = entries.map((entry) => (entry.id === id ? next : entry));
+  return accounts.map(({ name, ...account }) => ({ name, balance: balanceOf(account, after) })).find(({ balance }) => balance < 0);
+}
+
 /** The sum of the balances of accounts counted in net worth. */
 export function netWorth(accounts: { balance: number; includeInNetWorth: boolean }[]): number {
   return accounts.reduce((total, account) => total + (account.includeInNetWorth ? account.balance : 0), 0);

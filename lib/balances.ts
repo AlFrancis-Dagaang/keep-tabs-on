@@ -12,7 +12,7 @@ export async function loadBalances(tx: Tx, userId: string, { lock = false } = {}
   const rows = await (lock ? accountQuery.for("update") : accountQuery);
   const entries = await tx
     .select({
-      type: transactions.type, amount: transactions.amount, accountId: transactions.accountId, toAccountId: transactions.toAccountId,
+      id: transactions.id, type: transactions.type, amount: transactions.amount, accountId: transactions.accountId, toAccountId: transactions.toAccountId,
       date: transactions.date, categoryId: transactions.categoryId, billId: transactions.billId, debtId: transactions.debtId,
     })
     .from(transactions).where(eq(transactions.userId, userId));

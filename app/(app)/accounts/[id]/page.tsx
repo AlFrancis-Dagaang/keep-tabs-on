@@ -10,9 +10,11 @@ import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, categories, transactions } from "@/db/schema";
+import { EntryForm } from "../../activity/entry-form";
 import { getUserId } from "@/lib/auth/server";
+import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
-import { accountHistory, parseRange } from "@/lib/money";
+import { accountHistory, isLinked, parseRange } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const toAccounts = alias(accounts, "to_accounts");
@@ -34,14 +36,17 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
   const search = await searchParams;
   const { from, to } = parseRange(search.from, search.to);
   const userId = await getUserId();
-  const { account, rows } = await withUser(userId, async (tx) => ({
+  const { account, rows, balances, choices } = await withUser(userId, async (tx) => ({
+    balances: await loadBalances(tx, userId),
+    choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
+      .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
     account: (await tx.select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance })
       .from(accounts).where(and(eq(accounts.id, id.data), eq(accounts.userId, userId))))[0],
     // shortcut: loads every entry of the account, add paging when one account passes a few thousand rows.
     rows: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee, note: transactions.note,
-        accountId: transactions.accountId, toAccountId: transactions.toAccountId, account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName,
+        accountId: transactions.accountId, toAccountId: transactions.toAccountId, categoryId: transactions.categoryId, account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName,
         category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
       })
       .from(transactions)
@@ -75,7 +80,8 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
                 <TableHead className="pl-4">Date</TableHead>
                 <TableHead>Details</TableHead>
                 <TableHead className="text-right">Amount</TableHead>
-                <TableHead className="pr-4 text-right">Balance</TableHead>
+                <TableHead className="text-right">Balance</TableHead>
+                <TableHead className="w-0" />
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -93,7 +99,10 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
                       {row.note && <p className="text-sm text-muted-foreground">{row.note}</p>}
                     </TableCell>
                     <TableCell data-card="end" className="text-right tabular-nums">{row.change > 0 ? "+" : "−"}{money(Math.abs(row.change))}</TableCell>
-                    <TableCell data-label="Balance" className="pr-4 text-right tabular-nums">{money(row.balanceAfter)}</TableCell>
+                    <TableCell data-label="Balance" className="text-right tabular-nums">{money(row.balanceAfter)}</TableCell>
+                    <TableCell data-card="actions" className="pr-4 text-right">
+                      {!isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} />}
+                    </TableCell>
                   </TableRow>
                 );
               })}

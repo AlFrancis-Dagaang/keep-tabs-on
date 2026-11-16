@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, manilaMonth, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, isLinked, manilaMonth, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, progressBlocks, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -273,5 +273,45 @@ describe("formatTime", () => {
   it("reads the moment on the Manila clock, across UTC midnight", () => {
     expect(formatTime(new Date("2026-11-15T16:30:00Z"))).toBe("12:30 AM");
     expect(formatTime(new Date("2026-11-15T07:42:00Z"))).toBe("3:42 PM");
+  });
+});
+
+describe("balancesAfterEdit", () => {
+  const accounts = [{ id: a, name: "Cash", startingBalance: 0 }, { id: b, name: "Bank", startingBalance: 0 }];
+  const log: (Entry & { id: string })[] = [
+    { id: "i", type: "income", amount: 50000, accountId: a, toAccountId: null },
+    { id: "e", type: "expense", amount: 20000, accountId: a, toAccountId: null },
+    { id: "t", type: "transfer", amount: 10000, accountId: a, toAccountId: b },
+  ];
+
+  it("passes when every account stays at zero or above", () => {
+    expect(balancesAfterEdit(accounts, log, "e", { ...log[1], amount: 40000 })).toBeUndefined();
+    expect(balancesAfterEdit(accounts, log, "e", log[1])).toBeUndefined();
+  });
+
+  it("refuses raising an expense past what the account holds, and says where it ends", () => {
+    expect(balancesAfterEdit(accounts, log, "e", { ...log[1], amount: 50000 })).toEqual({ name: "Cash", balance: -10000 });
+  });
+
+  it("refuses moving an income away from an account that already spent it", () => {
+    expect(balancesAfterEdit(accounts, log, "i", { ...log[0], accountId: b })).toEqual({ name: "Cash", balance: -30000 });
+  });
+
+  it("moves the credit when a transfer's target changes", () => {
+    const toCash: Entry = { type: "transfer", amount: 10000, accountId: b, toAccountId: a };
+    expect(balancesAfterEdit(accounts, log, "t", toCash)).toEqual({ name: "Bank", balance: -10000 });
+  });
+
+  it("takes a transfer to a name out of one side only", () => {
+    expect(balancesAfterEdit(accounts, log, "t", { ...log[2], toAccountId: null })).toBeUndefined();
+    expect(balancesAfterEdit(accounts, log, "t", { ...log[2], toAccountId: null, amount: 40000 })).toEqual({ name: "Cash", balance: -10000 });
+  });
+});
+
+describe("isLinked", () => {
+  const none = { billId: null, debtId: null, goalId: null, installmentId: null };
+  it("is true when a bill, debt, goal or installment made the entry", () => {
+    expect(isLinked(none)).toBe(false);
+    for (const key of Object.keys(none)) expect(isLinked({ ...none, [key]: "x" })).toBe(true);
   });
 });
