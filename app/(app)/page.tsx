@@ -114,13 +114,13 @@ async function Overview() {
           <MiniTable>
             {data.balances.accounts.map((account) => (
               <TableRow key={account.id} className="relative">
-                <TableCell className="pl-4">
+                <TableCell className="pl-4 max-md:flex-1">
                   <span className="flex items-center gap-2">
                     <AccountIcon icon={account.icon} name={account.name} />
                     <Link href={`/accounts/${account.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{account.name}</Link>
                   </span>
                 </TableCell>
-                <TableCell className="pr-4 text-right tabular-nums">{money(account.balance)}</TableCell>
+                <TableCell className="pr-4 text-right tabular-nums max-md:shrink-0 max-md:whitespace-nowrap">{money(account.balance)}</TableCell>
               </TableRow>
             ))}
           </MiniTable>
@@ -166,12 +166,12 @@ async function Overview() {
           <MiniTable>
             {data.recent.map((row) => (
               <TableRow key={row.id}>
-                <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} /></TableCell>
-                <TableCell>
+                <TableCell className="pl-4 tabular-nums max-md:shrink-0"><EntryDate date={row.date} today={today} /></TableCell>
+                <TableCell className="max-md:flex-1">
                   {row.payee ?? row.category ?? <span className="text-muted-foreground">—</span>}
                   <div className="text-sm text-muted-foreground">{row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}</div>
                 </TableCell>
-                <TableCell className="pr-4 text-right tabular-nums">{{ income: "+", expense: "−", transfer: "" }[row.type]}{money(row.amount)}</TableCell>
+                <TableCell className="pr-4 text-right tabular-nums max-md:shrink-0 max-md:whitespace-nowrap">{{ income: "+", expense: "−", transfer: "" }[row.type]}{money(row.amount)}</TableCell>
               </TableRow>
             ))}
           </MiniTable>
@@ -200,7 +200,7 @@ function Card({ href, label, value, note, children }: { href: string; label: str
 
 function Section({ title, href, empty, className, children }: { title: string; href: string; empty?: string | false; className?: string; children: ReactNode }) {
   return (
-    <section className={`flex flex-col ${className ?? ""}`}>
+    <section className={`flex min-w-0 flex-col ${className ?? ""}`}>
       <div className="mb-3 flex items-baseline justify-between gap-4">
         <h2 className="font-serif text-xl">{title}</h2>
         <Link href={href} className="text-sm text-muted-foreground underline-offset-4 hover:underline">View all</Link>

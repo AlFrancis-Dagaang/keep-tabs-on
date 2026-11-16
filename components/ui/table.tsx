@@ -22,7 +22,7 @@ const cards = [
 ].join(" ")
 
 const list =
-  "max-md:[&_tr]:flex max-md:[&_tr]:flex-wrap max-md:[&_tr]:items-baseline max-md:[&_tr]:justify-between max-md:[&_tr]:gap-x-3 max-md:[&_tr]:px-3 max-md:[&_tr]:py-2 max-md:[&_td]:p-0 max-md:[&_td]:whitespace-normal"
+  "max-md:[&_tr]:flex max-md:[&_tr]:flex-wrap max-md:[&_tr]:items-baseline max-md:[&_tr]:justify-between max-md:[&_tr]:gap-x-3 max-md:[&_tr]:px-3 max-md:[&_tr]:py-2 max-md:[&_td]:min-w-0 max-md:[&_td]:p-0 max-md:[&_td]:break-words max-md:[&_td]:whitespace-normal"
 
 function Table({ className, list: compact, ...props }: React.ComponentProps<"table"> & { list?: boolean }) {
   return (
