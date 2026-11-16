@@ -54,7 +54,7 @@ function DebtFields({ today, debt, locked, onSaved }: { today: string; debt?: Ed
   const [direction, setDirection] = useState<Debt["direction"]>((values?.direction as Debt["direction"]) || debt?.direction || "owe");
   const owed = direction === "owed";
   return (
-    <form key={JSON.stringify(values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="id" value={debt?.id ?? ""} />
       {/* A disabled select isn't submitted, so a locked debt sends its direction through a hidden input. */}
       {locked && <input type="hidden" name="direction" value={direction} />}
@@ -128,7 +128,7 @@ function PayFields({ debt, accounts, today, onSaved }: { debt: { id: string; lef
 
   const values = state.values;
   return (
-    <form key={JSON.stringify(values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="debtId" value={debt.id} />
       <Field label={debt.direction === "owed" ? "To account" : "From account"} name="accountId" state={state}>
         <Select name="accountId" defaultValue={values?.accountId || undefined}>
@@ -149,6 +149,9 @@ function PayFields({ debt, accounts, today, onSaved }: { debt: { id: string; lef
       </Field>
       <Field label="Date" name="date" state={state}>
         <Input id="date" name="date" type="date" defaultValue={values?.date ?? today} {...invalid(state, "date")} />
+      </Field>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={values?.note ?? undefined} {...invalid(state, "note")} />
       </Field>
       <DialogFooter>
         <Button type="submit" disabled={pending}>{debt.direction === "owed" ? "Record receipt" : "Record payment"}</Button>
@@ -190,7 +193,7 @@ function invalid(state: FormState, name: FieldName) {
 
 function Field({ label, name, state, children }: { label: string; name: FieldName; state: FormState; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <Label htmlFor={name}>{label}</Label>
       {children}
       {state.errors?.[name] && <p id={`${name}-error`} className="text-sm text-destructive">{state.errors[name]}</p>}

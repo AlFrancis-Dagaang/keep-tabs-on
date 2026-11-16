@@ -44,7 +44,7 @@ function Fields({ today, accounts, installment, onSaved }: { today: string; acco
   const values = state.values;
   return (
     // Remounts after a failed save, so the select shows the refilled value once React resets the form.
-    <form key={JSON.stringify(values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="id" value={installment?.id ?? ""} />
       <Field label="Name" name="name" state={state}>
         <Input id="name" name="name" placeholder="Phone" defaultValue={values?.name ?? installment?.name} {...invalid(state, "name")} />
@@ -115,10 +115,13 @@ function PayFields({ installment, today, onSaved }: { installment: { id: string 
   }, [state, onSaved]);
 
   return (
-    <form key={JSON.stringify(state.values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(state.values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="installmentId" value={installment.id} />
       <Field label="Date" name="date" state={state}>
         <Input id="date" name="date" type="date" defaultValue={state.values?.date ?? today} {...invalid(state, "date")} />
+      </Field>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={state.values?.note ?? undefined} {...invalid(state, "note")} />
       </Field>
       {state.errors?.installmentId && <p role="alert" className="text-sm text-destructive">{state.errors.installmentId}</p>}
       <DialogFooter>
@@ -161,7 +164,7 @@ function invalid(state: FormState, name: FieldName) {
 
 function Field({ label, name, state, children }: { label: string; name: FieldName; state: FormState; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <Label htmlFor={name}>{label}</Label>
       {children}
       {state.errors?.[name] && <p id={`${name}-error`} className="text-sm text-destructive">{state.errors[name]}</p>}

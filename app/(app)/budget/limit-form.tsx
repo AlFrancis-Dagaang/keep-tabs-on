@@ -41,9 +41,9 @@ function Fields({ category, onSaved }: { category: Limit; onSaved: () => void })
   }, [state, onSaved]);
 
   return (
-    <form action={action} className="grid gap-4">
+    <form action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="categoryId" value={category.id} />
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Label htmlFor="budget">Monthly limit</Label>
         <Input
           id="budget"

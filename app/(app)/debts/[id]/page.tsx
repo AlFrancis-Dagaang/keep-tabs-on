@@ -32,7 +32,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
     debt: (await tx.select().from(debts).where(and(eq(debts.id, id.data), eq(debts.userId, userId))))[0],
     balances: await loadBalances(tx, userId),
     payments: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, account: accounts.name })
+      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(eq(transactions.debtId, id.data))
@@ -65,6 +65,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
               <TableRow>
                 <TableHead className="pl-4">Date</TableHead>
                 <TableHead>{owed ? "To" : "From"}</TableHead>
+                <TableHead>Note</TableHead>
                 <TableHead className="pr-4 text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -73,6 +74,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
                 <TableRow key={payment.id}>
                   <TableCell className="pl-4 tabular-nums">{formatDate(payment.date)}</TableCell>
                   <TableCell data-label={owed ? "To" : "From"}>{payment.account}</TableCell>
+                  <TableCell data-label={payment.note ? "Note" : undefined} className="text-muted-foreground">{payment.note}</TableCell>
                   <TableCell data-card="end" className="pr-4 text-right tabular-nums">{money(payment.amount)}</TableCell>
                 </TableRow>
               ))}

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { RowActions, RowMenu } from "@/components/row-menu";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
@@ -66,11 +67,12 @@ async function Bills() {
               {rows.map((row) => {
                 const paid = row.paid ?? 0;
                 return (
-                  <TableRow key={row.id}>
+                  <TableRow key={row.id} className="relative">
                     <TableCell className="pl-4">
-                      <div className="font-medium">{row.name}</div>
+                      <Link href={`/bills/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
                       <div className="text-sm text-muted-foreground tabular-nums">{money(row.amount)}</div>
                       <div className="text-sm text-muted-foreground">{row.note}</div>
+                      <RowMenu name={row.name} labels={["Edit", "Remove"]} />
                     </TableCell>
                     <TableCell data-label="Repeats">{repeatLabels[row.repeat]}</TableCell>
                     <TableCell data-label="Next due" className="tabular-nums">
@@ -85,10 +87,9 @@ async function Bills() {
                         {money(paid)} of {money(row.amount)}
                       </div>
                     </TableCell>
-                    <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
+                    <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
                       <PayBill bill={{ id: row.id, name: row.name, left: row.amount - paid }} accounts={balances.accounts} today={today} />
-                      <BillForm today={today} bill={row} />
-                      <DeleteBill id={row.id} name={row.name} />
+                      <RowActions items={[{ label: "Edit", node: <BillForm today={today} bill={row} /> }, { label: "Remove", node: <DeleteBill id={row.id} name={row.name} /> }]} />
                     </TableCell>
                   </TableRow>
                 );

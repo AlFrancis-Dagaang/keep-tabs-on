@@ -10,6 +10,8 @@ import { cn } from "cn"
 const cards = [
   "max-md:block max-md:[&_tbody]:block max-md:[&_thead]:sr-only",
   "max-md:[&_tbody_tr]:mb-2.5 max-md:[&_tbody_tr]:grid max-md:[&_tbody_tr]:grid-cols-[1fr_auto] max-md:[&_tbody_tr]:gap-x-3 max-md:[&_tbody_tr]:gap-y-1.5 max-md:[&_tbody_tr]:rounded-xl max-md:[&_tbody_tr]:border max-md:[&_tbody_tr]:bg-surface max-md:[&_tbody_tr]:p-3",
+  // the "⋯" button sits in the card's top-right corner; the title and the amount leave room for it
+  "max-md:[&_tbody_tr]:relative max-md:[&_tbody_tr:has([data-row-menu])_td:first-child]:pr-12 max-md:[&_tbody_tr:has([data-row-menu])_td[data-card=end]]:pr-12",
   "max-md:[&_tbody_td]:col-span-full max-md:[&_tbody_td]:p-0 max-md:[&_tbody_td]:whitespace-normal max-md:[&_tbody_td:empty]:hidden",
   "max-md:[&_tbody_td:first-child]:col-span-1 max-md:[&_tbody_td:first-child]:col-start-1 max-md:[&_tbody_td:first-child]:block",
   "max-md:[&_td[data-label]]:flex max-md:[&_td[data-label]]:items-baseline max-md:[&_td[data-label]]:justify-between max-md:[&_td[data-label]]:gap-3 max-md:[&_td[data-label]]:before:shrink-0 max-md:[&_td[data-label]]:before:text-muted-foreground max-md:[&_td[data-label]]:before:content-[attr(data-label)]",

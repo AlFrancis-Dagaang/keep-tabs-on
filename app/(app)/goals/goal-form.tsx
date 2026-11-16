@@ -51,7 +51,7 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
 
   const values = state.values;
   return (
-    <form key={JSON.stringify(values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="id" value={goal?.id ?? ""} />
       <Field label="Name" name="name" state={state}>
         <Input id="name" name="name" placeholder="Emergency fund" defaultValue={values?.name ?? goal?.name} {...invalid(state, "name")} />
@@ -111,7 +111,7 @@ function AddFields({ goal, accounts, today, onSaved }: { goal: { id: string; acc
 
   const values = state.values;
   return (
-    <form key={JSON.stringify(values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="goalId" value={goal.id} />
       <Field label="From account" name="fromAccountId" state={state}>
         <AccountSelect id="fromAccountId" accounts={accounts.filter((account) => account.id !== goal.accountId)}
@@ -122,6 +122,9 @@ function AddFields({ goal, accounts, today, onSaved }: { goal: { id: string; acc
       </Field>
       <Field label="Date" name="date" state={state}>
         <Input id="date" name="date" type="date" defaultValue={values?.date ?? today} {...invalid(state, "date")} />
+      </Field>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={values?.note ?? undefined} {...invalid(state, "note")} />
       </Field>
       <DialogFooter>
         <Button type="submit" disabled={pending}><Banknote />Add money</Button>
@@ -181,7 +184,7 @@ function invalid(state: FormState, name: FieldName) {
 
 function Field({ label, name, state, children }: { label: string; name: FieldName; state: FormState; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <Label htmlFor={name}>{label}</Label>
       {children}
       {state.errors?.[name] && <p id={`${name}-error`} className="text-sm text-destructive">{state.errors[name]}</p>}

@@ -11,7 +11,7 @@ import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const debtFields = ["id", "name", "direction", "total", "deadline", "paidBefore", "note"] as const;
-const payFields = ["debtId", "accountId", "amount", "date"] as const;
+const payFields = ["debtId", "accountId", "amount", "date", "note"] as const;
 type Field = (typeof debtFields)[number] | (typeof payFields)[number];
 
 export type FormState = {
@@ -39,7 +39,7 @@ const debtInput = z.object({
   }),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 });
-const payInput = z.object({ debtId: z.uuid(), accountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date.") });
+const payInput = z.object({ debtId: z.uuid(), accountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date."), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
 
 function read<F extends Field>(formData: FormData, fields: readonly F[]) {
   return Object.fromEntries(fields.map((field) => [field, String(formData.get(field) ?? "")])) as Record<F, string>;
@@ -112,7 +112,7 @@ export async function payDebt(_: FormState, formData: FormData): Promise<FormSta
     if (!receiving && balance(from.id)! < payment.amount) return { errors: { amount: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
 
     await tx.insert(transactions).values({
-      userId, type: receiving ? "income" : "expense", amount: payment.amount, date: payment.date, accountId: from.id, debtId: debt.id, payee: debt.name,
+      userId, type: receiving ? "income" : "expense", amount: payment.amount, date: payment.date, accountId: from.id, debtId: debt.id, payee: debt.name, note: payment.note,
     });
     return { ok: true, completed: payment.amount === left };
   });

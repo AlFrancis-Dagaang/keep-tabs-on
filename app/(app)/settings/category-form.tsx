@@ -41,10 +41,10 @@ function Fields({ kind, category, onSaved }: { kind: Category["kind"]; category?
   }, [state, onSaved]);
 
   return (
-    <form action={action} className="grid gap-4">
+    <form action={action} className="grid grid-cols-1 gap-4">
       {category && <input type="hidden" name="id" value={category.id} />}
       <input type="hidden" name="kind" value={kind} />
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Label htmlFor="name">Name</Label>
         <Input
           id="name"

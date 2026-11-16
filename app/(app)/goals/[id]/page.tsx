@@ -39,7 +39,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
       .where(and(eq(goals.id, id.data), eq(goals.userId, userId))))[0],
     balances: await loadBalances(tx, userId),
     transfers: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, from: accounts.name, to: toAccounts.name })
+      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, from: accounts.name, to: toAccounts.name })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .innerJoin(toAccounts, eq(transactions.toAccountId, toAccounts.id))
@@ -73,6 +73,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
                 <TableHead className="pl-4">Date</TableHead>
                 <TableHead>From</TableHead>
                 <TableHead>To</TableHead>
+                <TableHead>Note</TableHead>
                 <TableHead className="pr-4 text-right">Amount</TableHead>
               </TableRow>
             </TableHeader>
@@ -82,6 +83,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
                   <TableCell className="pl-4 tabular-nums">{formatDate(transfer.date)}</TableCell>
                   <TableCell data-label="From">{transfer.from}</TableCell>
                   <TableCell data-label="To">{transfer.to}</TableCell>
+                  <TableCell data-label={transfer.note ? "Note" : undefined} className="text-muted-foreground">{transfer.note}</TableCell>
                   <TableCell data-card="end" className="pr-4 text-right tabular-nums">{money(transfer.amount)}</TableCell>
                 </TableRow>
               ))}

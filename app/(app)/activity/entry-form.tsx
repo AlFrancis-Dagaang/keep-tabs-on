@@ -62,7 +62,7 @@ function Fields({ accounts, categories, today, entry, onSaved }: Options & { ent
   const choices = categories.filter((category) => category.kind === kind);
   return (
     // Remounts after a failed save, so the selects show the refilled values once React resets the form.
-    <form key={JSON.stringify(saved.values ?? {})} action={action} className="grid gap-4">
+    <form key={JSON.stringify(saved.values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       {entry && <input type="hidden" name="id" value={entry.id} />}
       <Field label="Type" name="type" state={state}>
         <Select name="type" value={type} onValueChange={(value) => setType(value as Transaction["type"])}>
@@ -132,7 +132,7 @@ function invalid(state: FormState, name: FieldName) {
 
 function Field({ label, name, state, children }: { label: string; name: FieldName; state: FormState; children: React.ReactNode }) {
   return (
-    <div className="grid gap-2">
+    <div className="grid grid-cols-1 gap-2">
       <Label htmlFor={name}>{label}</Label>
       {children}
       {state.errors?.[name] && <p id={`${name}-error`} className="text-sm text-destructive">{state.errors[name]}</p>}

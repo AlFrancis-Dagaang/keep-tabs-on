@@ -81,7 +81,7 @@ export function SetupForm({ currency: initial }: { currency: Currency }) {
 
   return (
     <form onSubmit={submit} className="grid gap-10">
-      <section className="grid gap-2">
+      <section className="grid grid-cols-1 gap-2">
         <h2 className="font-serif text-xl">Currency</h2>
         <select aria-label="Currency" value={currency} onChange={(event) => setCurrency(event.target.value as Currency)} className={`${selectClass} max-w-48`}>
           {currencies.map((code) => <option key={code} value={code}>{code} ({currencySymbol(code)})</option>)}
@@ -97,13 +97,13 @@ export function SetupForm({ currency: initial }: { currency: Currency }) {
           </div>
           {errors[`${section.key}.none`] && <p role="alert" className="text-sm text-destructive">{errors[`${section.key}.none`]}</p>}
           {rows[section.key].map((row, index) => (
-            <div key={index} className="grid gap-3 rounded-xl border bg-surface p-4 sm:grid-cols-2">
+            <div key={index} className="grid grid-cols-1 gap-3 rounded-xl border bg-surface p-4 sm:grid-cols-2">
               {section.fields.map((field) => {
                 const id = `${section.key}-${index}-${field.name}`;
                 const error = errors[`${section.key}.${index}.${field.name}`];
                 const value = row[field.name] ?? "";
                 return (
-                  <div key={field.name} className="grid gap-2">
+                  <div key={field.name} className="grid grid-cols-1 gap-2">
                     <Label htmlFor={id}>{field.kind === "money" ? `${field.label} (${currencySymbol(currency)})` : field.label}</Label>
                     {field.kind === "direction" ? (
                       <select id={id} value={value} onChange={(event) => change(section.key, index, field.name, event.target.value)} className={selectClass}>

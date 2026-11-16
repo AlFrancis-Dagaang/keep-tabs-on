@@ -44,9 +44,9 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
   }, [state, onSaved]);
 
   return (
-    <form action={action} className="grid gap-4">
+    <form action={action} className="grid grid-cols-1 gap-4">
       {account && <input type="hidden" name="id" value={account.id} />}
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Label htmlFor="name">Name</Label>
         <Input
           id="name"
@@ -58,7 +58,7 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
         />
         {state.errors?.name && <p id="name-error" className="text-sm text-destructive">{state.errors.name}</p>}
       </div>
-      <div className="grid gap-2">
+      <div className="grid grid-cols-1 gap-2">
         <Label htmlFor="balance">Balance today ({symbol})</Label>
         <Input
           id="balance"

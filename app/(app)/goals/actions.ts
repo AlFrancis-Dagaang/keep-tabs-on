@@ -11,7 +11,7 @@ import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const goalFields = ["id", "name", "target", "deadline", "accountId", "savedBefore", "note"] as const;
-const addFields = ["goalId", "fromAccountId", "amount", "date"] as const;
+const addFields = ["goalId", "fromAccountId", "amount", "date", "note"] as const;
 type Field = (typeof goalFields)[number] | (typeof addFields)[number];
 
 export type FormState = {
@@ -39,7 +39,7 @@ const goalInput = z.object({
   }),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 });
-const addInput = z.object({ goalId: z.uuid(), fromAccountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date.") });
+const addInput = z.object({ goalId: z.uuid(), fromAccountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date."), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
 
 function read<F extends Field>(formData: FormData, fields: readonly F[]) {
   return Object.fromEntries(fields.map((field) => [field, String(formData.get(field) ?? "")])) as Record<F, string>;
@@ -111,7 +111,7 @@ export async function addToGoal(_: FormState, formData: FormData): Promise<FormS
 
     await tx.insert(transactions).values({
       userId, type: "transfer", amount: transfer.amount, date: transfer.date,
-      accountId: from.id, toAccountId: goal.accountId, goalId: goal.id, payee: goal.name,
+      accountId: from.id, toAccountId: goal.accountId, goalId: goal.id, payee: goal.name, note: transfer.note,
     });
     return { ok: true, completed: transfer.amount === left };
   });
