@@ -32,7 +32,7 @@ Theme follows the system light/dark setting, with a manual toggle.
 ## Shapes
 - Panels and stat cards: 1px border, 12px radius, no heavy shadows.
 - Buttons: 8px radius. Primary = clay fill. Secondary = raised gray, like a neutral "Open" button.
-- Filters and badges: pills.
+- Filters and badges: pills. Status pills: Due soon, Upcoming, Today, Paid.
 
 ## Progress bars (signature element)
 - 12 square pixel blocks, 11px each, 3px gaps, no rounding.
@@ -49,11 +49,13 @@ Theme follows the system light/dark setting, with a manual toggle.
 - Dates are shown in words, "Jan 2, 2027" (`formatDate`); form date inputs stay native. Rows dated today carry a small "Today" tag. Activity and account history show the logged time as a muted second line.
 - Icons are lucide, 16px, before the text (never instead of it), decorative. Sidebar pages and Add, Edit, Remove and Record payment buttons have one.
 - Removing something says "Remove", never "Delete".
-- Accounts show a generic lucide icon (wallet, landmark, smartphone, banknote) before the name in lists. No brand logos and no stored icon; the mapping is picked when built.
+- Accounts show an icon before the name in lists: a bank logo from a fixed list (BPI, GCash, Maya, UnionBank, GSave, MariBank, files in `public/banks/`), or a colour tile (fixed palette, the first letter of the name), or a generic lucide icon (wallet, landmark, smartphone, banknote) when none is picked. One nullable `icon` text on accounts; no uploads.
 - Month picker: a button with the selected month ("November 2026") opens a year header with arrows, a 4×3 month grid, "This month", "Month to date" and "All dates". Months before the earliest entry or after the current one are dimmed; the current month is underlined. Single days and ranges sit under "Custom range".
 
 ## Overview page
-Light on purpose. Two stat cards (net worth with "Across N accounts", budget left with "₱X spent of ₱Y"), then two compact lists: Upcoming bills and Recent activity, each with a "View all" link. Accounts, goals, debts, income and expenses live on their own pages.
+Reference mock: the owner's image (T-19). Four stat cards: Net worth ("Across N accounts"), Income this month and Expenses this month (each with an arrow and % against last month, hidden when last month has no data), Bills due in 7 days (₱ total). Only Expenses has a pixel bar: this month's spending as a share of income (full and clay when over, hidden when income is 0). The cards are equal height. Below: Accounts (icon, name, balance), Upcoming bills (date, amount, "Due soon" within 3 days or "Upcoming" pill), Goals (name, pixel bar, %), Debts (name, amount, pixel bar) and Recent activity (date with "Today" tag, description, amount), each with a "View all" link. Budget left no longer shows here; it lives on Budget.
+- Desktop: four cards in a row, then a grid whose panels stretch to fill their row, so no column ends short: Accounts, Upcoming bills, Goals; then Debts and the wider Recent activity.
+- Mobile: cards and lists stack in the same order; lists are compact, no labels.
 
 ## Copy
 - Plain, sentence case, active verbs: "Record payment", "Add money", "Create goal".

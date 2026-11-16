@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- Covers: T-19. Throwaway mock of the new Overview and the account icon picker; structure from the owner's image, sample data in the frames, real dev figures in the worked example. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overview mock</title>
+<style>
+body{margin:0;padding:24px;background:#888;font:14px system-ui;color:#fff}
+h1{font:600 16px system-ui;margin:24px 0 8px}
+.row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.frame{--bg:#FAF9F5;--surface:#fff;--raised:#F0EEE6;--border:#E3E1D8;--text:#1F1E1C;--muted:#6E6B63;--clay:#C96442;--ok:#2f7d4f;
+  background:var(--bg);color:var(--text);font:14px "Instrument Sans",system-ui;border-radius:16px;padding:20px;box-sizing:border-box}
+.frame.dark{--bg:#1F1F1E;--surface:#262624;--raised:#30302E;--border:#3A3A37;--text:#ECEAE3;--muted:#A3A19A;--ok:#6fbf8a}
+.frame.d{width:1100px}.frame.m{width:390px}
+h2{font:500 20px "Source Serif 4",Georgia,serif;margin:0}
+.title{font:500 32px "Source Serif 4",Georgia,serif;margin:0}
+.sub{color:var(--muted);margin:2px 0 16px}
+.cards{display:grid;gap:12px;grid-template-columns:repeat(4,1fr);margin-bottom:20px}
+.m .cards{grid-template-columns:1fr 1fr}
+.card,.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+.card .l{color:var(--muted);font-size:13px}.card .v{font:500 24px "Source Serif 4",Georgia,serif;font-variant-numeric:tabular-nums}
+.card{display:flex;flex-direction:column}.card .n{color:var(--muted);font-size:12px;margin-top:auto;padding-top:6px}.card .bar{margin-top:8px}.up{color:var(--ok)}
+.bar{display:flex;gap:3px;margin-top:8px}.bar i{width:11px;height:11px;background:var(--border)}.bar i.f{background:var(--text)}.bar i.c{background:var(--clay)}
+.m .bar i{width:9px;height:9px}
+.grid{display:grid;gap:16px;grid-template-columns:1fr 1.3fr 1fr;grid-template-areas:'acc bills goals' 'debts recent recent'}
+.m .grid{grid-template-columns:1fr;grid-template-areas:'acc' 'bills' 'goals' 'debts' 'recent'}
+.sec{display:flex;flex-direction:column}.sec .panel{flex:1}
+.a-acc{grid-area:acc}.a-bills{grid-area:bills}.a-goals{grid-area:goals}.a-debts{grid-area:debts}.a-recent{grid-area:recent}
+.sec h2{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:8px}
+.sec h2 a{font:400 12px system-ui;color:var(--muted);text-decoration:underline}
+.li{display:flex;align-items:center;gap:10px;padding:9px 0;border-top:1px solid var(--border)}.li:first-child{border-top:0}
+.li .g{flex:1;min-width:0}.li .s{color:var(--muted);font-size:12px}.amt{font-variant-numeric:tabular-nums}
+.ic{width:22px;height:22px;border-radius:6px;display:grid;place-items:center;color:#fff;font:600 12px system-ui;flex:none}
+.pill{border-radius:99px;padding:1px 8px;font-size:11px;background:var(--raised);color:var(--text);margin-left:6px}
+.pill.o{background:var(--clay);color:#fff}
+.pct{font-size:12px;color:var(--muted);width:34px;text-align:right}
+.picker{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0}
+.picker button{width:44px;height:44px;border-radius:10px;border:1px solid var(--border);background:var(--surface);display:grid;place-items:center;color:var(--text);cursor:pointer}
+.picker button.sel{outline:2px solid var(--clay)}
+.picker .ic{width:28px;height:28px;font-size:14px}
+.note{background:#fffbe6;color:#333;border-radius:8px;padding:10px 12px;max-width:520px;line-height:1.5}
+.note b{display:block;margin-bottom:4px}
+table{border-collapse:collapse}td,th{padding:3px 10px 3px 0;text-align:left}
+</style>
+</head>
+<body>
+<div class="row">
+ <div class="note"><b>Worked example, your dev data (16 Nov 2026)</b>
+  <table>
+   <tr><th>Card</th><th>Figure</th><th>Last month</th><th>% change</th><th>Share-of-largest bar</th></tr>
+   <tr><td>Net worth</td><td>₱8,850.00</td><td>n/a</td><td>none</td><td>12 of 12</td></tr>
+   <tr><td>Income</td><td>₱200.00</td><td>₱0.00</td><td>hidden (last month 0)</td><td>0 of 12</td></tr>
+   <tr><td>Expenses</td><td>₱1,250.00</td><td>₱100.00</td><td>↑1,150%</td><td>1 of 12</td></tr>
+   <tr><td>Bills due in 7 days</td><td>₱0.00 (0 bills)</td><td>n/a</td><td>none</td><td>0 of 12</td></tr>
+  </table>
+  Payroll is excluded from net worth (₱1,000). Rent ₱1,000 is due Dec 1, 15 days out, so it shows Upcoming, not Due soon.<br><br>
+  <b>What this shows about question 1</b>
+  On this data the "share of the largest" bars are 12, 0, 1, 0. Net worth is full only because it is the largest, so the bars say nothing. Option B below shows Income and Expenses against each other, which reads better.
+ </div>
+</div>
+
+<h1>Desktop, light</h1><div class="row" id="d1"></div>
+<h1>Desktop, dark</h1><div class="row" id="d2"></div>
+<h1>Mobile 390px, light and dark</h1><div class="row" id="m1"></div>
+<h1>Bar options for the cards (question 1)</h1><div class="row" id="bars"></div>
+<h1>Account icon picker, in the Add account dialog</h1><div class="row" id="pick"></div>
+<h1>Empty states</h1><div class="row" id="empty"></div>
+
+<script>
+const bar=(n,c)=>`<div class="bar">${Array.from({length:12},(_,i)=>`<i class="${i<n?(c?'c':'f'):''}"></i>`).join('')}</div>`;
+const ic=(bg,t,r)=>`<span class="ic" style="background:${bg};${r?'border-radius:50%':''}">${t}</span>`;
+const accts=[[ic('#d4202c','B'),'BPI','₱34,200'],[ic('#1c6ef2','G'),'GCash','₱12,500'],[ic('#18a864','M'),'Maya','₱8,750'],[ic('#f58220','U'),'UnionBank','₱15,600'],[ic('#7a6a55','₱'),'Cash','₱3,200']];
+const list=(rows)=>rows.map(r=>`<div class="li">${r[0]}<div class="g">${r[1]}<div class="s">${r[2]||''}</div></div><div class="amt">${r[3]||''}</div></div>`).join('');
+const sec=(t,b,a)=>`<div class="sec a-${a}"><h2>${t}<a>View all</a></h2><div class="panel">${b}</div></div>`;
+const page=(cls)=>`<div class="frame ${cls}"><div class="title">Overview</div><div class="sub">See where your money stands today.</div>
+<div class="cards">
+ <div class="card"><div class="l">Net worth</div><div class="v">₱84,250</div><div class="n">Across 5 accounts</div></div>
+ <div class="card"><div class="l">Income this month</div><div class="v">₱38,000</div><div class="n up">↑ 12% vs last month</div></div>
+ <div class="card"><div class="l">Expenses this month</div><div class="v">₱25,750</div>${bar(8)}<div class="n up">↑ 8% vs last month</div></div>
+ <div class="card"><div class="l">Bills due in 7 days</div><div class="v">₱4,749</div><div class="n">3 bills</div></div>
+</div>
+<div class="grid">
+ ${sec('Accounts',list(accts.map(a=>[a[0],a[1],'',a[2]])),'acc')}${sec('Debts',list([['','BPI Credit Card','You owe','₱12,000']])+bar(1),'debts')}
+ ${sec('Upcoming bills',list([['','Netflix <span class="pill o">Due soon</span>','Nov 18, 2026','₱549'],['','Internet <span class="pill">Upcoming</span>','Nov 23, 2026','₱1,699'],['','Spotify <span class="pill">Upcoming</span>','Nov 25, 2026','₱149']]),'bills')}${sec('Recent activity',list([['','Salary <span class="pill">Today</span>','Nov 16, 2026','<span class="up">+₱32,000</span>'],['','Groceries','Nov 15, 2026','−₱1,240']]),'recent')}
+ ${sec('Goals',list([['','New Laptop','₱40,200 of ₱60,000','67%'],['','Travel Fund','₱11,500 of ₱50,000','23%']]),'goals')}
+</div></div>`;
+d1.innerHTML=page('d');d2.innerHTML=page('d dark');
+m1.innerHTML=page('m')+page('m dark');
+bars.innerHTML=`<div class="frame d" style="width:520px"><b>A. Share of the largest (not chosen)</b><div class="cards" style="grid-template-columns:1fr 1fr">
+ <div class="card"><div class="l">Net worth</div>${bar(12)}</div><div class="card"><div class="l">Income</div>${bar(0)}</div>
+ <div class="card"><div class="l">Expenses</div>${bar(1)}</div><div class="card"><div class="l">Bills due</div>${bar(0)}</div></div>Your dev data. Mostly empty.</div>
+<div class="frame d" style="width:520px"><b>B. Spent as a share of income (chosen); no bar on Net worth, Income or Bills</b><div class="cards" style="grid-template-columns:1fr 1fr">
+ <div class="card"><div class="l">Net worth</div></div><div class="card"><div class="l">Income</div></div>
+ <div class="card"><div class="l">Expenses</div>${bar(12,1)}</div><div class="card"><div class="l">Bills due</div></div></div>Expenses above income turn the bar clay and full, like over budget. Needs an income figure to mean anything.</div>`;
+const tiles=['#c96442','#d4202c','#f58220','#18a864','#1c6ef2','#6a4fc2','#d6357f','#6e6b63'];
+pick.innerHTML=['','dark'].map(t=>`<div class="frame ${t}" style="width:420px"><b>Icon</b> <span class="sub">optional</span>
+ <div class="sub" style="margin:8px 0 0">Logos</div><div class="picker">${['BPI','GCash','Maya','UnionBank','GSave','MariBank'].map((n,i)=>`<button ${i==1?'class="sel"':''} aria-label="${n}">${ic(['#d4202c','#1c6ef2','#18a864','#f58220','#0a8f5a','#e0472b'][i],n[0])}</button>`).join('')}<button aria-label="Cash">${ic('#7a6a55','₱')}</button></div>
+ <div class="sub" style="margin:8px 0 0">Colour tiles (first letter of the name)</div><div class="picker">${tiles.map(c=>`<button aria-label="Tile">${ic(c,'A')}</button>`).join('')}</div>
+ <div class="picker"><button aria-label="None" style="width:auto;padding:0 14px">None</button></div></div>`).join('');
+empty.innerHTML=['d','m'].map(c=>`<div class="frame ${c}" style="${c=='d'?'width:520px':''}"><div class="title">Overview</div><div class="sub">See where your money stands today.</div><div class="panel" style="color:var(--muted)">Add your first account in Accounts, like your bank, GCash or cash on hand. Everything else builds on it.</div></div>`).join('');
+</script>
+</body>
+</html>

@@ -10,11 +10,11 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 1. Log money as it moves: income, expense, or a transfer between my own accounts.
 2. Pay a recurring bill or debt from an account and watch its progress bar fill.
 3. Add money to a goal by transferring between accounts.
-4. Check the overview: net worth, account balances, budget left this month, upcoming bills.
+4. Check the overview: net worth, income and expenses this month, bills due soon, account balances, goals and debts.
 
 ## v1 scope
 - **Setup:** currency, accounts with today's balance, spending and income categories (monthly budgets optional), and optional bills, goals and debts.
-- **Accounts:** balance = starting + income − expenses + transfers in − transfers out. Shows a net worth total; an account can be left out of it (still listed, still usable). Editing a balance adjusts the starting balance. Each account has its own history page with a running balance and a date filter.
+- **Accounts:** balance = starting + income − expenses + transfers in − transfers out. Shows a net worth total; an account can be left out of it (still listed, still usable). Editing a balance adjusts the starting balance. Each account has its own history page with a running balance and a date filter, and an optional icon: a bank logo, a colour tile or cash.
 - **Activity:** income, expense and transfer entries, each with a category, a payee, an optional note and an optional link to a bill, debt, goal or installment. A transfer can go to one of my accounts or to someone else (a free-text name): the money leaves the account and counts as neither expense nor budget. Filter by type and by date (month, day or range). Edit entries (not ones linked to a bill, debt, goal or installment) and remove them.
 - **Recurring bills:** amount, next due date, and a repeat interval (weekly, every 2 weeks, monthly, every 3 months, yearly). Partial payments are allowed. Paying in full rolls the next due date forward; the due date can always be edited. It has a detail page with its payment history and a date filter, like debts.
 - **Debts:** money you owe or money owed to you, in one list with a type label. Total, deadline, amount paid (or received) before tracking, linked payments or receipts, progress and history. Receiving a repayment adds it to an account.

@@ -140,3 +140,11 @@ Status: done
 - [x] A payment can be edited from its row in the history on its bill, installment, debt or goal page (amount, date, account, note). Progress and the next due date follow the edit; an edit that would take an account below zero is refused
 - [x] Removing a bill or installment payment rolls the next due date back when that payment was the one that rolled it; debt and goal progress follow a remove, as today
 - [x] Linked rows on Activity either get the same edit or keep their read-only rule, as the decision says. A unit test covers the due-date and progress effect, the rules are proved on dev with the real actions, and the migration, if any, is additive only
+
+## T-19: Overview redesign and account icons
+Status: done
+- [x] Mock first: a one-file HTML mock of the new Overview (light and dark, 390px and desktop) and the account icon picker, approved by the owner before any code
+- [x] Overview matches the approved mock and `docs/design.md`: four stat cards (Net worth, Income this month, Expenses this month with % against last month, Bills due in 7 days) each with a pixel bar; lists for Accounts, Upcoming bills, Goals, Debts and Recent activity with "View all"; status pills (Due soon, Upcoming, Today). Budget left no longer shows on Overview
+- [x] Account icons: one nullable `icon` column on accounts (additive migration); a logo from the fixed list (BPI, GCash, Maya, UnionBank, GSave, MariBank, files in `public/banks/`), a colour tile from a fixed palette, or the generic lucide icon when null; a picker in the account form; the icon shows in every account list and on the Overview. Logo files that can't be sourced reliably fall back to tiles
+- [x] Figures unchanged for the same data; the % change and the 7-day total have unit tests, and are checked on dev data; empty states tell the user what to do next
+- [x] At 360px no page scrolls sideways, targets are at least 44px; `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md` still matches
