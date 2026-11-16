@@ -135,8 +135,8 @@ Status: done
 - [x] Looked at signed in on dev with real payments, light and dark, at 390px and desktop, including a 404 for a made-up id
 
 ## T-18: Edit or undo bill, debt, goal and installment payments
-Status: todo
-- [ ] Design first: a decision in `knowledge/decisions/` says which fields of a linked payment can change, and what happens to the bill's or installment's next due date and to debt and goal progress on an edit and on a remove. I approve it before any code
-- [ ] A payment can be edited from its row in the history on its bill, installment, debt or goal page (amount, date, account, note). Progress and the next due date follow the edit; an edit that would take an account below zero is refused
-- [ ] Removing a bill or installment payment rolls the next due date back when that payment was the one that rolled it; debt and goal progress follow a remove, as today
-- [ ] Linked rows on Activity either get the same edit or keep their read-only rule, as the decision says. A unit test covers the due-date and progress effect, the rules are proved on dev with the real actions, and the migration, if any, is additive only
+Status: done
+- [x] Design first: a decision in `knowledge/decisions/` says which fields of a linked payment can change, and what happens to the bill's or installment's next due date and to debt and goal progress on an edit and on a remove. I approve it before any code
+- [x] A payment can be edited from its row in the history on its bill, installment, debt or goal page (amount, date, account, note). Progress and the next due date follow the edit; an edit that would take an account below zero is refused
+- [x] Removing a bill or installment payment rolls the next due date back when that payment was the one that rolled it; debt and goal progress follow a remove, as today
+- [x] Linked rows on Activity either get the same edit or keep their read-only rule, as the decision says. A unit test covers the due-date and progress effect, the rules are proved on dev with the real actions, and the migration, if any, is additive only

@@ -21,6 +21,7 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 - **Installments:** a fixed-term purchase paid monthly: monthly amount, number of months, months already paid, due day and the account it's paid from. Recording a payment logs an expense, shows "3 of 12 paid" and rolls the due date; it finishes after the last payment. It has a detail page with its payment history and a date filter, like debts.
 - **Notes:** bills, debts, goals, installments and entries can each carry an optional note (up to 200 characters). Payments made from a pay dialog carry an optional note too, shown in the payment history.
 - **Goals:** target, deadline, the account the money is saved in, and the amount already saved. Progress comes from linked transfers; history shows from and to.
+- **Editing payments:** on a bill, installment, debt or goal page, a payment can be edited (date, account, note, and the amount where it does not close a bill cycle) or removed. Removing the payment that closed a bill cycle or an installment month rolls the due date back. A change that would take an account below zero is refused.
 - **Budget:** monthly limits on spending categories only (bill and debt payments don't count). Shows the current month with a total. Past months are kept with budget, spent and saved per month and per category, and each month's budget amounts are saved as they were.
 - **Settings:** currency, manage categories.
 - **Sign-in:** Google sign-in. Each user sees only their own data.
