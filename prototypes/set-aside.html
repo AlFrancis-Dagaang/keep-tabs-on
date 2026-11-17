@@ -1,0 +1,128 @@
+<!doctype html>
+<!-- Covers: T-20. Throwaway mock of Set aside vs Paid on the four list rows and of the transfer form's "For" dropdown. Sample numbers, not the owner's real data. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set aside mock</title>
+<style>
+body{margin:0;padding:24px;background:#888;font:14px system-ui;color:#fff}
+h1{font:600 16px system-ui;margin:28px 0 8px}
+.row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.frame{--bg:#FAF9F5;--surface:#fff;--raised:#F0EEE6;--border:#E3E1D8;--text:#1F1E1C;--muted:#6E6B63;--clay:#C96442;--ok:#2f7d4f;
+  background:var(--bg);color:var(--text);font:14px "Instrument Sans",system-ui;border-radius:16px;padding:20px;box-sizing:border-box;width:560px}
+.frame.m{width:390px}
+h2{font:500 18px "Source Serif 4",Georgia,serif;margin:0 0 10px}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 14px}
+.li{padding:12px 0;border-top:1px solid var(--border)}.li:first-child{border-top:0}
+.li .n{font-weight:500}.li .s{color:var(--muted);font-size:12px}
+.bars{display:grid;grid-template-columns:auto 1fr;gap:4px 10px;align-items:center;margin-top:8px}
+.bars .k{color:var(--muted);font-size:12px}
+.bar{display:flex;gap:3px}.bar i{width:11px;height:11px;background:var(--border)}.bar i.f{background:var(--text)}.bar i.a{background:var(--clay)}
+.bars .v{font-size:12px;color:var(--muted);grid-column:2;margin-top:-2px}
+.bars .t{font-variant-numeric:tabular-nums}
+.tag{font-size:11px;border-radius:99px;padding:1px 8px;background:var(--raised);margin-left:6px}
+.field{margin-bottom:10px}.field label{display:block;font-size:12px;color:var(--muted);margin-bottom:3px}
+.sel{border:1px solid var(--border);background:var(--surface);border-radius:8px;padding:8px 10px;display:flex;justify-content:space-between}
+.sel.hint{border-color:var(--clay)}.muted{color:var(--muted)}
+table{border-collapse:collapse;width:100%}td,th{padding:6px 8px 6px 0;text-align:left;border-top:1px solid var(--border);font-size:13px}th{color:var(--muted);font-weight:400;border-top:0}
+.note{background:#fffbe6;color:#333;border-radius:8px;padding:10px 12px;max-width:560px;line-height:1.5;margin-bottom:12px}
+.note b{display:block;margin-bottom:4px}
+.opt{margin-bottom:6px;font-size:12px;color:#fff}
+</style>
+</head>
+<body>
+
+<div class="note"><b>What to judge</b>
+ Two separate bars on each item: <b style="display:inline">Set aside</b> (clay, from linked transfers) and <b style="display:inline">Paid</b> (dark, from Pay / Add money only). They are never added. A full Set aside bar does not mark anything done.
+ Worked example (sample): rent ₱10,000. You transferred ₱3,000 + ₱2,000 to your holding account and linked both to Rent: Set aside ₱5,000. You then paid ₱2,000 from holding: Paid ₱2,000. Rent shows 5,000 set aside and 2,000 paid. Not 7,000.
+</div>
+
+<h1>1. Option A (recommended): two labelled bars under the name — Recurring bills, then Debts, Goals, Installments</h1>
+<div class="row">
+ <div class="frame">
+  <h2>Recurring bills</h2>
+  <div class="panel">
+   <div class="li"><span class="n">Rent</span> <span class="tag">Next due Dec 1</span><div class="s">₱10,000.00 · monthly</div>
+    <div class="bars">
+     <span class="k">Set aside</span><span class="bar"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱5,000.00 of ₱10,000.00</span>
+     <span class="k">Paid</span><span class="bar"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱2,000.00 of ₱10,000.00</span>
+    </div></div>
+   <div class="li"><span class="n">Internet</span><div class="s">₱1,500.00 · monthly</div>
+    <div class="bars">
+     <span class="k">Set aside</span><span class="bar"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i></span><span class="v t">₱1,500.00 of ₱1,500.00 · not paid yet</span>
+     <span class="k">Paid</span><span class="bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱0.00 of ₱1,500.00</span>
+    </div></div>
+   <div class="li"><span class="n">Phone plan</span><div class="s">₱999.00 · monthly · nothing linked</div>
+    <div class="bars"><span class="k">Paid</span><span class="bar"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱0.00 of ₱999.00</span></div>
+    <div class="s" style="margin-top:4px">No Set aside bar when nothing is linked, so rows without it look as today.</div></div>
+  </div>
+  <h2 style="margin-top:18px">Debts · Goals · Installments (same two bars)</h2>
+  <div class="panel">
+   <div class="li"><span class="n">Loan from Ana</span> <span class="tag">You owe</span><div class="s">₱6,000.00 total</div>
+    <div class="bars"><span class="k">Set aside</span><span class="bar"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱3,000.00 of ₱6,000.00</span>
+     <span class="k">Paid</span><span class="bar"><i class="f"></i><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱1,500.00 of ₱6,000.00</span></div></div>
+   <div class="li"><span class="n">Emergency fund</span><div class="s">₱20,000.00 target</div>
+    <div class="bars"><span class="k">Set aside</span><span class="bar"><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱5,000.00 of ₱20,000.00</span>
+     <span class="k">Saved</span><span class="bar"><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱2,000.00 of ₱20,000.00 (Add money)</span></div></div>
+   <div class="li"><span class="n">Laptop</span><div class="s">₱3,000.00 a month · 5 of 12 paid</div>
+    <div class="bars"><span class="k">Set aside</span><span class="bar"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱1,500.00 of next ₱3,000.00</span></div></div>
+  </div>
+ </div>
+
+ <div class="frame m">
+  <h2>Phone width (Option A)</h2>
+  <div class="panel">
+   <div class="li"><span class="n">Rent</span> <span class="tag">Dec 1</span><div class="s">₱10,000.00 · monthly</div>
+    <div class="bars">
+     <span class="k">Set aside</span><span class="bar"><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱5,000.00 of ₱10,000.00</span>
+     <span class="k">Paid</span><span class="bar"><i class="f"></i><i class="f"></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v t">₱2,000.00 of ₱10,000.00</span>
+    </div></div>
+  </div>
+ </div>
+</div>
+
+<h1>2. Option B (not recommended): one bar, two tones</h1>
+<div class="row"><div class="frame">
+ <div class="panel"><div class="li"><span class="n">Rent</span><div class="s">₱10,000.00</div>
+  <div class="bars"><span class="k">Both</span><span class="bar"><i class="f"></i><i class="f"></i><i class="a"></i><i class="a"></i><i class="a"></i><i class="a"></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="v">₱2,000 paid + ₱3,000 more set aside?</span></div>
+  <div class="s" style="margin-top:6px">Reads as 5,000 of 10,000 "done", which is the double-counting we are avoiding, and it hides that the ₱2,000 came out of the ₱5,000.</div></div></div>
+</div></div>
+
+<h1>3. Transfer form: where the "For" dropdown goes</h1>
+<div class="row">
+ <div class="frame m"><div class="opt">Placement A (recommended): right under To, only for transfers</div>
+  <div class="field"><label>From</label><div class="sel">Main account <span class="muted">▾</span></div></div>
+  <div class="field"><label>To</label><div class="sel">Holding bills <span class="muted">▾</span></div></div>
+  <div class="field"><label>For (optional)</label><div class="sel hint">Rent · bill <span class="muted">▾</span></div>
+   <div class="s muted" style="font-size:12px;margin-top:3px">Counts as set aside, not as a payment.</div></div>
+  <div class="field"><label>Amount</label><div class="sel">3,000.00</div></div>
+  <div class="field"><label>Note</label><div class="sel muted">Half of rent</div></div>
+ </div>
+ <div class="frame m"><div class="opt">Placement B: just above Note, after Amount</div>
+  <div class="field"><label>From</label><div class="sel">Main account <span class="muted">▾</span></div></div>
+  <div class="field"><label>To</label><div class="sel">Holding bills <span class="muted">▾</span></div></div>
+  <div class="field"><label>Amount</label><div class="sel">3,000.00</div></div>
+  <div class="field"><label>For (optional)</label><div class="sel hint">Rent · bill <span class="muted">▾</span></div></div>
+  <div class="field"><label>Note</label><div class="sel muted">Half of rent</div></div>
+ </div>
+ <div class="frame m"><div class="opt">The For list: grouped, and the kind is in each label</div>
+  <div class="panel" style="padding:8px 14px">
+   <div class="s">None</div><div class="s" style="margin-top:8px">BILLS</div><div>Rent · bill</div><div>Internet · bill</div>
+   <div class="s" style="margin-top:8px">DEBTS</div><div>Loan from Ana · debt</div>
+   <div class="s" style="margin-top:8px">INSTALLMENTS</div><div>Laptop · installment</div>
+   <div class="s" style="margin-top:8px">GOALS</div><div>Emergency fund · goal</div></div>
+ </div>
+</div>
+
+<h1>4. Activity: the existing For column shows the link</h1>
+<div class="row"><div class="frame" style="width:760px">
+ <table><tr><th>Date</th><th>Type</th><th>From → To</th><th>For</th><th>Amount</th></tr>
+  <tr><td>Nov 15</td><td>Transfer</td><td>Main → Holding bills</td><td>Set aside · Rent</td><td>₱3,000.00</td></tr>
+  <tr><td>Nov 16</td><td>Transfer</td><td>Main → Holding bills</td><td>Set aside · Rent</td><td>₱2,000.00</td></tr>
+  <tr><td>Nov 17</td><td>Bill</td><td>Holding bills</td><td>Rent (paid)</td><td>−₱2,000.00</td></tr>
+  <tr><td>Nov 17</td><td>Goal</td><td>Main → Emergency fund</td><td>Goal (Add money)</td><td>₱2,000.00</td></tr></table>
+ <div class="s" style="margin-top:8px">A set-aside transfer stays an ordinary, editable transfer. Edit and Remove work as they do now.</div>
+</div></div>
+</body>
+</html>
