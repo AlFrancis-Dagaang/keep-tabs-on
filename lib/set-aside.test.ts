@@ -4,7 +4,7 @@ import { and, eq, gt, sql, sum } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { accounts, bills, debts, goals, installments, transactions } from "../db/schema";
 import { withUser } from "./db";
-import { billSetAside, debtSetAside, goalSetAside, installmentSetAside } from "./set-aside";
+import { billSetAside, debtSetAside, goalSetAside, installmentSetAside, loadSetAsideRows } from "./set-aside";
 
 vi.mock("@/lib/auth/server", () => ({ getUserId: async () => currentUser }));
 vi.mock("@/lib/settings", () => ({ getMoney: async () => String }));
@@ -98,6 +98,42 @@ describe.skipIf(!process.env.DATABASE_URL)("set aside", () => {
       const [d] = await withUser(userId, (tx) => tx.select({ setAside: debtSetAside }).from(debts).where(eq(debts.id, debt.id)));
       const [g] = await withUser(userId, (tx) => tx.select({ setAside: goalSetAside }).from(goals).where(eq(goals.id, goal.id)));
       expect([d.setAside, g.setAside]).toEqual([500_000, 400_000]);
+    } finally {
+      await cleanup(userId);
+    }
+  });
+
+  it("lists what is set aside, biggest first, with the Total and each row's status", async () => {
+    const userId = randomUUID();
+    const s = await setup(userId);
+    try {
+      const [debt] = await withUser(userId, (tx) => tx.insert(debts).values({ userId, name: "Loan", total: 140_000, setAsideBefore: 20_000, deadline: "2027-01-01" }).returning());
+      const [goal] = await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Trip", target: 250_000, deadline: "2027-01-01", accountId: s.holding.id }).returning());
+      await withUser(userId, (tx) => tx.insert(debts).values({ userId, name: "Lent", direction: "owed", total: 50_000, setAsideBefore: 50_000, deadline: "2027-01-01" }));
+      const [empty] = await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Nothing", target: 100, deadline: "2027-01-01", accountId: s.holding.id }).returning());
+      const [inst] = await withUser(userId, (tx) =>
+        tx.insert(installments).values({ userId, name: "Phone", monthlyAmount: 195_792, months: 6, dueDay: 1, nextDueDate: "2026-12-01", accountId: s.from.id }).returning(),
+      );
+      await withUser(userId, (tx) =>
+        tx.insert(transactions).values([
+          transfer(userId, s.from.id, s.holding.id, { setAsideBillId: s.bill.id, amount: 1_100_000 }), // over the bill: still ready
+          transfer(userId, s.from.id, s.holding.id, { setAsideGoalId: goal.id, amount: 250_000 }), // equal to the target: ready
+          transfer(userId, s.from.id, s.holding.id, { setAsideInstallmentId: inst.id, amount: 100_000 }), // under
+          transfer(userId, s.from.id, s.holding.id, { setAsideDebtId: debt.id, amount: 70_000 }), // 70,000 + 20,000 before tracking, under
+        ]),
+      );
+      const { rows, total } = await withUser(userId, (tx) => loadSetAsideRows(tx, userId));
+      expect(rows.map(({ kind, setAside, outOf, ready, toGo, full }) => ({ kind, setAside, outOf, ready, toGo, full }))).toEqual([
+        { kind: "bill", setAside: 1_100_000, outOf: 1_000_000, ready: true, toGo: 0, full: false },
+        { kind: "goal", setAside: 250_000, outOf: 250_000, ready: true, toGo: 0, full: true },
+        { kind: "installment", setAside: 100_000, outOf: 195_792, ready: false, toGo: 95_792, full: false },
+        { kind: "debt", setAside: 90_000, outOf: 140_000, ready: false, toGo: 50_000, full: false },
+        { kind: "debt", setAside: 50_000, outOf: 50_000, ready: true, toGo: 0, full: true }, // owed to you: "Full", not "Ready to pay"
+      ]);
+      expect(rows.some((row) => row.id === empty.id)).toBe(false);
+      expect(total).toBe(1_590_000); // Out of is never summed
+      const [g] = await withUser(userId, (tx) => tx.select({ setAside: goalSetAside }).from(goals).where(eq(goals.id, goal.id)));
+      expect(rows.find((row) => row.id === goal.id)?.setAside).toBe(g.setAside);
     } finally {
       await cleanup(userId);
     }

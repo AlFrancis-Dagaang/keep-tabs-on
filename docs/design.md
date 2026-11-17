@@ -4,7 +4,8 @@
 Calm, warm and readable, like the Claude app. Notion-style layout: left sidebar navigation, page title with a short serif description, clean data tables. One playful element: the pixel progress bars.
 
 ## Layout
-- Sidebar: Overview, Accounts, Activity, Recurring bills, Installments, Goals, Debts, Budget, Settings, light/dark toggle.
+- Sidebar: Overview, Accounts, Activity, Recurring bills, Installments, Goals, Debts, Budget, Set aside, Settings, light/dark toggle.
+- Set aside page: one flat table (Kind, Item, Set aside, Out of, Status), biggest first, items with nothing set aside left out; the Total row sums Set aside only. Status is a clay pill ("Ready to pay"; "Full" for goals and for debts owed to you) once Set aside reaches Out of, else "₱X to go". Cards below md.
 - Mobile (below 768px): the sidebar becomes a top bar with a hamburger that opens a drawer (page links with icons, theme toggle, Sign out); it closes on navigate. No bottom tab bar.
 - Mobile tables: each row is a card (title, labelled fields, amount top right, actions); Overview mini-tables are compact lists. From 768px up they are tables.
 - Between 768px and their width, wide tables scroll sideways inside their panel; the page never scrolls sideways.

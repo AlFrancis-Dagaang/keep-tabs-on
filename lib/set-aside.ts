@@ -40,3 +40,22 @@ export const installmentSetAside = sum(
 /** Set aside for a debt or a goal: everything linked plus the before-tracking amount, payments don't reduce it. */
 export const debtSetAside = sum("debt", "debts");
 export const goalSetAside = sum("goal", "goals");
+
+export type SetAsideRow = { kind: "bill" | "debt" | "installment" | "goal"; id: string; name: string; setAside: number; outOf: number; ready: boolean; toGo: number; full: boolean };
+
+/** Everything set aside, biggest first, for the Set aside page. Items with nothing set aside are left out; total sums Set aside only. */
+export async function loadSetAsideRows(tx: Tx, userId: string) {
+  const [billRows, debtRows, installmentRows, goalRows] = await Promise.all([
+    tx.select({ id: bills.id, name: bills.name, setAside: billSetAside, outOf: bills.amount }).from(bills).where(eq(bills.userId, userId)),
+    tx.select({ id: debts.id, name: debts.name, setAside: debtSetAside, outOf: debts.total, direction: debts.direction }).from(debts).where(eq(debts.userId, userId)),
+    tx.select({ id: installments.id, name: installments.name, setAside: installmentSetAside, outOf: installments.monthlyAmount }).from(installments).where(eq(installments.userId, userId)),
+    tx.select({ id: goals.id, name: goals.name, setAside: goalSetAside, outOf: goals.target }).from(goals).where(eq(goals.userId, userId)),
+  ]);
+  // full: the pill reads "Full" instead of "Ready to pay", for a goal and for a debt owed to you (nothing for you to pay).
+  const tag = <T extends { setAside: number; outOf: number; direction?: string }>(kind: SetAsideRow["kind"], list: T[]) =>
+    list.map((row) => ({ ...row, kind, full: kind === "goal" || row.direction === "owed", ready: row.setAside >= row.outOf, toGo: Math.max(row.outOf - row.setAside, 0) }));
+  const rows: SetAsideRow[] = [...tag("goal", goalRows), ...tag("installment", installmentRows), ...tag("debt", debtRows), ...tag("bill", billRows)]
+    .filter((row) => row.setAside > 0)
+    .sort((a, b) => b.setAside - a.setAside || a.name.localeCompare(b.name));
+  return { rows, total: rows.reduce((sum, row) => sum + row.setAside, 0) };
+}
