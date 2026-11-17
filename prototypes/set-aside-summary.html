@@ -1,0 +1,140 @@
+<!doctype html>
+<!-- Covers: T-22 (Set aside summary page, with a Status pill: Ready to pay / Full / amount to go). Throwaway mock. Figures are the linked amounts from the T-20 handoff plus Therapy's real ₱1,500 before tracking; confirm against the app. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Set aside summary mock</title>
+<style>
+body{margin:0;padding:24px;background:#888;font:15px system-ui;color:#fff}
+h1{font:600 16px system-ui;margin:28px 0 8px}
+.row{display:flex;gap:24px;flex-wrap:wrap;align-items:flex-start}
+.frame{--bg:#FAF9F5;--surface:#fff;--raised:#F0EEE6;--border:#E3E1D8;--text:#1F1E1C;--muted:#6E6B63;--clay:#C96442;
+  background:var(--bg);color:var(--text);font:15px "Instrument Sans",system-ui;border-radius:16px;padding:24px;box-sizing:border-box;width:520px}
+.frame.m{width:390px}
+h2{font:500 24px "Source Serif 4",Georgia,serif;margin:0 0 4px}
+.desc{font:16px "Source Serif 4",Georgia,serif;color:var(--muted);margin:0 0 20px}
+.total{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;justify-content:space-between;align-items:baseline;margin-bottom:24px}
+.total .l{font-weight:600}.total .big{font:500 28px "Source Serif 4",Georgia,serif;font-variant-numeric:tabular-nums}
+.grp{margin-bottom:20px}
+.gh{display:flex;justify-content:space-between;color:var(--muted);font-size:13px;margin-bottom:6px;padding:0 2px;text-transform:uppercase;letter-spacing:.04em}
+.gh b{font-weight:600;color:var(--text);text-transform:none;letter-spacing:0;font-variant-numeric:tabular-nums}
+.item{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;font-variant-numeric:tabular-nums}
+.item+.item{margin-top:6px}
+.item .a{font-weight:500}
+.tbl{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:4px 16px}
+table{border-collapse:collapse;width:100%;font-variant-numeric:tabular-nums}
+td,th{padding:12px 8px 12px 0;text-align:left;border-top:1px solid var(--border)}
+th{color:var(--muted);font-weight:400;font-size:13px;border-top:0}
+td.r,th.r{text-align:right;padding-right:0}
+tr.tot td{font-weight:600;border-top:2px solid var(--border)}
+tr.grow td{font-weight:600;background:var(--raised)}td.ind{padding-left:16px}
+.foot{color:var(--muted);font-size:13px;margin-top:4px}
+.nav{display:flex;flex-direction:column;gap:2px;width:190px}
+.nav div{padding:7px 10px;border-radius:8px;color:var(--muted)}.nav .on{background:var(--raised);color:var(--text);font-weight:500}.nav .new{outline:2px dashed var(--clay)}
+.note{background:#fffbe6;color:#333;border-radius:8px;padding:10px 12px;max-width:560px;line-height:1.5;margin-bottom:12px}
+.opt{margin-bottom:6px;font-size:12px;color:#fff}
+.pill{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill.ok{background:var(--clay);color:#fff}.pill.go{background:var(--raised);color:var(--muted);font-weight:500}
+</style>
+</head>
+<body>
+
+<div class="note"><b>What to judge:</b> one line per item, with just the name and the amount set aside. Items sit under their kind, each kind shows its subtotal, and the grand total is at the top. Bars, targets and notes stay on each item's own page.<br>
+ Check: 100 + 700 + 1,000 + 2,500 = ₱4,300. (Therapy's ₱2,500 includes ₱1,500 set aside before tracking.)</div>
+
+<h1>Set aside page: desktop and phone</h1>
+<div class="row">
+ <div class="frame">
+  <h2>Set aside</h2>
+  <p class="desc">Money parked for your bills, debts, installments and goals, right now.</p>
+
+  <div class="total"><span class="l">Total</span><span class="big">₱4,300.00</span></div>
+
+  <div class="grp"><div class="gh"><span>Goals</span><b>₱2,500.00</b></div>
+   <div class="item"><span>Therapy</span><span class="a">₱2,500.00</span></div></div>
+
+  <div class="grp"><div class="gh"><span>Installments</span><b>₱1,000.00</b></div>
+   <div class="item"><span>Iphone</span><span class="a">₱1,000.00</span></div></div>
+
+  <div class="grp"><div class="gh"><span>Debts</span><b>₱700.00</b></div>
+   <div class="item"><span>Electric Meter</span><span class="a">₱700.00</span></div></div>
+
+  <div class="grp"><div class="gh"><span>Recurring bills</span><b>₱100.00</b></div>
+   <div class="item"><span>Claude Code</span><span class="a">₱100.00</span></div></div>
+
+  <div class="foot">Kinds with nothing set aside are left out. Tap an item to open it.</div>
+ </div>
+
+ <div class="frame m">
+  <h2>Set aside</h2>
+  <p class="desc">Money parked, right now.</p>
+  <div class="total"><span class="l">Total</span><span class="big">₱4,300.00</span></div>
+  <div class="grp"><div class="gh"><span>Goals</span><b>₱2,500.00</b></div>
+   <div class="item"><span>Therapy</span><span class="a">₱2,500.00</span></div></div>
+  <div class="grp"><div class="gh"><span>Installments</span><b>₱1,000.00</b></div>
+   <div class="item"><span>Iphone</span><span class="a">₱1,000.00</span></div></div>
+  <div class="grp"><div class="gh"><span>Debts</span><b>₱700.00</b></div>
+   <div class="item"><span>Electric Meter</span><span class="a">₱700.00</span></div></div>
+  <div class="grp"><div class="gh"><span>Recurring bills</span><b>₱100.00</b></div>
+   <div class="item"><span>Claude Code</span><span class="a">₱100.00</span></div></div>
+ </div>
+</div>
+
+<h1>Same list as a table, with the amount each one is for (desktop; on a phone each row becomes a card)</h1>
+<div class="row">
+ <div class="frame" style="width:600px">
+  <h2>Set aside</h2>
+  <p class="desc">Money parked for your bills, debts, installments and goals, right now.</p>
+  <div class="tbl"><table>
+   <tr><th>Kind</th><th>Item</th><th class="r">Set aside</th><th class="r">Out of</th><th class="r">Status</th></tr>
+   <tr><td>Goal</td><td>Therapy</td><td class="r">₱2,500.00</td><td class="r">₱2,500.00</td><td class="r"><span class="pill ok">Full</span></td></tr>
+   <tr><td>Installment</td><td>Iphone</td><td class="r">₱1,000.00</td><td class="r">₱1,957.92</td><td class="r"><span class="pill go">₱957.92 to go</span></td></tr>
+   <tr><td>Debt</td><td>Electric Meter</td><td class="r">₱700.00</td><td class="r">₱1,400.00</td><td class="r"><span class="pill go">₱700.00 to go</span></td></tr>
+   <tr><td>Bill</td><td>Claude Code</td><td class="r">₱100.00</td><td class="r">₱1,400.00</td><td class="r"><span class="pill go">₱1,300.00 to go</span></td></tr>
+   <tr class="tot"><td colspan="2">Total</td><td class="r">₱4,300.00</td><td></td><td></td></tr>
+  </table></div>
+  <div class="foot"><b>Status:</b> a pill shows once Set aside reaches Out of. Bills, installments and debts read "Ready to pay" (go pay it); goals read "Full" (target reached). Before that it shows what is still to go. "Out of" is the goal target, debt total, bill amount, or the next installment payment. It isn't added up, because those are different things.</div>
+ </div>
+ <div class="frame" style="width:600px">
+  <div class="opt">With a subtotal row per kind</div>
+  <div class="tbl"><table>
+   <tr><th>Item</th><th class="r">Set aside</th><th class="r">Out of</th></tr>
+   <tr class="grow"><td>Goals</td><td class="r">₱2,500.00</td><td></td></tr>
+   <tr><td class="ind">Therapy</td><td class="r">₱2,500.00</td><td class="r">₱2,500.00</td></tr>
+   <tr class="grow"><td>Installments</td><td class="r">₱1,000.00</td><td></td></tr>
+   <tr><td class="ind">Iphone</td><td class="r">₱1,000.00</td><td class="r">₱1,957.92</td></tr>
+   <tr class="grow"><td>Debts</td><td class="r">₱700.00</td><td></td></tr>
+   <tr><td class="ind">Electric Meter</td><td class="r">₱700.00</td><td class="r">₱1,400.00</td></tr>
+   <tr class="grow"><td>Recurring bills</td><td class="r">₱100.00</td><td></td></tr>
+   <tr><td class="ind">Claude Code</td><td class="r">₱100.00</td><td class="r">₱1,400.00</td></tr>
+   <tr class="tot"><td>Total</td><td class="r">₱4,300.00</td><td></td></tr>
+  </table></div>
+ </div>
+ <div class="frame m">
+  <div class="opt">Phone width</div>
+  <div class="item" style="display:block"><div style="display:flex;justify-content:space-between"><span>Therapy</span><span class="a">₱2,500.00</span></div><div class="foot">Goal · out of ₱2,500.00 · <span class="pill ok">Full</span></div></div>
+  <div class="item" style="display:block"><div style="display:flex;justify-content:space-between"><span>Iphone</span><span class="a">₱1,000.00</span></div><div class="foot">Installment · out of ₱1,957.92 · ₱957.92 to go</div></div>
+  <div class="item" style="display:block"><div style="display:flex;justify-content:space-between"><span>Electric Meter</span><span class="a">₱700.00</span></div><div class="foot">Debt · out of ₱1,400.00 · ₱700.00 to go</div></div>
+  <div class="item" style="display:block"><div style="display:flex;justify-content:space-between"><span>Claude Code</span><span class="a">₱100.00</span></div><div class="foot">Bill · out of ₱1,400.00 · ₱1,300.00 to go</div></div>
+  <div class="item" style="display:flex;margin-top:10px;font-weight:600"><span>Total</span><span>₱4,300.00</span></div>
+ </div>
+</div>
+
+<h1>The states a row can show (sample rows, not the real figures)</h1>
+<div class="row"><div class="frame" style="width:600px"><div class="tbl"><table>
+ <tr><th>Kind</th><th>Item</th><th class="r">Set aside</th><th class="r">Out of</th><th class="r">Status</th></tr>
+ <tr><td>Bill</td><td>Rent</td><td class="r">₱5,000.00</td><td class="r">₱5,000.00</td><td class="r"><span class="pill ok">Ready to pay</span></td></tr>
+ <tr><td>Installment</td><td>Laptop</td><td class="r">₱3,200.00</td><td class="r">₱3,000.00</td><td class="r"><span class="pill ok">Ready to pay</span></td></tr>
+ <tr><td>Goal</td><td>Trip</td><td class="r">₱8,000.00</td><td class="r">₱8,000.00</td><td class="r"><span class="pill ok">Full</span></td></tr>
+ <tr><td>Debt</td><td>Loan</td><td class="r">₱400.00</td><td class="r">₱1,400.00</td><td class="r"><span class="pill go">₱1,000.00 to go</span></td></tr>
+</table></div><div class="foot">Over the amount still counts as ready or full. A debt is Ready to pay only when Set aside covers the whole debt.</div></div></div>
+<h1>Where it sits in the sidebar</h1>
+<div class="row">
+ <div class="frame m"><div class="opt">A (recommended): after Budget</div>
+  <div class="nav"><div>Overview</div><div>Accounts</div><div>Activity</div><div>Recurring bills</div><div>Installments</div><div>Goals</div><div>Debts</div><div>Budget</div><div class="on new">Set aside</div><div>Settings</div></div></div>
+ <div class="frame m"><div class="opt">B: right after Activity</div>
+  <div class="nav"><div>Overview</div><div>Accounts</div><div>Activity</div><div class="on new">Set aside</div><div>Recurring bills</div><div>Installments</div><div>Goals</div><div>Debts</div><div>Budget</div><div>Settings</div></div></div>
+</div>
+</body>
+</html>

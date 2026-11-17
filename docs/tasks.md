@@ -164,3 +164,12 @@ Status: done
 - [x] Figures: the amount is added into that item's Set aside bar and figure. Goals and debts: it counts for good, like their running sum. Bills: it counts until the cycle rolls. Installments: it counts only until the next payment. The Set aside bar shows when the amount is above zero even with no linked transfer; the two figures are still never added, and Overview does not show Set aside
 - [x] No side effects: no Saved, Paid, due date, installment count, account balance, budget or net worth changes. A DB-backed test on dev proves that, and that paying an installment or rolling a bill's cycle drops its pre-tracking amount while goals and debts keep theirs
 - [x] `pnpm lint`, `pnpm test` and `pnpm build` pass; the migration is additive and applied to dev only after the DB host check; looked at signed in on dev on all four kinds, at 390px (no sideways scroll) and desktop
+
+## T-22: Set aside summary page
+Status: done
+- [x] Page: a "Set aside" page after Budget in the sidebar and the mobile drawer, matching `prototypes/set-aside-summary.html` (approved): a flat table with Kind, Item, Set aside and Out of, biggest first, one Total row that sums Set aside only (Out of is never summed). Items with nothing set aside are left out, and an empty page tells the user what to do next
+- [x] Figures: each row's Set aside is the same figure the item's own page shows, from the four helpers in `lib/set-aside.ts` (bills until the cycle rolls, installments until the next payment, goals and debts for good, before-tracking amounts included). Out of is the goal target, debt total, bill amount or monthly installment. A DB-backed test on dev with one item of each kind proves the rows, the order and the Total
+- [x] Read-only, no schema change: nothing it shows or loads changes a Saved, Paid, due date, installment count, balance, budget or net worth; Overview does not show Set aside
+- [x] Phone: below 768px each row becomes a card (kind and "out of" under the name, amount top right) with the Total below, using `ui/table.tsx`; no sideways scroll at 390px
+- [x] Status: each row ends in a Status pill. When Set aside is at or over Out of it reads "Ready to pay" (bills, installments, debts) or "Full" (goals and debts owed to you); before that it shows the amount still to go. The Total row has no status. A DB test covers the boundary (just under, equal, over)
+- [x] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md`'s sidebar list is updated; looked at signed in on dev with the real items, at 390px and desktop
