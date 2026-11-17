@@ -13,6 +13,8 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Show a headline figure on the owner's real data before planning how it's defined](lessons/2026-11-14-show-figure-on-real-data.md) — worked example with real numbers, approved before building
 - [Read the deployment's regions field to see where functions run, not the region in the logs](lessons/2026-11-15-check-deployment-region.md) — get_deployment regions, not log region; state what evidence cannot show
 - [Show a mock of the placement before building a new UI element](lessons/2026-11-16-mock-placement-first.md) — when the plan doesn't name a position, show 2–3 placements and get a pick first
+- [Qualify the outer table in raw SQL subqueries](lessons/2026-11-17-qualify-outer-table.md) — Drizzle may render the column unqualified; spell out "table"."col"
+- [Give DB-backed tests an explicit timeout](lessons/2026-11-17-db-test-timeout.md) — 30 s testTimeout in vitest.config.mts; run 3 times before calling it green
 
 ## Decisions
 - [Stack](decisions/2026-11-09-stack.md) — Next.js + Neon/Drizzle + Neon Auth on Vercel; RLS via restricted role and per-request transaction

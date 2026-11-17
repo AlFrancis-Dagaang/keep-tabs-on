@@ -65,3 +65,4 @@ Core loop: log income/expense/transfer → pay bills and debts → fund goals �
 - Local work and tests use the Neon `dev` branch (`DATABASE_URL` and `DATABASE_OWNER_URL` in `.env.local`).
   Never run `db:migrate`, tests or scripts against production; its connection strings live only in Vercel (knowledge/decisions/2026-11-14-dev-branch-for-local-work.md).
   Before any DB command, check the host in `.env.local` is the dev endpoint (`ep-rough-sea-ao6no8lf`), not production (`ep-steep-base-ao0q4xxw`).
+- A test that touches the database runs under the 30 s `testTimeout` in `vitest.config.mts`; run it 3 times before calling it green (knowledge/lessons/2026-11-17-db-test-timeout.md).
