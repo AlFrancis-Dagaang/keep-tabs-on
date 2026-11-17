@@ -51,6 +51,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-18](tasks/T-18.md) — Edit or undo linked payments: edit from the history rows, due-date roll-back on remove, one additive marker column
 - [T-19](tasks/T-19.md) — Overview redesign and account icons: four stat cards, five lists, pills, logo or colour tile per account, one additive column
 - [T-20](tasks/T-20.md) — Set aside by linked transfers: a transfer can link to a bill, debt, installment or goal; separate Set aside figure next to Paid
+- [T-21](tasks/T-21.md) — Set aside before tracking: an optional starting amount on bills, debts, installments and goals that counts in the Set aside bar
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests
