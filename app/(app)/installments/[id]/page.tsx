@@ -6,11 +6,13 @@ import { z } from "zod";
 import { DateFilter } from "@/components/date-filter";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { PaymentHistory } from "@/components/payment-history";
 import { PixelBar } from "@/components/pixel-bar";
 import { accounts, installments, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { installmentSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 import { formatDate, parseRange, previousDueDate, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
@@ -38,7 +40,7 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
       .select({
         id: installments.id, name: installments.name, monthlyAmount: installments.monthlyAmount, months: installments.months,
         paidBefore: installments.paidBefore, nextDueDate: installments.nextDueDate, dueDay: installments.dueDay, note: installments.note,
-        account: accounts.name,
+        account: accounts.name, setAside: installmentSetAside,
       })
       .from(installments)
       .innerJoin(accounts, eq(installments.accountId, accounts.id))
@@ -47,7 +49,7 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
     first: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.installmentId, id.data)))[0]?.date,
     total: (await tx.select({ n: count() }).from(transactions).where(eq(transactions.installmentId, id.data)))[0].n,
     payments: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name, accountId: transactions.accountId })
+      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, paidTo: transactions.paidTo, account: accounts.name, accountId: transactions.accountId })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(and(eq(transactions.installmentId, id.data), from ? gte(transactions.date, from) : undefined, to ? lte(transactions.date, to) : undefined))
@@ -68,6 +70,7 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
         {!finished && <PayInstallment installment={installment} today={today} />}
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
+        <SetAside name={installment.name} amount={installment.setAside} target={installment.monthlyAmount} money={money} nextTarget />
         <PixelBar blocks={progressBlocks(paid, installment.months)} label={`${installment.name}: ${paid} of ${installment.months} paid`} />
         <div className="mt-2 text-sm tabular-nums">{paid} of {installment.months} paid</div>
         {installment.paidBefore > 0 && (

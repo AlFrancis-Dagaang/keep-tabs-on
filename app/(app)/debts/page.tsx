@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { debtSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 import { directionLabels, formatDate } from "@/lib/money";
 
@@ -30,7 +32,7 @@ async function Debts() {
     rows: await tx
       .select({
         id: debts.id, name: debts.name, direction: debts.direction, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore, note: debts.note,
-        paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
+        paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number), setAside: debtSetAside,
       })
       .from(debts)
       .leftJoin(transactions, eq(transactions.debtId, debts.id))
@@ -75,6 +77,7 @@ async function Debts() {
                   <TableCell data-label="Type">{directionLabels[row.direction]}</TableCell>
                   <TableCell data-label="Deadline" className="tabular-nums">{formatDate(row.deadline)}</TableCell>
                   <TableCell data-label="Progress">
+                    <SetAside name={row.name} amount={row.setAside} target={row.total} money={money} />
                     <DebtProgress id={row.id} name={row.name} paid={row.paid} total={row.total} direction={row.direction} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                       {money(row.paid)} of {money(row.total)} {row.direction === "owed" ? "received" : "paid"}

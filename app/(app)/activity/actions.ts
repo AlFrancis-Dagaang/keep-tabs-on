@@ -10,7 +10,7 @@ import { withUser } from "@/lib/db";
 import { balancesAfterEdit, installmentDueAfterRemove, isLinked, maxPaymentAmount, parseMoney, previousDueDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const fields = ["type", "accountId", "toAccountId", "toName", "categoryId", "amount", "date", "payee", "note"] as const;
+const fields = ["type", "accountId", "toAccountId", "toName", "categoryId", "amount", "date", "payee", "note", "setAside", "paidTo"] as const;
 type Field = (typeof fields)[number];
 
 export type FormState = {
@@ -38,6 +38,8 @@ const entryInput = z.discriminatedUnion("type", [
     type: z.literal("transfer"),
     toAccountId: z.union([z.literal(""), z.uuid("Pick the account it goes to.")]),
     toName: z.string().trim().max(60, "Keep the name under 60 characters."),
+    // "kind:id" of a bill, debt, installment or goal, or blank.
+    setAside: z.string().regex(/^((bill|debt|installment|goal):[0-9a-f-]{36})?$/, "Pick something from the list."),
     ...common,
   })
     .refine((entry) => entry.toAccountId || entry.toName, { path: ["toAccountId"], message: "Pick the account it goes to, or enter a name." })
@@ -57,7 +59,7 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
     return { values, errors: Object.fromEntries(Object.entries(fieldErrors).map(([field, messages]) => [field, messages?.[0]])) };
   }
 
-  const entry = parsed.data;
+  const { setAside, ...entry } = { setAside: "", ...parsed.data };
   const errors = await withUser(userId, async (tx): Promise<FormState["errors"]> => {
     const { accounts, entries, balance } = await loadBalances(tx, userId, { lock: true });
     if (id) {
@@ -76,9 +78,21 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
         .where(and(eq(categories.id, entry.categoryId), eq(categories.userId, userId)));
       if (category?.kind !== (entry.type === "income" ? "income" : "spending")) return { categoryId: "Pick a category." };
     }
+    const [kind, itemId] = setAside.split(":");
+    const table = { bill: bills, debt: debts, installment: installments, goal: goals }[kind as "bill"];
+    if (table) {
+      const [item] = await tx.select({ id: table.id }).from(table).where(and(eq(table.id, itemId), eq(table.userId, userId)));
+      if (!item) return { setAside: "Pick something from the list." };
+    }
+    const link = {
+      setAsideBillId: kind === "bill" ? itemId : null,
+      setAsideDebtId: kind === "debt" ? itemId : null,
+      setAsideInstallmentId: kind === "installment" ? itemId : null,
+      setAsideGoalId: kind === "goal" ? itemId : null,
+    };
     const row = entry.type === "transfer"
-      ? { ...entry, categoryId: null, toAccountId: entry.toAccountId || null, toName: entry.toName || null }
-      : { ...entry, toAccountId: null, toName: null };
+      ? { ...entry, ...link, categoryId: null, toAccountId: entry.toAccountId || null, toName: entry.toName || null }
+      : { ...entry, toAccountId: null, toName: null, setAsideBillId: null, setAsideDebtId: null, setAsideInstallmentId: null, setAsideGoalId: null };
     if (id) {
       // An edit can lower the old account, the new one or a transfer's target, so every account is rechecked.
       const short = balancesAfterEdit(accounts, entries, id, row);
@@ -96,9 +110,15 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
   return { ok: true };
 }
 
-const paymentInput = z.object({ accountId: common.accountId, amount, date: common.date, note: common.note });
+const paymentInput = z.object({
+  accountId: common.accountId,
+  amount,
+  date: common.date,
+  paidTo: z.string().trim().max(60, "Keep the name under 60 characters.").transform((name) => name || null),
+  note: common.note,
+});
 
-/** Edits the amount, date, account and note of a bill, installment, debt or goal payment. Progress and due dates follow the cycle and the count, never the date. */
+/** Edits the amount, date, account, who was paid and note of a bill, installment, debt or goal payment. Progress and due dates follow the cycle and the count, never the date. */
 export async function editPayment(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -147,7 +167,7 @@ export async function editPayment(_: FormState, formData: FormData): Promise<For
     // The edit can lower the old account, the new one or a goal's account, so every account is rechecked.
     const short = balancesAfterEdit(accounts, entries, id, { ...entries.find((entry) => entry.id === id)!, ...payment });
     if (short) return { amount: `This would take ${short.name} below zero.` };
-    await tx.update(transactions).set({ accountId: payment.accountId, amount: payment.amount, date: payment.date, note: payment.note }).where(eq(transactions.id, id));
+    await tx.update(transactions).set({ accountId: payment.accountId, amount: payment.amount, date: payment.date, paidTo: old.goalId ? null : payment.paidTo, note: payment.note }).where(eq(transactions.id, id));
   });
   if (errors) return { values, errors };
   refresh();

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, billStatus, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthChange, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, previousMonth, progressBlocks, startingForBalance, toInput } from "./money";
+import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, billStatus, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthChange, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, previousMonth, progressBlocks, setAsideOf, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -343,6 +343,24 @@ describe("isLinked", () => {
   it("is true when a bill, debt, goal or installment made the entry", () => {
     expect(isLinked(none)).toBe(false);
     for (const key of Object.keys(none)) expect(isLinked({ ...none, [key]: "x" })).toBe(true);
+  });
+});
+
+describe("setAsideOf", () => {
+  const none = { setAsideBillId: null, setAsideDebtId: null, setAsideGoalId: null, setAsideInstallmentId: null };
+  it("is null when nothing is set aside", () => {
+    expect(setAsideOf(none)).toBeNull();
+  });
+
+  it("names the kind and id of the one link", () => {
+    expect(setAsideOf({ ...none, setAsideBillId: "a" })).toEqual({ kind: "bill", id: "a" });
+    expect(setAsideOf({ ...none, setAsideDebtId: "a" })).toEqual({ kind: "debt", id: "a" });
+    expect(setAsideOf({ ...none, setAsideInstallmentId: "a" })).toEqual({ kind: "installment", id: "a" });
+    expect(setAsideOf({ ...none, setAsideGoalId: "a" })).toEqual({ kind: "goal", id: "a" });
+  });
+
+  it("does not make a transfer linked", () => {
+    expect(isLinked({ billId: null, debtId: null, goalId: null, installmentId: null, ...{ setAsideBillId: "a" } })).toBe(false);
   });
 });
 

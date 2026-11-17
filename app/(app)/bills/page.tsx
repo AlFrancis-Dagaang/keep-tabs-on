@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { billSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 import { formatDate, repeatLabels } from "@/lib/money";
 
@@ -30,7 +32,7 @@ async function Bills() {
     rows: await tx
       .select({
         id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, repeat: bills.repeat, note: bills.note,
-        paid: sum(transactions.amount).mapWith(Number),
+        paid: sum(transactions.amount).mapWith(Number), setAside: billSetAside,
       })
       .from(bills)
       .leftJoin(transactions, and(eq(transactions.billId, bills.id), gt(transactions.createdAt, bills.cycleStart)))
@@ -81,6 +83,7 @@ async function Bills() {
                       )}
                     </TableCell>
                     <TableCell data-label="This cycle">
+                      <SetAside name={row.name} amount={row.setAside} target={row.amount} money={money} />
                       <BillProgress id={row.id} name={row.name} paid={paid} amount={row.amount} />
                       <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                         {money(paid)} of {money(row.amount)}

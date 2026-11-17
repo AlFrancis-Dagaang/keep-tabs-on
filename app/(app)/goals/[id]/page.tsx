@@ -7,11 +7,13 @@ import { z } from "zod";
 import { DeleteEntry, EditPayment } from "@/app/(app)/activity/entry-form";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { goalSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 
 import { AddMoney, GoalProgress } from "../goal-form";
@@ -35,7 +37,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId();
   const { goal, balances, transfers } = await withUser(userId, async (tx) => ({
     goal: (await tx
-      .select({ id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, accountId: goals.accountId, savedBefore: goals.savedBefore, account: accounts.name })
+      .select({ id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, accountId: goals.accountId, savedBefore: goals.savedBefore, account: accounts.name, setAside: goalSetAside })
       .from(goals)
       .innerJoin(accounts, eq(goals.accountId, accounts.id))
       .where(and(eq(goals.id, id.data), eq(goals.userId, userId))))[0],
@@ -59,6 +61,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
         <AddMoney goal={{ id: goal.id, name: goal.name, accountId: goal.accountId, left: goal.target - saved }} accounts={balances.accounts} today={today} />
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
+        <SetAside name={goal.name} amount={goal.setAside} target={goal.target} money={money} next="Saved" />
         <GoalProgress id={goal.id} name={goal.name} saved={saved} target={goal.target} />
         <div className="mt-2 text-sm tabular-nums">{money(saved)} of {money(goal.target)} saved</div>
         {goal.savedBefore > 0 && (

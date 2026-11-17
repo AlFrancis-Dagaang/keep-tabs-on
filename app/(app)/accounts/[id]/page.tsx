@@ -14,8 +14,9 @@ import { accounts, categories, transactions } from "@/db/schema";
 import { EntryForm } from "../../activity/entry-form";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { loadSetAsideItems } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
-import { accountHistory, isLinked, parseRange } from "@/lib/money";
+import { accountHistory, isLinked, parseRange, setAsideOf } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const toAccounts = alias(accounts, "to_accounts");
@@ -37,18 +38,20 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
   const search = await searchParams;
   const { from, to } = parseRange(search.from, search.to);
   const userId = await getUserId();
-  const { account, rows, balances, choices } = await withUser(userId, async (tx) => ({
+  const { account, rows, balances, choices, setAsideItems } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
     choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
       .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
+    setAsideItems: await loadSetAsideItems(tx, userId),
     account: (await tx.select({ id: accounts.id, name: accounts.name, startingBalance: accounts.startingBalance, icon: accounts.icon })
       .from(accounts).where(and(eq(accounts.id, id.data), eq(accounts.userId, userId))))[0],
     // shortcut: loads every entry of the account, add paging when one account passes a few thousand rows.
     rows: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee, note: transactions.note,
-        accountId: transactions.accountId, toAccountId: transactions.toAccountId, categoryId: transactions.categoryId, account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName,
+        accountId: transactions.accountId, toAccountId: transactions.toAccountId, categoryId: transactions.categoryId, account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName, paidTo: transactions.paidTo,
         category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
+        setAsideBillId: transactions.setAsideBillId, setAsideDebtId: transactions.setAsideDebtId, setAsideGoalId: transactions.setAsideGoalId, setAsideInstallmentId: transactions.setAsideInstallmentId,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -89,9 +92,11 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
               {shown.map((row) => {
                 const out = row.accountId === account.id;
                 const label = row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : row.installmentId ? "Installment" : "Uncategorized");
+                const link = setAsideOf(row);
+                const forName = link && setAsideItems.find((item) => item.value === `${link.kind}:${link.id}`)?.name;
                 const details = row.type === "transfer"
-                  ? `${row.goalId ? "Goal" : "Transfer"} ${out ? `to ${row.toAccount ?? row.toName}` : `from ${row.account}`}`
-                  : row.payee ? `${row.payee} · ${label}` : label;
+                  ? `${row.goalId ? "Goal" : forName ? `Set aside · ${forName}` : "Transfer"} ${out ? `to ${row.toAccount ?? row.toName}` : `from ${row.account}`}`
+                  : row.payee ? `${row.payee}${row.paidTo ? ` · To ${row.paidTo}` : ""} · ${label}` : label;
                 return (
                   <TableRow key={row.id}>
                     <TableCell className="pl-4 tabular-nums"><EntryDate date={row.date} today={today} loggedAt={row.createdAt} /></TableCell>
@@ -102,7 +107,7 @@ async function AccountHistory({ params, searchParams }: { params: Promise<{ id: 
                     <TableCell data-card="end" className="text-right tabular-nums">{row.change > 0 ? "+" : "−"}{money(Math.abs(row.change))}</TableCell>
                     <TableCell data-label="Balance" className="text-right tabular-nums">{money(row.balanceAfter)}</TableCell>
                     <TableCell data-card="actions" className="pr-4 text-right">
-                      {!isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} />}
+                      {!isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} setAsideItems={setAsideItems} />}
                     </TableCell>
                   </TableRow>
                 );

@@ -11,7 +11,7 @@ import { nextDueDate, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const billFields = ["id", "name", "amount", "nextDueDate", "repeat", "note"] as const;
-const payFields = ["billId", "accountId", "amount", "date", "note"] as const;
+const payFields = ["billId", "accountId", "amount", "date", "paidTo", "note"] as const;
 type Field = (typeof billFields)[number] | (typeof payFields)[number];
 
 export type FormState = {
@@ -34,7 +34,7 @@ const billInput = z.object({
   repeat: z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"], "Pick how often it repeats."),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 });
-const payInput = z.object({ billId: z.uuid(), accountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date."), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
+const payInput = z.object({ billId: z.uuid(), accountId: z.uuid("Pick an account."), amount, date: z.iso.date("Pick a date."), paidTo: z.string().trim().max(60, "Keep the name under 60 characters.").transform((name) => name || null), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
 
 function read<F extends Field>(formData: FormData, fields: readonly F[]) {
   return Object.fromEntries(fields.map((field) => [field, String(formData.get(field) ?? "")])) as Record<F, string>;
@@ -111,7 +111,7 @@ export async function payBill(_: FormState, formData: FormData): Promise<FormSta
 
     const completed = payment.amount === left;
     await tx.insert(transactions).values({
-      userId, type: "expense", amount: payment.amount, date: payment.date, accountId: from.id, billId: bill.id, payee: bill.name, note: payment.note,
+      userId, type: "expense", amount: payment.amount, date: payment.date, accountId: from.id, billId: bill.id, payee: bill.name, paidTo: payment.paidTo, note: payment.note,
       // The cycle it closes: kept in SQL (a JS Date drops microseconds) so removing this payment can reopen that cycle.
       rolledCycleStart: completed ? sql`(select cycle_start from bills where id = ${bill.id})` : null,
     });

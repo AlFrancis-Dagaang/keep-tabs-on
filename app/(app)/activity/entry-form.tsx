@@ -8,18 +8,19 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Category, Transaction } from "@/db/schema";
-import { toInput } from "@/lib/money";
+import { setAsideOf, toInput } from "@/lib/money";
 import { deleteEntry, editPayment, saveEntry, type FormState } from "./actions";
 
 type Options = {
   accounts: { id: string; name: string; balance: number }[];
   categories: Pick<Category, "id" | "name" | "kind">[];
   today: string; // YYYY-MM-DD in Asia/Manila, from the server
+  setAsideItems: { value: string; label: string; name: string; group: string }[]; // what a transfer can be set aside for: value is "kind:id"
 };
 
-type EditableEntry = Pick<Transaction, "id" | "type" | "amount" | "date" | "accountId" | "toAccountId" | "toName" | "categoryId" | "payee" | "note">;
+type EditableEntry = Pick<Transaction, "id" | "type" | "amount" | "date" | "accountId" | "toAccountId" | "toName" | "categoryId" | "payee" | "note" | "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId">;
 
 /** "Add entry" with no entry; "Edit" with one. */
 export function EntryForm({ entry, ...options }: Options & { entry?: EditableEntry }) {
@@ -44,16 +45,17 @@ export function EntryForm({ entry, ...options }: Options & { entry?: EditableEnt
 }
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
-function Fields({ accounts, categories, today, entry, onSaved }: Options & { entry?: EditableEntry; onSaved: () => void }) {
+function Fields({ accounts, categories, today, setAsideItems, entry, onSaved }: Options & { entry?: EditableEntry; onSaved: () => void }) {
   const { symbol } = useMoney();
   const [saved, action, pending] = useActionState(saveEntry, {});
   // Until a save fails, the form shows the entry being edited; after one, what was typed.
   const state: FormState = { ...saved, values: saved.values ?? (entry && {
     type: entry.type, accountId: entry.accountId, toAccountId: entry.toAccountId ?? "", toName: entry.toName ?? "", categoryId: entry.categoryId ?? "",
-    amount: toInput(entry.amount), date: entry.date, payee: entry.payee ?? "", note: entry.note ?? "",
+    amount: toInput(entry.amount), date: entry.date, payee: entry.payee ?? "", note: entry.note ?? "", setAside: linkOf(entry), paidTo: "",
   }) };
   const [type, setType] = useState<Transaction["type"]>(entry?.type ?? "expense");
   const [toOther, setToOther] = useState(!!entry?.toName); // a transfer to someone outside your accounts
+  const [setAside, setSetAside] = useState((saved.values?.setAside ?? (entry && linkOf(entry))) || "");
   useEffect(() => {
     if (saved.ok) onSaved();
   }, [saved, onSaved]);
@@ -85,6 +87,27 @@ function Fields({ accounts, categories, today, entry, onSaved }: Options & { ent
               <Input id="toName" name="toName" placeholder="Mom" defaultValue={state.values?.toName} {...invalid(state, "toName")} />
             </Field>
           )}
+          <Field label="For (optional)" name="setAside" state={state}>
+            {/* An item can't have an empty value, so "None" is sent as blank by the hidden input. */}
+            <input type="hidden" name="setAside" value={setAside} />
+            <Select value={setAside || NONE} onValueChange={(value) => setSetAside(value === NONE ? "" : value)}>
+              <SelectTrigger id="setAside" className="w-full" {...invalid(state, "setAside")}>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value={NONE}>None</SelectItem>
+                {[...new Set(setAsideItems.map((item) => item.group))].map((group) => (
+                  <SelectGroup key={group}>
+                    <SelectLabel>{group}</SelectLabel>
+                    {setAsideItems.filter((item) => item.group === group).map((item) => (
+                      <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-sm text-muted-foreground">Counts toward its Set aside bar. Nothing is paid.</p>
+          </Field>
         </>
       ) : (
         <Field label="Category" name="categoryId" state={state}>
@@ -141,6 +164,12 @@ function Field({ label, name, state, children }: { label: string; name: FieldNam
 }
 
 const OTHER = "other";
+const NONE = "none";
+
+function linkOf(entry: Parameters<typeof setAsideOf>[0]) {
+  const link = setAsideOf(entry);
+  return link ? `${link.kind}:${link.id}` : "";
+}
 
 // With `other`, the list ends in "Someone else…", which swaps the account for a free-text name (the select then sends nothing).
 function AccountSelect({ label, name, accounts, state, other }: {
@@ -171,11 +200,12 @@ function AccountSelect({ label, name, accounts, state, other }: {
   );
 }
 
-type PaymentToEdit = { id: string; amount: number; date: string; accountId: string; note: string | null };
+// paidTo is left out for goals: Add money goes into the goal's own account, so there is no one to name.
+type PaymentToEdit = { id: string; amount: number; date: string; accountId: string; note: string | null; paidTo?: string | null };
 
 /** Edit on a bill, installment, debt or goal payment: amount, date, account and note. `amountLocked` shows the amount but can't change it. */
-export function EditPayment({ payment, accounts, accountLabel = "Paid from", amountLocked = false }: {
-  payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel?: string; amountLocked?: boolean;
+export function EditPayment({ payment, accounts, accountLabel = "Paid from", paidToLabel = "To (optional)", amountLocked = false }: {
+  payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel?: string; paidToLabel?: string; amountLocked?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   return (
@@ -191,19 +221,19 @@ export function EditPayment({ payment, accounts, accountLabel = "Paid from", amo
           <DialogTitle>Edit payment</DialogTitle>
           <DialogDescription>Change this payment. The account balances and progress follow.</DialogDescription>
         </DialogHeader>
-        <PaymentFields payment={payment} accounts={accounts} accountLabel={accountLabel} amountLocked={amountLocked} onSaved={() => setOpen(false)} />
+        <PaymentFields payment={payment} accounts={accounts} accountLabel={accountLabel} paidToLabel={paidToLabel} amountLocked={amountLocked} onSaved={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
-function PaymentFields({ payment, accounts, accountLabel, amountLocked, onSaved }: {
-  payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel: string; amountLocked: boolean; onSaved: () => void;
+function PaymentFields({ payment, accounts, accountLabel, paidToLabel, amountLocked, onSaved }: {
+  payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel: string; paidToLabel: string; amountLocked: boolean; onSaved: () => void;
 }) {
   const { symbol } = useMoney();
   const [saved, action, pending] = useActionState(editPayment, {});
   const state: FormState = { ...saved, values: saved.values ?? {
-    type: "", accountId: payment.accountId, toAccountId: "", toName: "", categoryId: "", amount: toInput(payment.amount), date: payment.date, payee: "", note: payment.note ?? "",
+    type: "", accountId: payment.accountId, toAccountId: "", toName: "", categoryId: "", amount: toInput(payment.amount), date: payment.date, payee: "", note: payment.note ?? "", setAside: "", paidTo: payment.paidTo ?? "",
   } };
   useEffect(() => {
     if (saved.ok) onSaved();
@@ -221,6 +251,11 @@ function PaymentFields({ payment, accounts, accountLabel, amountLocked, onSaved 
         <Input id="date" name="date" type="date" defaultValue={state.values?.date} {...invalid(state, "date")} />
       </Field>
       <AccountSelect label={accountLabel} name="accountId" accounts={accounts} state={state} />
+      {payment.paidTo !== undefined && (
+        <Field label={paidToLabel} name="paidTo" state={state}>
+          <Input id="paidTo" name="paidTo" placeholder="Landlord" defaultValue={state.values?.paidTo} {...invalid(state, "paidTo")} />
+        </Field>
+      )}
       <Field label="Note (optional)" name="note" state={state}>
         <Input id="note" name="note" defaultValue={state.values?.note} {...invalid(state, "note")} />
       </Field>

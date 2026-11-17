@@ -1,4 +1,4 @@
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, getTableColumns } from "drizzle-orm";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
@@ -6,11 +6,13 @@ import { z } from "zod";
 import { DeleteEntry, EditPayment } from "@/app/(app)/activity/entry-form";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, debts, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { debtSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 import { directionLabels, formatDate } from "@/lib/money";
 
@@ -31,10 +33,10 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
   if (!id.success) notFound();
   const userId = await getUserId();
   const { debt, balances, payments } = await withUser(userId, async (tx) => ({
-    debt: (await tx.select().from(debts).where(and(eq(debts.id, id.data), eq(debts.userId, userId))))[0],
+    debt: (await tx.select({ ...getTableColumns(debts), setAside: debtSetAside }).from(debts).where(and(eq(debts.id, id.data), eq(debts.userId, userId))))[0],
     balances: await loadBalances(tx, userId),
     payments: await tx
-      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name, accountId: transactions.accountId })
+      .select({ id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, paidTo: transactions.paidTo, account: accounts.name, accountId: transactions.accountId })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
       .where(eq(transactions.debtId, id.data))
@@ -52,6 +54,7 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
         <PayDebt debt={{ id: debt.id, name: debt.name, left: debt.total - paid, direction: debt.direction }} accounts={balances.accounts} today={today} />
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
+        <SetAside name={debt.name} amount={debt.setAside} target={debt.total} money={money} />
         <DebtProgress id={debt.id} name={debt.name} paid={paid} total={debt.total} direction={debt.direction} />
         <div className="mt-2 text-sm tabular-nums">{money(paid)} of {money(debt.total)} {owed ? "received" : "paid"}</div>
         {debt.paidBefore > 0 && (
@@ -78,13 +81,16 @@ async function DebtDetail({ params }: { params: Promise<{ id: string }> }) {
                   <TableCell className="pl-4 tabular-nums">
                     {formatDate(payment.date)}
                   </TableCell>
-                  <TableCell data-label={owed ? "To" : "From"}>{payment.account}</TableCell>
+                  <TableCell data-label={owed ? "To" : "From"}>
+                    {payment.account}
+                    {payment.paidTo && <p className="text-sm text-muted-foreground">{owed ? "From" : "To"} {payment.paidTo}</p>}
+                  </TableCell>
                   <TableCell data-label={payment.note ? "Note" : undefined} className="text-muted-foreground">{payment.note}</TableCell>
                   <TableCell data-card="end" className="text-right tabular-nums">{money(payment.amount)}</TableCell>
                   <TableCell data-card="actions" className="pr-4 text-right">
                     <RowActions
                       items={[
-                        { label: "Edit", node: <EditPayment payment={payment} accounts={balances.accounts} accountLabel={owed ? "Received in" : "Paid from"} /> },
+                        { label: "Edit", node: <EditPayment payment={payment} accounts={balances.accounts} accountLabel={owed ? "Received in" : "Paid from"} paidToLabel={owed ? "From (optional)" : "To (optional)"} /> },
                         {
                           label: "Remove",
                           node: <DeleteEntry id={payment.id} what={owed ? "receipt" : "payment"} label={`${formatDate(payment.date)} · ${payment.account} · ${money(payment.amount)}`} consequence={`${money(payment.amount)} goes back to what's left.`} />,

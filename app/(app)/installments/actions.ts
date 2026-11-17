@@ -11,7 +11,7 @@ import { nextDueDate, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 const fields = ["id", "name", "monthlyAmount", "months", "paidBefore", "nextDueDate", "accountId", "note"] as const;
-const payFields = ["installmentId", "date", "note"] as const;
+const payFields = ["installmentId", "date", "paidTo", "note"] as const;
 type Field = (typeof fields)[number] | (typeof payFields)[number];
 
 export type FormState = {
@@ -35,7 +35,7 @@ const installmentInput = z.object({
   accountId: z.uuid("Pick an account."),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 }).refine((installment) => installment.paidBefore < installment.months, { path: ["paidBefore"], message: "Must be fewer than the months, or it's already finished." });
-const payInput = z.object({ installmentId: z.uuid(), date: z.iso.date("Pick a date."), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
+const payInput = z.object({ installmentId: z.uuid(), date: z.iso.date("Pick a date."), paidTo: z.string().trim().max(60, "Keep the name under 60 characters.").transform((name) => name || null), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
 
 function read<F extends Field>(formData: FormData, names: readonly F[]) {
   return Object.fromEntries(names.map((name) => [name, String(formData.get(name) ?? "")])) as Record<F, string>;
@@ -111,7 +111,7 @@ export async function payInstallment(_: FormState, formData: FormData): Promise<
     }
     await tx.insert(transactions).values({
       userId, type: "expense", amount: installment.monthlyAmount, date: payment.date, accountId: from.id,
-      installmentId: installment.id, payee: installment.name, note: payment.note,
+      installmentId: installment.id, payee: installment.name, paidTo: payment.paidTo, note: payment.note,
     });
     if (paid + 1 < installment.months) {
       await tx.update(installments).set({ nextDueDate: nextDueDate(installment.nextDueDate, "monthly", installment.dueDay) })

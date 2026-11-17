@@ -3,12 +3,14 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { PixelBar } from "@/components/pixel-bar";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, installments, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { installmentSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 import { formatDate, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
@@ -33,7 +35,7 @@ async function Installments() {
         id: installments.id, name: installments.name, monthlyAmount: installments.monthlyAmount, months: installments.months,
         paidBefore: installments.paidBefore, nextDueDate: installments.nextDueDate, accountId: installments.accountId, note: installments.note,
         account: accounts.name,
-        paid: sql<number>`${installments.paidBefore} + ${count(transactions.id)}`.mapWith(Number),
+        paid: sql<number>`${installments.paidBefore} + ${count(transactions.id)}`.mapWith(Number), setAside: installmentSetAside,
       })
       .from(installments)
       .innerJoin(accounts, eq(installments.accountId, accounts.id))
@@ -91,6 +93,7 @@ async function Installments() {
                       )}
                     </TableCell>
                     <TableCell data-label="Progress">
+                      <SetAside name={row.name} amount={row.setAside} target={row.monthlyAmount} money={money} nextTarget />
                       <PixelBar blocks={progressBlocks(row.paid, row.months)} label={`${row.name}: ${row.paid} of ${row.months} paid`} />
                       <div className="mt-1 text-sm text-muted-foreground tabular-nums">{row.paid} of {row.months} paid</div>
                     </TableCell>

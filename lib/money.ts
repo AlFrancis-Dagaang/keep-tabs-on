@@ -45,6 +45,17 @@ export function isLinked(entry: Pick<Transaction, "billId" | "debtId" | "goalId"
   return !!(entry.billId || entry.debtId || entry.goalId || entry.installmentId);
 }
 
+export type SetAside = { kind: "bill" | "debt" | "installment" | "goal"; id: string };
+
+/** What a transfer was set aside for, if anything. Not a payment, so it never makes an entry linked. */
+export function setAsideOf(entry: Pick<Transaction, "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId">): SetAside | null {
+  if (entry.setAsideBillId) return { kind: "bill", id: entry.setAsideBillId };
+  if (entry.setAsideDebtId) return { kind: "debt", id: entry.setAsideDebtId };
+  if (entry.setAsideInstallmentId) return { kind: "installment", id: entry.setAsideInstallmentId };
+  if (entry.setAsideGoalId) return { kind: "goal", id: entry.setAsideGoalId };
+  return null;
+}
+
 /** The first account an edit would take below zero, with the balance it would end at; undefined when the edit is safe. */
 export function balancesAfterEdit(accounts: Pick<Account, "id" | "name" | "startingBalance">[], entries: (Entry & { id: string })[], id: string, next: Entry) {
   const after = entries.map((entry) => (entry.id === id ? next : entry));

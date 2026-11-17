@@ -92,6 +92,13 @@
       "when": 1794822827554,
       "tag": "0012_striped_whirlwind",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "7",
+      "when": 1794901007813,
+      "tag": "0013_simple_the_professor",
+      "breakpoints": true
     }
   ]
 }

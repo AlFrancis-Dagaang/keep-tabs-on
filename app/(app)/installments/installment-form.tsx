@@ -120,6 +120,9 @@ function PayFields({ installment, today, onSaved }: { installment: { id: string 
       <Field label="Date" name="date" state={state}>
         <Input id="date" name="date" type="date" defaultValue={state.values?.date ?? today} {...invalid(state, "date")} />
       </Field>
+      <Field label="To (optional)" name="paidTo" state={state}>
+        <Input id="paidTo" name="paidTo" placeholder="Landlord" defaultValue={state.values?.paidTo} {...invalid(state, "paidTo")} />
+      </Field>
       <Field label="Note (optional)" name="note" state={state}>
         <Input id="note" name="note" defaultValue={state.values?.note ?? undefined} {...invalid(state, "note")} />
       </Field>

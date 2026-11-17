@@ -135,6 +135,9 @@ function PayFields({ bill, accounts, today, onSaved }: { bill: { id: string; lef
           </SelectContent>
         </Select>
       </Field>
+      <Field label="To (optional)" name="paidTo" state={state}>
+        <Input id="paidTo" name="paidTo" placeholder="Landlord" defaultValue={values?.paidTo} {...invalid(state, "paidTo")} />
+      </Field>
       <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" className="tabular-nums" defaultValue={values?.amount ?? toInput(bill.left)} {...invalid(state, "amount")} />
       </Field>

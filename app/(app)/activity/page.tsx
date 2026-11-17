@@ -13,8 +13,9 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { accounts, categories, transactions, type Transaction } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { loadSetAsideItems } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
-import { formatDate, isLinked, parseRange } from "@/lib/money";
+import { formatDate, isLinked, parseRange, setAsideOf } from "@/lib/money";
 
 import { DeleteEntry, EntryForm } from "./entry-form";
 import { getMoney } from "@/lib/settings";
@@ -23,10 +24,10 @@ const types: Transaction["type"][] = ["income", "expense", "transfer"];
 const toAccounts = alias(accounts, "to_accounts");
 
 type Search = Promise<{ type?: string; from?: string; to?: string }>;
-type Row = Pick<Transaction, "type" | "payee" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId"> & { account: string; toAccount: string | null; category: string | null };
+type Row = Pick<Transaction, "type" | "payee" | "paidTo" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId" | "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId"> & { setAsideName?: string | null; account: string; toAccount: string | null; category: string | null };
 
 const dash = <span className="text-muted-foreground">—</span>;
-const payee = (head: string) => ({ head, cell: (row: Row) => <TableCell data-label={head}>{row.payee ?? dash}</TableCell> });
+const payee = (head: string) => ({ head, cell: (row: Row) => <TableCell data-label={head}>{row.payee ?? dash}{row.paidTo && <span className="text-muted-foreground"> · To {row.paidTo}</span>}</TableCell> });
 const note = { head: "Note", cell: (row: Row) => <TableCell data-label={row.note ? "Note" : undefined} className="text-muted-foreground">{row.note}</TableCell> };
 const category = {
   head: "Category",
@@ -45,7 +46,7 @@ const columns: Record<"all" | Transaction["type"], { head: string; cell: (row: R
   transfer: [
     { head: "From", cell: (row) => <TableCell data-label="From">{row.account}</TableCell> },
     { head: "To", cell: (row) => <TableCell data-label="To">{row.toAccount ?? row.toName}</TableCell> },
-    { head: "For", cell: (row) => <TableCell data-label="For">{row.goalId ? "Goal" : dash}</TableCell> },
+    { head: "For", cell: (row) => <TableCell data-label="For">{row.goalId ? "Goal" : row.setAsideName ? `Set aside · ${row.setAsideName}` : dash}</TableCell> },
     note,
   ],
 };
@@ -64,16 +65,18 @@ async function Activity({ searchParams }: { searchParams: Search }) {
   const search = await searchParams;
   const type = types.find((t) => t === search.type);
   const { from, to } = parseRange(search.from, search.to);
-  const { balances, choices, earliest, rows } = await withUser(userId, async (tx) => ({
+  const { balances, choices, earliest, rows: found, setAsideItems } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
     choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
       .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
+    setAsideItems: await loadSetAsideItems(tx, userId),
     earliest: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.userId, userId)))[0].date,
     rows: await tx
       .select({
         id: transactions.id, type: transactions.type, accountId: transactions.accountId, toAccountId: transactions.toAccountId, categoryId: transactions.categoryId, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee,
-        note: transactions.note, toName: transactions.toName,
+        note: transactions.note, toName: transactions.toName, paidTo: transactions.paidTo,
         account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
+        setAsideBillId: transactions.setAsideBillId, setAsideDebtId: transactions.setAsideDebtId, setAsideGoalId: transactions.setAsideGoalId, setAsideInstallmentId: transactions.setAsideInstallmentId,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -82,6 +85,10 @@ async function Activity({ searchParams }: { searchParams: Search }) {
       .where(and(eq(transactions.userId, userId), type && eq(transactions.type, type), from ? gte(transactions.date, from) : undefined, to ? lte(transactions.date, to) : undefined))
       .orderBy(desc(transactions.date), desc(transactions.createdAt)),
   }));
+  const rows = found.map((row) => {
+    const link = setAsideOf(row);
+    return { ...row, setAsideName: link && setAsideItems.find((item) => item.value === `${link.kind}:${link.id}`)?.name };
+  });
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
   const typeHref = (t?: string) => {
     const query = new URLSearchParams({ ...(t && { type: t }), ...(from && { from }), ...(to && { to }) }).toString();
@@ -92,7 +99,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
   return (
     <>
       <PageHeader title="Activity" description="Income, expenses and transfers.">
-        {balances.accounts.length > 0 && <EntryForm accounts={balances.accounts} categories={choices} today={today} />}
+        {balances.accounts.length > 0 && <EntryForm accounts={balances.accounts} categories={choices} today={today} setAsideItems={setAsideItems} />}
       </PageHeader>
       {balances.accounts.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
@@ -132,7 +139,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                         <TableCell data-card="actions" className="pr-4 text-right">
                           <RowActions
                             items={[
-                              { label: "Edit", node: !isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} /> },
+                              { label: "Edit", node: !isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} setAsideItems={setAsideItems} /> },
                               { label: "Remove", node: <DeleteEntry id={row.id} label={`${formatDate(row.date)} · ${where} · ${sign}${money(row.amount)}`} consequence={isLinked(row) ? "The bill, installment, debt or goal goes back too, and a due date it moved rolls back." : undefined} /> },
                             ]}
                           />

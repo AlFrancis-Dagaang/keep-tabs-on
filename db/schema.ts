@@ -175,11 +175,22 @@ export const transactions = pgTable(
     debtId: uuid("debt_id").references(() => debts.id, { onDelete: "set null" }), // debt payments: expenses with no category
     goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }), // money added to a goal: transfers into its account
     installmentId: uuid("installment_id").references(() => installments.id, { onDelete: "set null" }), // installment payments: expenses with no category
+    // Transfers only: money set aside for an item. Separate from the four columns above, which mean "this entry is a payment".
+    setAsideBillId: uuid("set_aside_bill_id").references(() => bills.id, { onDelete: "set null" }),
+    setAsideDebtId: uuid("set_aside_debt_id").references(() => debts.id, { onDelete: "set null" }),
+    setAsideGoalId: uuid("set_aside_goal_id").references(() => goals.id, { onDelete: "set null" }),
+    setAsideInstallmentId: uuid("set_aside_installment_id").references(() => installments.id, { onDelete: "set null" }),
+    paidTo: text("paid_to"), // bill, debt and installment payments: who was paid, free text
     rolledCycleStart: timestamp("rolled_cycle_start", { withTimezone: true }), // the bill payment that closed a cycle: the cycle_start it replaced, so a remove can reopen it
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check("transactions_type", sql`${t.type} in ('income', 'expense', 'transfer')`),
+    check(
+      "transactions_set_aside",
+      sql`num_nonnulls(${t.setAsideBillId}, ${t.setAsideDebtId}, ${t.setAsideGoalId}, ${t.setAsideInstallmentId}) = 0
+        or (${t.type} = 'transfer' and num_nonnulls(${t.setAsideBillId}, ${t.setAsideDebtId}, ${t.setAsideGoalId}, ${t.setAsideInstallmentId}) = 1)`,
+    ),
     check("transactions_amount", sql`${t.amount} > 0`),
     check(
       "transactions_transfer",

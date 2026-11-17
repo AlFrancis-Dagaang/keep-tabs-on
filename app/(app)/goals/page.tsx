@@ -3,11 +3,13 @@ import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { accounts, goals, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { goalSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 
 import { AddMoney, DeleteGoal, GoalForm, GoalProgress } from "./goal-form";
@@ -31,7 +33,7 @@ async function Goals() {
       .select({
         id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, accountId: goals.accountId,
         savedBefore: goals.savedBefore, note: goals.note, account: accounts.name,
-        saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
+        saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number), setAside: goalSetAside,
       })
       .from(goals)
       .innerJoin(accounts, eq(goals.accountId, accounts.id))
@@ -77,6 +79,7 @@ async function Goals() {
                   <TableCell data-label="Deadline" className="tabular-nums">{formatDate(row.deadline)}</TableCell>
                   <TableCell data-label="Saved in">{row.account}</TableCell>
                   <TableCell data-label="Saved">
+                    <SetAside name={row.name} amount={row.setAside} target={row.target} money={money} next="Saved" />
                     <GoalProgress id={row.id} name={row.name} saved={row.saved} target={row.target} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                       {money(row.saved)} of {money(row.target)}

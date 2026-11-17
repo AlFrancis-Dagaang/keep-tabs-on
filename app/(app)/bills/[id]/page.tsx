@@ -6,10 +6,12 @@ import { z } from "zod";
 import { DateFilter } from "@/components/date-filter";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
+import { SetAside } from "@/components/set-aside";
 import { PaymentHistory } from "@/components/payment-history";
 import { accounts, bills, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
+import { billSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 import { formatDate, parseRange, previousDueDate, repeatLabels } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
@@ -37,7 +39,7 @@ async function BillDetail({ params, searchParams }: { params: Promise<{ id: stri
     bill: (await tx
       .select({
         id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, dueDay: bills.dueDay, repeat: bills.repeat, note: bills.note,
-        paid: sum(transactions.amount).mapWith(Number),
+        paid: sum(transactions.amount).mapWith(Number), setAside: billSetAside,
       })
       .from(bills)
       .leftJoin(transactions, and(eq(transactions.billId, bills.id), gt(transactions.createdAt, bills.cycleStart)))
@@ -47,7 +49,7 @@ async function BillDetail({ params, searchParams }: { params: Promise<{ id: stri
     first: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.billId, id.data)))[0]?.date,
     payments: await tx
       .select({
-        id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, account: accounts.name, accountId: transactions.accountId,
+        id: transactions.id, date: transactions.date, amount: transactions.amount, note: transactions.note, paidTo: transactions.paidTo, account: accounts.name, accountId: transactions.accountId,
         // Compared in SQL: the payment that closed the last cycle has the same created_at as cycle_start.
         open: sql<boolean>`${transactions.createdAt} > ${bills.cycleStart}`, closing: sql<boolean>`${transactions.createdAt} = ${bills.cycleStart}`,
       })
@@ -68,6 +70,7 @@ async function BillDetail({ params, searchParams }: { params: Promise<{ id: stri
         {balances.accounts.length > 0 && <PayBill bill={{ id: bill.id, name: bill.name, left: bill.amount - paid }} accounts={balances.accounts} today={today} />}
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
+        <SetAside name={bill.name} amount={bill.setAside} target={bill.amount} money={money} />
         <BillProgress id={bill.id} name={bill.name} paid={paid} amount={bill.amount} />
         <div className="mt-2 text-sm tabular-nums">{money(paid)} of {money(bill.amount)} this cycle</div>
       </div>

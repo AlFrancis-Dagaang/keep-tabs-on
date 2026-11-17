@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { formatDate } from "@/lib/money";
 
 // `locked` keeps the amount from changing; `consequence` is what removing the payment does, shown in its confirm.
-type Payment = { id: string; date: string; account: string; accountId: string; amount: number; note: string | null; locked: boolean; consequence: string };
+type Payment = { id: string; date: string; account: string; accountId: string; amount: number; note: string | null; paidTo: string | null; locked: boolean; consequence: string };
 
 /** The payment history of a bill or an installment: newest first, as the caller sorted it. */
 export function PaymentHistory({ rows, money, accounts }: {
@@ -28,7 +28,10 @@ export function PaymentHistory({ rows, money, accounts }: {
               <TableCell className="pl-4 tabular-nums">
                 {formatDate(row.date)}
               </TableCell>
-              <TableCell data-label="Paid from">{row.account}</TableCell>
+              <TableCell data-label="Paid from">
+                {row.account}
+                {row.paidTo && <p className="text-sm text-muted-foreground">To {row.paidTo}</p>}
+              </TableCell>
               <TableCell data-label={row.note ? "Note" : undefined} className="text-muted-foreground">{row.note}</TableCell>
               <TableCell data-card="end" className="text-right tabular-nums">{money(row.amount)}</TableCell>
               <TableCell data-card="actions" className="pr-4 text-right">
