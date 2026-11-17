@@ -19,17 +19,24 @@ export async function loadSetAsideItems(tx: Tx, userId: string) {
 
 // One correlated subquery per kind, so a page's paid sum (a left join on transactions) isn't multiplied by a second join.
 // Aliased `sa`, and the outer table named in full: drizzle drops the qualifier in a single-table select, and a bare "id" would read sa.id.
-const sum = (kind: "bill" | "debt" | "installment" | "goal", table: string, since = sql``) =>
-  sql<number>`coalesce((select sum(sa.amount) from transactions sa where sa.${sql.raw(`set_aside_${kind}_id`)} = ${sql.identifier(table)}.id${since}), 0)`.mapWith(Number);
+// `before` is the amount set aside before tracking (set_aside_before), added once the item says it still counts.
+const sum = (kind: "bill" | "debt" | "installment" | "goal", table: string, since = sql``, before = sql.raw(`"${table}"."set_aside_before"`)) =>
+  sql<number>`coalesce((select sum(sa.amount) from transactions sa where sa.${sql.raw(`set_aside_${kind}_id`)} = ${sql.identifier(table)}.id${since}), 0) + ${before}`.mapWith(Number);
 
-/** Set aside for a bill this cycle: transfers after the cycle start, like what's paid. */
-export const billSetAside = sum("bill", "bills", sql` and sa.created_at > "bills"."cycle_start"`);
-/** Set aside for an installment since its last payment. */
+/** Set aside for a bill this cycle: transfers after the cycle start, like what's paid, plus the before-tracking amount until the cycle rolls past it. */
+export const billSetAside = sum(
+  "bill",
+  "bills",
+  sql` and sa.created_at > "bills"."cycle_start"`,
+  sql`case when "bills"."cycle_start" <= "bills"."set_aside_before_at" then "bills"."set_aside_before" else 0 end`,
+);
+/** Set aside for an installment since its last payment, plus the before-tracking amount until a payment comes after it. */
 export const installmentSetAside = sum(
   "installment",
   "installments",
   sql` and sa.created_at > coalesce((select max(p.created_at) from transactions p where p.installment_id = "installments"."id"), '-infinity')`,
+  sql`case when not exists (select 1 from transactions p where p.installment_id = "installments"."id" and p.created_at > "installments"."set_aside_before_at") then "installments"."set_aside_before" else 0 end`,
 );
-/** Set aside for a debt or a goal: everything linked, payments don't reduce it. */
+/** Set aside for a debt or a goal: everything linked plus the before-tracking amount, payments don't reduce it. */
 export const debtSetAside = sum("debt", "debts");
 export const goalSetAside = sum("goal", "goals");

@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { nextDueDate, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const billFields = ["id", "name", "amount", "nextDueDate", "repeat", "note"] as const;
+const billFields = ["id", "name", "amount", "setAsideBefore", "nextDueDate", "repeat", "note"] as const;
 const payFields = ["billId", "accountId", "amount", "date", "paidTo", "note"] as const;
 type Field = (typeof billFields)[number] | (typeof payFields)[number];
 
@@ -30,6 +30,11 @@ const billInput = z.object({
   id: z.union([z.literal(""), z.uuid()]),
   name: z.string().trim().min(1, "Give the bill a name.").max(60, "Keep the name under 60 characters."),
   amount,
+  setAsideBefore: z.string().transform((value, ctx) => {
+    const centavos = value.trim() ? parseMoney(value) : 0;
+    if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
+    return centavos ?? z.NEVER;
+  }),
   nextDueDate: z.iso.date("Pick the next due date."),
   repeat: z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"], "Pick how often it repeats."),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
@@ -69,12 +74,13 @@ export async function saveBill(_: FormState, formData: FormData): Promise<FormSt
       return;
     }
     const own = and(eq(bills.id, id), eq(bills.userId, userId));
-    const [current] = await tx.select({ id: bills.id }).from(bills).where(own).for("update");
+    const [current] = await tx.select({ id: bills.id, setAsideBefore: bills.setAsideBefore }).from(bills).where(own).for("update");
     if (!current) return { name: "This bill is gone. Close and refresh." };
     // Lowering the amount below what's paid would finish the cycle without a payment to roll it.
     const paid = await paidThisCycle(tx, current.id);
     if (row.amount <= paid) return { amount: `Already paid ${money(paid)} this cycle. Enter more than that.` };
-    await tx.update(bills).set(row).where(own);
+    // Restamped only when the amount changes, so an edit after a roll can't revive an old one.
+    await tx.update(bills).set({ ...row, ...(row.setAsideBefore !== current.setAsideBefore && { setAsideBeforeAt: sql`now()` }) }).where(own);
   });
   if (errors) return { values, errors };
   refresh();

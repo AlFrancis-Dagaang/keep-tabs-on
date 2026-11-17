@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { existsSync } from "node:fs";
-import { and, eq, gt, sum } from "drizzle-orm";
+import { and, eq, gt, sql, sum } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { accounts, bills, debts, goals, installments, transactions } from "../db/schema";
 import { withUser } from "./db";
@@ -155,5 +155,94 @@ describe.skipIf(!process.env.DATABASE_URL)("set aside", () => {
     } finally {
       await Promise.all([cleanup(a), cleanup(b)]);
     }
+  });
+  describe("set aside before tracking", () => {
+    it("adds to a goal's and a debt's linked transfers without touching Saved or Paid", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      try {
+        const [debt] = await withUser(userId, (tx) => tx.insert(debts).values({ userId, name: "Loan", total: 2_000_000, deadline: "2027-01-01", paidBefore: 100_000, setAsideBefore: 200_000 }).returning());
+        const [goal] = await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Trip", target: 2_500_000, deadline: "2027-01-01", accountId: s.holding.id, savedBefore: 150_000, setAsideBefore: 1_500_000 }).returning());
+        await withUser(userId, (tx) =>
+          tx.insert(transactions).values([
+            transfer(userId, s.from.id, s.holding.id, { setAsideDebtId: debt.id, amount: 700_000 }),
+            transfer(userId, s.from.id, s.holding.id, { setAsideGoalId: goal.id, amount: 1_000_000 }),
+          ]),
+        );
+        const [d] = await withUser(userId, (tx) =>
+          tx.select({ setAside: debtSetAside, paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number) }).from(debts)
+            .leftJoin(transactions, eq(transactions.debtId, debts.id)).where(eq(debts.id, debt.id)).groupBy(debts.id),
+        );
+        const [g] = await withUser(userId, (tx) =>
+          tx.select({ setAside: goalSetAside, saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number) }).from(goals)
+            .leftJoin(transactions, eq(transactions.goalId, goals.id)).where(eq(goals.id, goal.id)).groupBy(goals.id),
+        );
+        expect(d).toEqual({ setAside: 900_000, paid: 100_000 });
+        expect(g).toEqual({ setAside: 2_500_000, saved: 150_000 });
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("counts a bill's amount until the cycle rolls, and again if the roll is undone", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      const figure = async () => (await withUser(userId, (tx) => tx.select({ setAside: billSetAside }).from(bills).where(eq(bills.id, s.bill.id))))[0].setAside;
+      try {
+        await withUser(userId, (tx) => tx.update(bills).set({ setAsideBefore: 300_000, setAsideBeforeAt: ago(1), cycleStart: ago(2) }).where(eq(bills.id, s.bill.id)));
+        expect(await figure()).toBe(300_000);
+        await withUser(userId, (tx) => tx.update(bills).set({ cycleStart: new Date() }).where(eq(bills.id, s.bill.id)));
+        expect(await figure()).toBe(0);
+        await withUser(userId, (tx) => tx.update(bills).set({ cycleStart: ago(2) }).where(eq(bills.id, s.bill.id)));
+        expect(await figure()).toBe(300_000);
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("counts an installment's amount until the next payment, and again if it is removed", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      try {
+        const [inst] = await withUser(userId, (tx) =>
+          tx.insert(installments).values({ userId, name: "Phone", monthlyAmount: 300_000, months: 6, dueDay: 1, nextDueDate: "2026-12-01", accountId: s.from.id, setAsideBefore: 500_000, setAsideBeforeAt: ago(1) }).returning(),
+        );
+        const figure = async () => (await withUser(userId, (tx) => tx.select({ setAside: installmentSetAside }).from(installments).where(eq(installments.id, inst.id))))[0].setAside;
+        expect(await figure()).toBe(500_000);
+        const [payment] = await withUser(userId, (tx) =>
+          tx.insert(transactions).values({ userId, type: "expense", amount: 300_000, date: "2026-11-17", accountId: s.from.id, installmentId: inst.id, payee: "Phone" }).returning(),
+        );
+        expect(await figure()).toBe(0);
+        await withUser(userId, (tx) => tx.delete(transactions).where(eq(transactions.id, payment.id)));
+        expect(await figure()).toBe(500_000);
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("restamps a bill only when the amount changes, and refuses a negative one", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      const { saveBill } = await import("../app/(app)/bills/actions");
+      const form = (name: string, setAside: string) => {
+        const data = new FormData();
+        for (const [key, value] of Object.entries({ id: s.bill.id, name, amount: "10000", setAsideBefore: setAside, nextDueDate: "2026-12-01", repeat: "monthly", note: "" })) data.set(key, value);
+        return data;
+      };
+      const stamp = async () => (await withUser(userId, (tx) => tx.select({ at: bills.setAsideBeforeAt, n: bills.setAsideBefore }).from(bills).where(eq(bills.id, s.bill.id))))[0];
+      try {
+        currentUser = userId;
+        await withUser(userId, (tx) => tx.update(bills).set({ setAsideBefore: 300_000, setAsideBeforeAt: ago(10) }).where(eq(bills.id, s.bill.id)));
+        expect((await saveBill({}, form("Rent 2", "3000"))).ok).toBe(true);
+        expect((await stamp()).at.getTime()).toBeLessThan(ago(9).getTime());
+        expect((await saveBill({}, form("Rent 2", "4000"))).ok).toBe(true);
+        const changed = await stamp();
+        expect(changed.n).toBe(400_000);
+        expect(changed.at.getTime()).toBeGreaterThan(ago(1).getTime());
+        expect((await saveBill({}, form("Rent 2", "-5"))).errors?.setAsideBefore).toBeTruthy();
+      } finally {
+        await cleanup(userId);
+      }
+    });
   });
 });

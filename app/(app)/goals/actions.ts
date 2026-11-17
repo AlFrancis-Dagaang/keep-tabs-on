@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const goalFields = ["id", "name", "target", "deadline", "accountId", "savedBefore", "note"] as const;
+const goalFields = ["id", "name", "target", "deadline", "accountId", "savedBefore", "setAsideBefore", "note"] as const;
 const addFields = ["goalId", "fromAccountId", "amount", "date", "note"] as const;
 type Field = (typeof goalFields)[number] | (typeof addFields)[number];
 
@@ -33,6 +33,11 @@ const goalInput = z.object({
   deadline: z.iso.date("Pick a deadline."),
   accountId: z.uuid("Pick an account."),
   savedBefore: z.string().transform((value, ctx) => {
+    const centavos = value.trim() ? parseMoney(value) : 0;
+    if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
+    return centavos ?? z.NEVER;
+  }),
+  setAsideBefore: z.string().transform((value, ctx) => {
     const centavos = value.trim() ? parseMoney(value) : 0;
     if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
     return centavos ?? z.NEVER;

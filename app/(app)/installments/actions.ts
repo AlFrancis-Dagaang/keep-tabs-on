@@ -1,6 +1,6 @@
 "use server";
 
-import { and, count, eq } from "drizzle-orm";
+import { and, count, eq, sql } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
 import { accounts, installments, transactions } from "@/db/schema";
@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { nextDueDate, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const fields = ["id", "name", "monthlyAmount", "months", "paidBefore", "nextDueDate", "accountId", "note"] as const;
+const fields = ["id", "name", "monthlyAmount", "months", "paidBefore", "setAsideBefore", "nextDueDate", "accountId", "note"] as const;
 const payFields = ["installmentId", "date", "paidTo", "note"] as const;
 type Field = (typeof fields)[number] | (typeof payFields)[number];
 
@@ -31,6 +31,11 @@ const installmentInput = z.object({
   }),
   months: z.string().transform(whole).pipe(z.number("Enter 1 to 120 months.").min(1, "Enter 1 to 120 months.").max(120, "Enter 1 to 120 months.")),
   paidBefore: z.string().transform((value) => (value.trim() ? whole(value) : 0)).pipe(z.number("Enter a whole number of months, or leave it blank.")),
+  setAsideBefore: z.string().transform((value, ctx) => {
+    const centavos = value.trim() ? parseMoney(value) : 0;
+    if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
+    return centavos ?? z.NEVER;
+  }),
   nextDueDate: z.iso.date("Pick the next due date."),
   accountId: z.uuid("Pick an account."),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
@@ -69,11 +74,12 @@ export async function saveInstallment(_: FormState, formData: FormData): Promise
       return;
     }
     const own = and(eq(installments.id, id), eq(installments.userId, userId));
-    const [current] = await tx.select({ id: installments.id }).from(installments).where(own).for("update");
+    const [current] = await tx.select({ id: installments.id, setAsideBefore: installments.setAsideBefore }).from(installments).where(own).for("update");
     if (!current) return { name: "This installment is gone. Close and refresh." };
     const paid = row.paidBefore + (await recordedPayments(tx, current.id));
     if (paid >= row.months) return { months: `Already paid ${paid} months. Enter more than that.` };
-    await tx.update(installments).set(row).where(own);
+    // Restamped only when the amount changes, so an edit after a payment can't revive an old one.
+    await tx.update(installments).set({ ...row, ...(row.setAsideBefore !== current.setAsideBefore && { setAsideBeforeAt: sql`now()` }) }).where(own);
   });
   if (errors) return { values, errors };
   refresh();

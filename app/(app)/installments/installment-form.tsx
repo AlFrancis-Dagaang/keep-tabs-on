@@ -13,7 +13,7 @@ import { toInput } from "@/lib/money";
 import { deleteInstallment, type FormState, payInstallment, saveInstallment } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
-type EditableInstallment = Pick<Installment, "id" | "name" | "monthlyAmount" | "months" | "paidBefore" | "nextDueDate" | "accountId" | "note">;
+type EditableInstallment = Pick<Installment, "id" | "name" | "monthlyAmount" | "months" | "paidBefore" | "setAsideBefore" | "nextDueDate" | "accountId" | "note">;
 
 export function InstallmentForm({ today, accounts, installment }: { today: string; accounts: Accounts; installment?: EditableInstallment }) {
   const [open, setOpen] = useState(false);
@@ -61,6 +61,10 @@ function Fields({ today, accounts, installment, onSaved }: { today: string; acco
       <Field label="Months paid before tracking" name="paidBefore" state={state}>
         <Input id="paidBefore" name="paidBefore" inputMode="numeric" placeholder="0" className="tabular-nums"
           defaultValue={values?.paidBefore ?? (installment?.paidBefore ? installment.paidBefore : undefined)} {...invalid(state, "paidBefore")} />
+      </Field>
+      <Field label={`Set aside before tracking (${symbol})`} name="setAsideBefore" state={state}>
+        <Input id="setAsideBefore" name="setAsideBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
+          defaultValue={values?.setAsideBefore ?? (installment?.setAsideBefore ? toInput(installment.setAsideBefore) : undefined)} {...invalid(state, "setAsideBefore")} />
       </Field>
       <Field label="Next due date" name="nextDueDate" state={state}>
         <Input id="nextDueDate" name="nextDueDate" type="date" defaultValue={values?.nextDueDate ?? installment?.nextDueDate ?? today} {...invalid(state, "nextDueDate")} />

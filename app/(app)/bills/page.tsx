@@ -31,7 +31,7 @@ async function Bills() {
     balances: await loadBalances(tx, userId),
     rows: await tx
       .select({
-        id: bills.id, name: bills.name, amount: bills.amount, nextDueDate: bills.nextDueDate, repeat: bills.repeat, note: bills.note,
+        id: bills.id, name: bills.name, amount: bills.amount, setAsideBefore: bills.setAsideBefore, nextDueDate: bills.nextDueDate, repeat: bills.repeat, note: bills.note,
         paid: sum(transactions.amount).mapWith(Number), setAside: billSetAside,
       })
       .from(bills)

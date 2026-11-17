@@ -33,7 +33,7 @@ async function Installments() {
     rows: await tx
       .select({
         id: installments.id, name: installments.name, monthlyAmount: installments.monthlyAmount, months: installments.months,
-        paidBefore: installments.paidBefore, nextDueDate: installments.nextDueDate, accountId: installments.accountId, note: installments.note,
+        paidBefore: installments.paidBefore, setAsideBefore: installments.setAsideBefore, nextDueDate: installments.nextDueDate, accountId: installments.accountId, note: installments.note,
         account: accounts.name,
         paid: sql<number>`${installments.paidBefore} + ${count(transactions.id)}`.mapWith(Number), setAside: installmentSetAside,
       })

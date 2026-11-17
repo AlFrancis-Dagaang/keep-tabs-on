@@ -14,7 +14,7 @@ import { progressBlocks, repeatLabels, toInput } from "@/lib/money";
 import { deleteBill, type FormState, payBill, saveBill } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
-type EditableBill = Pick<Bill, "id" | "name" | "amount" | "nextDueDate" | "repeat" | "note">;
+type EditableBill = Pick<Bill, "id" | "name" | "amount" | "setAsideBefore" | "nextDueDate" | "repeat" | "note">;
 
 export function BillProgress({ id, name, paid, amount }: { id: string; name: string; paid: number; amount: number }) {
   const { money } = useMoney();
@@ -63,6 +63,10 @@ function BillFields({ today, bill, onSaved }: { today: string; bill?: EditableBi
       <Field label={`Amount (${symbol})`} name="amount" state={state}>
         <Input id="amount" name="amount" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.amount ?? (bill && toInput(bill.amount))} {...invalid(state, "amount")} />
+      </Field>
+      <Field label={`Set aside before tracking (${symbol})`} name="setAsideBefore" state={state}>
+        <Input id="setAsideBefore" name="setAsideBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
+          defaultValue={values?.setAsideBefore ?? (bill?.setAsideBefore ? toInput(bill.setAsideBefore) : undefined)} {...invalid(state, "setAsideBefore")} />
       </Field>
       <Field label="Next due date" name="nextDueDate" state={state}>
         <Input id="nextDueDate" name="nextDueDate" type="date" defaultValue={values?.nextDueDate ?? bill?.nextDueDate ?? today} {...invalid(state, "nextDueDate")} />

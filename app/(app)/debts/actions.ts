@@ -10,7 +10,7 @@ import { type Tx, withUser } from "@/lib/db";
 import { parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const debtFields = ["id", "name", "direction", "total", "deadline", "paidBefore", "note"] as const;
+const debtFields = ["id", "name", "direction", "total", "deadline", "paidBefore", "setAsideBefore", "note"] as const;
 const payFields = ["debtId", "accountId", "amount", "date", "paidTo", "note"] as const;
 type Field = (typeof debtFields)[number] | (typeof payFields)[number];
 
@@ -33,6 +33,11 @@ const debtInput = z.object({
   total: amount,
   deadline: z.iso.date("Pick a deadline."),
   paidBefore: z.string().transform((value, ctx) => {
+    const centavos = value.trim() ? parseMoney(value) : 0;
+    if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
+    return centavos ?? z.NEVER;
+  }),
+  setAsideBefore: z.string().transform((value, ctx) => {
     const centavos = value.trim() ? parseMoney(value) : 0;
     if (centavos === null) ctx.addIssue({ code: "custom", message: "Enter an amount like 1,234.56, or leave it blank." });
     return centavos ?? z.NEVER;

@@ -14,7 +14,7 @@ import { directionLabels, progressBlocks, toInput } from "@/lib/money";
 import { deleteDebt, type FormState, payDebt, saveDebt } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
-type EditableDebt = Pick<Debt, "id" | "name" | "direction" | "total" | "deadline" | "paidBefore" | "note">;
+type EditableDebt = Pick<Debt, "id" | "name" | "direction" | "total" | "deadline" | "paidBefore" | "setAsideBefore" | "note">;
 
 export function DebtProgress({ id, name, paid, total, direction }: { id: string; name: string; paid: number; total: number; direction: Debt["direction"] }) {
   const { money } = useMoney();
@@ -83,6 +83,10 @@ function DebtFields({ today, debt, locked, onSaved }: { today: string; debt?: Ed
       <Field label={`${owed ? "Received" : "Paid"} before tracking (${symbol})`} name="paidBefore" state={state}>
         <Input id="paidBefore" name="paidBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.paidBefore ?? (debt?.paidBefore ? toInput(debt.paidBefore) : undefined)} {...invalid(state, "paidBefore")} />
+      </Field>
+      <Field label={`Set aside before tracking (${symbol})`} name="setAsideBefore" state={state}>
+        <Input id="setAsideBefore" name="setAsideBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
+          defaultValue={values?.setAsideBefore ?? (debt?.setAsideBefore ? toInput(debt.setAsideBefore) : undefined)} {...invalid(state, "setAsideBefore")} />
       </Field>
       <Field label="Note (optional)" name="note" state={state}>
         <Input id="note" name="note" defaultValue={values?.note ?? debt?.note ?? undefined} {...invalid(state, "note")} />

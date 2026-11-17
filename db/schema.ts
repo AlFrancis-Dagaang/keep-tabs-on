@@ -61,11 +61,14 @@ export const bills = pgTable(
     dueDay: smallint("due_day").notNull(), // the day of the month the owner picked; monthly rolls land on it, clamped
     repeat: text({ enum: ["weekly", "biweekly", "monthly", "quarterly", "yearly"] }).notNull(),
     cycleStart: timestamp("cycle_start", { withTimezone: true }).notNull().defaultNow(), // payments after this count toward this cycle
+    setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking; counts until the cycle rolls past set_aside_before_at
+    setAsideBeforeAt: timestamp("set_aside_before_at", { withTimezone: true }).notNull().defaultNow(), // when that amount was last changed
     note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check("bills_amount", sql`${t.amount} > 0`),
+    check("bills_set_aside_before", sql`${t.setAsideBefore} >= 0`),
     check("bills_due_day", sql`${t.dueDay} between 1 and 31`),
     check("bills_repeat", sql`${t.repeat} in ('weekly', 'biweekly', 'monthly', 'quarterly', 'yearly')`),
     ownRows(t.userId),
@@ -84,11 +87,14 @@ export const installments = pgTable(
     dueDay: smallint("due_day").notNull(), // like bills: monthly rolls land on it, clamped
     nextDueDate: date("next_due_date", { mode: "string" }).notNull(),
     accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where each payment comes from
+    setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking; counts until a payment after set_aside_before_at
+    setAsideBeforeAt: timestamp("set_aside_before_at", { withTimezone: true }).notNull().defaultNow(), // when that amount was last changed
     note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
     check("installments_monthly_amount", sql`${t.monthlyAmount} > 0`),
+    check("installments_set_aside_before", sql`${t.setAsideBefore} >= 0`),
     check("installments_months", sql`${t.months} between 1 and 120`),
     check("installments_paid_before", sql`${t.paidBefore} between 0 and ${t.months} - 1`),
     check("installments_due_day", sql`${t.dueDay} between 1 and 31`),
@@ -106,10 +112,12 @@ export const debts = pgTable(
     total: bigint({ mode: "number" }).notNull(), // centavos
     deadline: date({ mode: "string" }).notNull(),
     paidBefore: bigint("paid_before", { mode: "number" }).notNull().default(0), // centavos paid (or received) before tracking started
+    setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking started
     note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    check("debts_set_aside_before", sql`${t.setAsideBefore} >= 0`),
     check("debts_direction", sql`${t.direction} in ('owe', 'owed')`),
     check("debts_total", sql`${t.total} > 0`),
     check("debts_paid_before", sql`${t.paidBefore} between 0 and ${t.total}`),
@@ -127,10 +135,12 @@ export const goals = pgTable(
     deadline: date({ mode: "string" }).notNull(),
     accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where the money is saved
     savedBefore: bigint("saved_before", { mode: "number" }).notNull().default(0), // centavos saved before tracking started
+    setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking started
     note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
+    check("goals_set_aside_before", sql`${t.setAsideBefore} >= 0`),
     check("goals_target", sql`${t.target} > 0`),
     check("goals_saved_before", sql`${t.savedBefore} between 0 and ${t.target}`),
     ownRows(t.userId),

@@ -32,7 +32,7 @@ async function Goals() {
     rows: await tx
       .select({
         id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, accountId: goals.accountId,
-        savedBefore: goals.savedBefore, note: goals.note, account: accounts.name,
+        savedBefore: goals.savedBefore, setAsideBefore: goals.setAsideBefore, note: goals.note, account: accounts.name,
         saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number), setAside: goalSetAside,
       })
       .from(goals)

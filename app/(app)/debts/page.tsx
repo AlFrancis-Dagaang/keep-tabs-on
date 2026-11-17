@@ -31,7 +31,7 @@ async function Debts() {
     balances: await loadBalances(tx, userId),
     rows: await tx
       .select({
-        id: debts.id, name: debts.name, direction: debts.direction, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore, note: debts.note,
+        id: debts.id, name: debts.name, direction: debts.direction, total: debts.total, deadline: debts.deadline, paidBefore: debts.paidBefore, setAsideBefore: debts.setAsideBefore, note: debts.note,
         paid: sql<number>`${debts.paidBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number), setAside: debtSetAside,
       })
       .from(debts)
