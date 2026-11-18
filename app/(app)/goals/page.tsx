@@ -1,18 +1,16 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { asc, eq } from "drizzle-orm";
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
-import { SetAside } from "@/components/set-aside";
 import { RowActions } from "@/components/row-actions";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { accounts, goals, transactions } from "@/db/schema";
+import { goals } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
-import { loadBalances } from "@/lib/balances";
 import { goalSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 
-import { AddMoney, DeleteGoal, GoalForm, GoalProgress } from "./goal-form";
+import { DeleteGoal, GoalForm, GoalProgress } from "./goal-form";
 import { formatDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
@@ -27,33 +25,22 @@ export default function GoalsPage() {
 async function Goals() {
   const money = await getMoney();
   const userId = await getUserId();
-  const { balances, rows } = await withUser(userId, async (tx) => ({
-    balances: await loadBalances(tx, userId),
-    rows: await tx
-      .select({
-        id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, accountId: goals.accountId,
-        savedBefore: goals.savedBefore, setAsideBefore: goals.setAsideBefore, note: goals.note, account: accounts.name,
-        saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number), setAside: goalSetAside,
-      })
-      .from(goals)
-      .innerJoin(accounts, eq(goals.accountId, accounts.id))
-      .leftJoin(transactions, eq(transactions.goalId, goals.id))
-      .where(eq(goals.userId, userId))
-      .groupBy(goals.id, accounts.name)
-      .orderBy(asc(goals.deadline), asc(goals.createdAt)),
-  }));
+  const rows = await withUser(userId, (tx) => tx
+    .select({
+      id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline,
+      setAsideBefore: goals.setAsideBefore, note: goals.note, saved: goalSetAside,
+    })
+    .from(goals)
+    .where(eq(goals.userId, userId))
+    .orderBy(asc(goals.deadline), asc(goals.createdAt)));
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 
   return (
     <>
       <PageHeader title="Goals" description="What you're saving for.">
-        {balances.accounts.length > 0 && <GoalForm today={today} accounts={balances.accounts} />}
+        <GoalForm today={today} />
       </PageHeader>
-      {balances.accounts.length === 0 ? (
-        <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
-          Add an account first in <Link href="/accounts" className="underline">Accounts</Link>, then save toward goals in it.
-        </p>
-      ) : rows.length === 0 ? (
+      {rows.length === 0 ? (
         <p className="rounded-xl border bg-surface p-6 text-muted-foreground">No goals yet. Create one: an emergency fund, a trip, a new phone.</p>
       ) : (
         <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
@@ -62,7 +49,6 @@ async function Goals() {
               <TableRow>
                 <TableHead className="pl-4">Goal</TableHead>
                 <TableHead>Deadline</TableHead>
-                <TableHead>Saved in</TableHead>
                 <TableHead>Saved</TableHead>
                 <TableHead className="w-0" />
               </TableRow>
@@ -77,17 +63,14 @@ async function Goals() {
                     <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
                   <TableCell data-label="Deadline" className="tabular-nums">{formatDate(row.deadline)}</TableCell>
-                  <TableCell data-label="Saved in">{row.account}</TableCell>
                   <TableCell data-label="Saved">
-                    <SetAside name={row.name} amount={row.setAside} target={row.target} money={money} next="Saved" />
-                    <GoalProgress id={row.id} name={row.name} saved={row.saved} target={row.target} />
+                    <GoalProgress name={row.name} saved={row.saved} target={row.target} />
                     <div className="mt-1 text-sm text-muted-foreground tabular-nums">
                       {money(row.saved)} of {money(row.target)}
                     </div>
                   </TableCell>
                   <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
-                    <AddMoney goal={{ id: row.id, name: row.name, accountId: row.accountId, left: row.target - row.saved }} accounts={balances.accounts} today={today} />
-                    <RowActions items={[{ label: "Edit", node: <GoalForm today={today} accounts={balances.accounts} goal={row} /> }, { label: "Remove", node: <DeleteGoal id={row.id} name={row.name} /> }]} />
+                    <RowActions items={[{ label: "Edit", node: <GoalForm today={today} goal={row} /> }, { label: "Remove", node: <DeleteGoal id={row.id} name={row.name} /> }]} />
                   </TableCell>
                 </TableRow>
               ))}

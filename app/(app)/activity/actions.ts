@@ -63,10 +63,10 @@ export async function saveEntry(_: FormState, formData: FormData): Promise<FormS
   const errors = await withUser(userId, async (tx): Promise<FormState["errors"]> => {
     const { accounts, entries, balance } = await loadBalances(tx, userId, { lock: true });
     if (id) {
-      const [old] = await tx.select({ billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId })
+      const [old] = await tx.select({ billId: transactions.billId, debtId: transactions.debtId, installmentId: transactions.installmentId })
         .from(transactions).where(and(eq(transactions.id, id), eq(transactions.userId, userId)));
       if (!old) return { type: "This entry no longer exists." };
-      if (isLinked(old)) return { type: "Entries made by a bill, debt, goal or installment can't be edited." };
+      if (isLinked(old)) return { type: "Entries made by a bill, debt or installment can't be edited." };
     }
     // FKs skip RLS, so only ids found among the user's own rows get saved.
     const from = accounts.find((account) => account.id === entry.accountId);
@@ -118,7 +118,7 @@ const paymentInput = z.object({
   note: common.note,
 });
 
-/** Edits the amount, date, account, who was paid and note of a bill, installment, debt or goal payment. Progress and due dates follow the cycle and the count, never the date. */
+/** Edits the amount, date, account, who was paid and note of a bill, installment or debt payment. Progress and due dates follow the cycle and the count, never the date. */
 export async function editPayment(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -156,18 +156,12 @@ export async function editPayment(_: FormState, formData: FormData): Promise<For
     } else if (old.debtId) {
       const [debt] = await tx.select({ total: debts.total, paidBefore: debts.paidBefore }).from(debts).where(eq(debts.id, old.debtId));
       if (debt) max = maxPaymentAmount(debt.total - debt.paidBefore, await others(eq(transactions.debtId, old.debtId)));
-    } else if (old.goalId) {
-      const [goal] = await tx.select({ target: goals.target, savedBefore: goals.savedBefore, accountId: goals.accountId }).from(goals).where(eq(goals.id, old.goalId));
-      if (goal) {
-        if (payment.accountId === goal.accountId) return { accountId: "Pick an account other than the one the goal is saved in." };
-        max = maxPaymentAmount(goal.target - goal.savedBefore, await others(eq(transactions.goalId, old.goalId)));
-      }
     }
     if (max !== undefined && payment.amount > max) return { amount: `Only ${money(max)} fits.` };
-    // The edit can lower the old account, the new one or a goal's account, so every account is rechecked.
+    // The edit can lower the old account or the new one, so both are rechecked.
     const short = balancesAfterEdit(accounts, entries, id, { ...entries.find((entry) => entry.id === id)!, ...payment });
     if (short) return { amount: `This would take ${short.name} below zero.` };
-    await tx.update(transactions).set({ accountId: payment.accountId, amount: payment.amount, date: payment.date, paidTo: old.goalId ? null : payment.paidTo, note: payment.note }).where(eq(transactions.id, id));
+    await tx.update(transactions).set({ accountId: payment.accountId, amount: payment.amount, date: payment.date, paidTo: payment.paidTo, note: payment.note }).where(eq(transactions.id, id));
   });
   if (errors) return { values, errors };
   refresh();

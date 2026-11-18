@@ -40,10 +40,9 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
       .select({
         id: installments.id, name: installments.name, monthlyAmount: installments.monthlyAmount, months: installments.months,
         paidBefore: installments.paidBefore, nextDueDate: installments.nextDueDate, dueDay: installments.dueDay, note: installments.note,
-        account: accounts.name, setAside: installmentSetAside,
+        setAside: installmentSetAside,
       })
       .from(installments)
-      .innerJoin(accounts, eq(installments.accountId, accounts.id))
       .where(and(eq(installments.id, id.data), eq(installments.userId, userId))))[0],
     balances: await loadBalances(tx, userId),
     first: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.installmentId, id.data)))[0]?.date,
@@ -65,9 +64,9 @@ async function InstallmentDetail({ params, searchParams }: { params: Promise<{ i
       <Link href="/installments" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Installments</Link>
       <PageHeader
         title={installment.name}
-        description={`${money(installment.monthlyAmount)} × ${installment.months} · due day ${installment.dueDay} · from ${installment.account} · ${finished ? "Finished" : `Next due ${formatDate(installment.nextDueDate)}${installment.nextDueDate < today ? " · Overdue" : ""}`}${installment.note ? ` · ${installment.note}` : ""}`}
+        description={`${money(installment.monthlyAmount)} × ${installment.months} · due day ${installment.dueDay} · ${finished ? "Finished" : `Next due ${formatDate(installment.nextDueDate)}${installment.nextDueDate < today ? " · Overdue" : ""}`}${installment.note ? ` · ${installment.note}` : ""}`}
       >
-        {!finished && <PayInstallment installment={installment} today={today} />}
+        {!finished && <PayInstallment installment={installment} accounts={balances.accounts} today={today} />}
       </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
         <SetAside name={installment.name} amount={installment.setAside} target={installment.monthlyAmount} money={money} nextTarget />

@@ -12,6 +12,7 @@ import { accounts, bills, categories, debts, goals, transactions } from "@/db/sc
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
+import { goalSetAside } from "@/lib/set-aside";
 import { billsDueSoon, billStatus, directionLabels, formatDate, manilaMonth, monthChange, monthTotals, netWorth, previousMonth, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
@@ -45,12 +46,10 @@ async function Overview() {
     goals: await tx
       .select({
         id: goals.id, name: goals.name, target: goals.target,
-        saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number),
+        saved: goalSetAside,
       })
       .from(goals)
-      .leftJoin(transactions, eq(transactions.goalId, goals.id))
       .where(eq(goals.userId, userId))
-      .groupBy(goals.id)
       .orderBy(asc(goals.deadline), asc(goals.createdAt))
       .limit(5),
     debts: await tx

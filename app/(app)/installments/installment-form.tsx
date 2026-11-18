@@ -13,9 +13,9 @@ import { toInput } from "@/lib/money";
 import { deleteInstallment, type FormState, payInstallment, saveInstallment } from "./actions";
 
 type Accounts = { id: string; name: string; balance: number }[];
-type EditableInstallment = Pick<Installment, "id" | "name" | "monthlyAmount" | "months" | "paidBefore" | "setAsideBefore" | "nextDueDate" | "accountId" | "note">;
+type EditableInstallment = Pick<Installment, "id" | "name" | "monthlyAmount" | "months" | "paidBefore" | "setAsideBefore" | "nextDueDate" | "note">;
 
-export function InstallmentForm({ today, accounts, installment }: { today: string; accounts: Accounts; installment?: EditableInstallment }) {
+export function InstallmentForm({ today, installment }: { today: string; installment?: EditableInstallment }) {
   const [open, setOpen] = useState(false);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -27,14 +27,14 @@ export function InstallmentForm({ today, accounts, installment }: { today: strin
           <DialogTitle>{installment ? "Edit installment" : "Add installment"}</DialogTitle>
           <DialogDescription>A purchase paid in equal monthly payments. You can change the due date anytime.</DialogDescription>
         </DialogHeader>
-        <Fields today={today} accounts={accounts} installment={installment} onSaved={() => setOpen(false)} />
+        <Fields today={today} installment={installment} onSaved={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
-function Fields({ today, accounts, installment, onSaved }: { today: string; accounts: Accounts; installment?: EditableInstallment; onSaved: () => void }) {
+function Fields({ today, installment, onSaved }: { today: string; installment?: EditableInstallment; onSaved: () => void }) {
   const { money, symbol } = useMoney();
   const [state, action, pending] = useActionState(saveInstallment, {});
   useEffect(() => {
@@ -43,7 +43,6 @@ function Fields({ today, accounts, installment, onSaved }: { today: string; acco
 
   const values = state.values;
   return (
-    // Remounts after a failed save, so the select shows the refilled value once React resets the form.
     <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
       <input type="hidden" name="id" value={installment?.id ?? ""} />
       <Field label="Name" name="name" state={state}>
@@ -69,8 +68,47 @@ function Fields({ today, accounts, installment, onSaved }: { today: string; acco
       <Field label="Next due date" name="nextDueDate" state={state}>
         <Input id="nextDueDate" name="nextDueDate" type="date" defaultValue={values?.nextDueDate ?? installment?.nextDueDate ?? today} {...invalid(state, "nextDueDate")} />
       </Field>
-      <Field label="Paid from" name="accountId" state={state}>
-        <Select name="accountId" defaultValue={values?.accountId ?? installment?.accountId}>
+      <Field label="Note (optional)" name="note" state={state}>
+        <Input id="note" name="note" defaultValue={values?.note ?? installment?.note ?? undefined} {...invalid(state, "note")} />
+      </Field>
+      <DialogFooter>
+        <Button type="submit" disabled={pending}>{installment ? "Save installment" : "Add installment"}</Button>
+      </DialogFooter>
+    </form>
+  );
+}
+
+export function PayInstallment(props: { installment: { id: string; name: string; monthlyAmount: number }; accounts: Accounts; today: string }) {
+  const { money } = useMoney();
+  const [open, setOpen] = useState(false);
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button variant="secondary" size="sm"><Banknote />Record payment</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Record payment</DialogTitle>
+          <DialogDescription>{props.installment.name}: {money(props.installment.monthlyAmount)} a month.</DialogDescription>
+        </DialogHeader>
+        <PayFields {...props} onSaved={() => setOpen(false)} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function PayFields({ installment, accounts, today, onSaved }: { installment: { id: string }; accounts: Accounts; today: string; onSaved: () => void }) {
+  const { money } = useMoney();
+  const [state, action, pending] = useActionState(payInstallment, {});
+  useEffect(() => {
+    if (state.ok) onSaved();
+  }, [state, onSaved]);
+
+  return (
+    <form key={JSON.stringify(state.values ?? {})} action={action} className="grid grid-cols-1 gap-4">
+      <input type="hidden" name="installmentId" value={installment.id} />
+      <Field label="From account" name="accountId" state={state}>
+        <Select name="accountId" defaultValue={state.values?.accountId || undefined}>
           <SelectTrigger id="accountId" className="w-full" {...invalid(state, "accountId")}>
             <SelectValue placeholder="Pick an account" />
           </SelectTrigger>
@@ -83,49 +121,12 @@ function Fields({ today, accounts, installment, onSaved }: { today: string; acco
           </SelectContent>
         </Select>
       </Field>
-      <Field label="Note (optional)" name="note" state={state}>
-        <Input id="note" name="note" defaultValue={values?.note ?? installment?.note ?? undefined} {...invalid(state, "note")} />
-      </Field>
-      <DialogFooter>
-        <Button type="submit" disabled={pending}>{installment ? "Save installment" : "Add installment"}</Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-export function PayInstallment(props: { installment: { id: string; name: string; monthlyAmount: number; account: string }; today: string }) {
-  const { money } = useMoney();
-  const [open, setOpen] = useState(false);
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="secondary" size="sm"><Banknote />Record payment</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Record payment</DialogTitle>
-          <DialogDescription>{props.installment.name}: {money(props.installment.monthlyAmount)} from {props.installment.account}.</DialogDescription>
-        </DialogHeader>
-        <PayFields {...props} onSaved={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function PayFields({ installment, today, onSaved }: { installment: { id: string }; today: string; onSaved: () => void }) {
-  const [state, action, pending] = useActionState(payInstallment, {});
-  useEffect(() => {
-    if (state.ok) onSaved();
-  }, [state, onSaved]);
-
-  return (
-    <form key={JSON.stringify(state.values ?? {})} action={action} className="grid grid-cols-1 gap-4">
-      <input type="hidden" name="installmentId" value={installment.id} />
       <Field label="Date" name="date" state={state}>
         <Input id="date" name="date" type="date" defaultValue={state.values?.date ?? today} {...invalid(state, "date")} />
       </Field>
       <Field label="To (optional)" name="paidTo" state={state}>
-        <Input id="paidTo" name="paidTo" placeholder="Landlord" defaultValue={state.values?.paidTo} {...invalid(state, "paidTo")} />
+        <Input id="paidTo" name="paidTo" list="paid-to-accounts" placeholder="Landlord" defaultValue={state.values?.paidTo} {...invalid(state, "paidTo")} />
+        <datalist id="paid-to-accounts">{accounts.map((account) => <option key={account.id} value={account.name} />)}</datalist>
       </Field>
       <Field label="Note (optional)" name="note" state={state}>
         <Input id="note" name="note" defaultValue={state.values?.note ?? undefined} {...invalid(state, "note")} />

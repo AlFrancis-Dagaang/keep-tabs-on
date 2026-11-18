@@ -1,5 +1,5 @@
 import { randomUUID } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { and, eq, gt, sql, sum } from "drizzle-orm";
 import { describe, expect, it, vi } from "vitest";
 import { accounts, bills, debts, goals, installments, transactions } from "../db/schema";
@@ -193,12 +193,12 @@ describe.skipIf(!process.env.DATABASE_URL)("set aside", () => {
     }
   });
   describe("set aside before tracking", () => {
-    it("adds to a goal's and a debt's linked transfers without touching Saved or Paid", async () => {
+    it("adds to a goal's and a debt's linked transfers without touching Paid", async () => {
       const userId = randomUUID();
       const s = await setup(userId);
       try {
         const [debt] = await withUser(userId, (tx) => tx.insert(debts).values({ userId, name: "Loan", total: 2_000_000, deadline: "2027-01-01", paidBefore: 100_000, setAsideBefore: 200_000 }).returning());
-        const [goal] = await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Trip", target: 2_500_000, deadline: "2027-01-01", accountId: s.holding.id, savedBefore: 150_000, setAsideBefore: 1_500_000 }).returning());
+        const [goal] = await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Trip", target: 2_500_000, deadline: "2027-01-01", setAsideBefore: 1_500_000 }).returning());
         await withUser(userId, (tx) =>
           tx.insert(transactions).values([
             transfer(userId, s.from.id, s.holding.id, { setAsideDebtId: debt.id, amount: 700_000 }),
@@ -210,11 +210,10 @@ describe.skipIf(!process.env.DATABASE_URL)("set aside", () => {
             .leftJoin(transactions, eq(transactions.debtId, debts.id)).where(eq(debts.id, debt.id)).groupBy(debts.id),
         );
         const [g] = await withUser(userId, (tx) =>
-          tx.select({ setAside: goalSetAside, saved: sql<number>`${goals.savedBefore} + coalesce(sum(${transactions.amount}), 0)`.mapWith(Number) }).from(goals)
-            .leftJoin(transactions, eq(transactions.goalId, goals.id)).where(eq(goals.id, goal.id)).groupBy(goals.id),
+          tx.select({ setAside: goalSetAside }).from(goals).where(eq(goals.id, goal.id)),
         );
         expect(d).toEqual({ setAside: 900_000, paid: 100_000 });
-        expect(g).toEqual({ setAside: 2_500_000, saved: 150_000 });
+        expect(g).toEqual({ setAside: 2_500_000 });
       } finally {
         await cleanup(userId);
       }
@@ -278,6 +277,128 @@ describe.skipIf(!process.env.DATABASE_URL)("set aside", () => {
         expect((await saveBill({}, form("Rent 2", "-5"))).errors?.setAsideBefore).toBeTruthy();
       } finally {
         await cleanup(userId);
+      }
+    });
+  });
+  describe("goals are a jar", () => {
+    const form = (fields: Record<string, string>) => {
+      const data = new FormData();
+      for (const [key, value] of Object.entries(fields)) data.set(key, value);
+      return data;
+    };
+
+    it("saves a goal with no account, and its figure can pass the target", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      const { saveGoal } = await import("../app/(app)/goals/actions");
+      try {
+        currentUser = userId;
+        const saved = await saveGoal({}, form({ id: "", name: "Trip", target: "1000", deadline: "2027-01-01", setAsideBefore: "1500", note: "" }));
+        expect(saved.ok).toBe(true);
+        const [goal] = await withUser(userId, (tx) => tx.select().from(goals));
+        expect(goal.accountId).toBeNull();
+        await withUser(userId, (tx) => tx.insert(transactions).values(transfer(userId, s.from.id, s.holding.id, { setAsideGoalId: goal.id, amount: 50_000 })));
+        const [row] = await withUser(userId, (tx) => tx.select({ saved: goalSetAside }).from(goals).where(eq(goals.id, goal.id)));
+        expect(row.saved).toBe(200_000); // 1,500 already saved + 500 linked, over the 1,000 target
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("keeps each goal's figure through the migration's data step", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      try {
+        const [goal] = await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Trip", target: 2_500_000, deadline: "2027-01-01", accountId: s.holding.id, savedBefore: 150_000, setAsideBefore: 1_500_000 }).returning());
+        await withUser(userId, (tx) =>
+          tx.insert(transactions).values([
+            transfer(userId, s.from.id, s.holding.id, { goalId: goal.id, amount: 400_000 }), // an old Add money
+            transfer(userId, s.from.id, s.holding.id, { setAsideGoalId: goal.id, amount: 200_000 }),
+          ]),
+        );
+        const before = 150_000 + 400_000 + 200_000 + 1_500_000; // Saved + Set aside, as the owner saw them
+        const file = readdirSync("db/migrations").find((name) => name.startsWith("0015"))!;
+        const statements = readFileSync(`db/migrations/${file}`, "utf8").split("--> statement-breakpoint").map((part) => part.trim()).filter((part) => part.startsWith("UPDATE"));
+        await withUser(userId, async (tx) => {
+          for (const statement of statements) await tx.execute(sql.raw(statement)); // RLS limits each UPDATE to this user's rows
+        });
+        const [row] = await withUser(userId, (tx) => tx.select({ saved: goalSetAside, accountId: goals.accountId }).from(goals).where(eq(goals.id, goal.id)));
+        expect(row).toEqual({ saved: before, accountId: null });
+        expect((await withUser(userId, (tx) => tx.select().from(transactions).where(eq(transactions.goalId, goal.id)))).length).toBe(0);
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("lets an account be deleted while goals exist", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      const { deleteAccount } = await import("../app/(app)/accounts/actions");
+      try {
+        currentUser = userId;
+        await withUser(userId, (tx) => tx.insert(goals).values({ userId, name: "Trip", target: 100, deadline: "2027-01-01" }));
+        expect(await deleteAccount(form({ id: s.holding.id }))).toEqual({});
+        expect((await withUser(userId, (tx) => tx.select().from(accounts).where(eq(accounts.id, s.holding.id)))).length).toBe(0);
+      } finally {
+        await cleanup(userId);
+      }
+    });
+  });
+
+  describe("installments pick their account when paid", () => {
+    const form = (fields: Record<string, string>) => {
+      const data = new FormData();
+      for (const [key, value] of Object.entries(fields)) data.set(key, value);
+      return data;
+    };
+    const make = (userId: string, extra: Partial<typeof installments.$inferInsert> = {}) =>
+      withUser(userId, async (tx) => (await tx.insert(installments).values({ userId, name: "Phone", monthlyAmount: 300_000, months: 6, dueDay: 1, nextDueDate: "2026-12-01", ...extra }).returning())[0]);
+
+    it("saves an installment with no account", async () => {
+      const userId = randomUUID();
+      await setup(userId);
+      const { saveInstallment } = await import("../app/(app)/installments/actions");
+      try {
+        currentUser = userId;
+        const saved = await saveInstallment({}, form({ id: "", name: "Phone", monthlyAmount: "3000", months: "6", paidBefore: "", setAsideBefore: "", nextDueDate: "2026-12-01", note: "" }));
+        expect(saved.ok).toBe(true);
+        expect((await withUser(userId, (tx) => tx.select().from(installments)))[0].accountId).toBeNull();
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("pays from the chosen account, stores To as a label and rolls the due date", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      const { payInstallment } = await import("../app/(app)/installments/actions");
+      try {
+        currentUser = userId;
+        const old = await make(userId, { accountId: s.holding.id }); // an old installment still pays from the picked account
+        const result = await payInstallment({}, form({ installmentId: old.id, accountId: s.from.id, date: "2026-11-18", paidTo: "Set aside holding", note: "" }));
+        expect(result.ok).toBe(true);
+        const rows = await withUser(userId, (tx) => tx.select().from(transactions));
+        expect(rows).toEqual([expect.objectContaining({ type: "expense", amount: 300_000, accountId: s.from.id, installmentId: old.id, paidTo: "Set aside holding", toAccountId: null })]);
+        expect((await withUser(userId, (tx) => tx.select().from(installments).where(eq(installments.id, old.id))))[0].nextDueDate).toBe("2027-01-01");
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
+    it("refuses with no account, a short balance or an account that isn't yours", async () => {
+      const [a, b] = [randomUUID(), randomUUID()];
+      const [sa, sb] = [await setup(a), await setup(b)];
+      const { payInstallment } = await import("../app/(app)/installments/actions");
+      try {
+        currentUser = a;
+        const inst = await make(a);
+        const pay = (accountId: string) => payInstallment({}, form({ installmentId: inst.id, accountId, date: "2026-11-18", paidTo: "", note: "" }));
+        expect((await pay("")).errors?.accountId).toBeTruthy();
+        expect((await pay(sb.from.id)).errors?.accountId).toBeTruthy();
+        expect((await pay(sa.holding.id)).errors?.installmentId).toMatch(/Only/); // empty account: never negative
+        expect(await withUser(a, (tx) => tx.select().from(transactions))).toEqual([]);
+      } finally {
+        await Promise.all([cleanup(a), cleanup(b)]);
       }
     });
   });

@@ -40,9 +40,9 @@ export function balanceOf(account: Pick<Account, "id" | "startingBalance">, entr
   }, account.startingBalance);
 }
 
-/** Entries made by a bill, debt, goal or installment drive their progress and due dates, so they can't be edited. */
-export function isLinked(entry: Pick<Transaction, "billId" | "debtId" | "goalId" | "installmentId">): boolean {
-  return !!(entry.billId || entry.debtId || entry.goalId || entry.installmentId);
+/** Entries made by a bill, debt or installment drive their progress and due dates, so they can't be edited. */
+export function isLinked(entry: Pick<Transaction, "billId" | "debtId" | "installmentId">): boolean {
+  return !!(entry.billId || entry.debtId || entry.installmentId);
 }
 
 export type SetAside = { kind: "bill" | "debt" | "installment" | "goal"; id: string };

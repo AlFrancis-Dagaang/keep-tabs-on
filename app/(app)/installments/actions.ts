@@ -3,15 +3,15 @@
 import { and, count, eq, sql } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { z } from "zod";
-import { accounts, installments, transactions } from "@/db/schema";
+import { installments, transactions } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { type Tx, withUser } from "@/lib/db";
 import { nextDueDate, parseMoney } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
-const fields = ["id", "name", "monthlyAmount", "months", "paidBefore", "setAsideBefore", "nextDueDate", "accountId", "note"] as const;
-const payFields = ["installmentId", "date", "paidTo", "note"] as const;
+const fields = ["id", "name", "monthlyAmount", "months", "paidBefore", "setAsideBefore", "nextDueDate", "note"] as const;
+const payFields = ["installmentId", "accountId", "date", "paidTo", "note"] as const;
 type Field = (typeof fields)[number] | (typeof payFields)[number];
 
 export type FormState = {
@@ -37,10 +37,9 @@ const installmentInput = z.object({
     return centavos ?? z.NEVER;
   }),
   nextDueDate: z.iso.date("Pick the next due date."),
-  accountId: z.uuid("Pick an account."),
   note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null),
 }).refine((installment) => installment.paidBefore < installment.months, { path: ["paidBefore"], message: "Must be fewer than the months, or it's already finished." });
-const payInput = z.object({ installmentId: z.uuid(), date: z.iso.date("Pick a date."), paidTo: z.string().trim().max(60, "Keep the name under 60 characters.").transform((name) => name || null), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
+const payInput = z.object({ installmentId: z.uuid(), accountId: z.uuid("Pick an account."), date: z.iso.date("Pick a date."), paidTo: z.string().trim().max(60, "Keep the name under 60 characters.").transform((name) => name || null), note: z.string().trim().max(200, "Keep the note under 200 characters.").transform((note) => note || null) });
 
 function read<F extends Field>(formData: FormData, names: readonly F[]) {
   return Object.fromEntries(names.map((name) => [name, String(formData.get(name) ?? "")])) as Record<F, string>;
@@ -66,9 +65,6 @@ export async function saveInstallment(_: FormState, formData: FormData): Promise
   const { id, ...installment } = parsed.data;
   const row = { ...installment, dueDay: Number(installment.nextDueDate.slice(8)) };
   const errors = await withUser(userId, async (tx): Promise<FormState["errors"]> => {
-    // FKs skip RLS, so the account must be found among the user's own rows.
-    const [account] = await tx.select({ id: accounts.id }).from(accounts).where(and(eq(accounts.id, row.accountId), eq(accounts.userId, userId)));
-    if (!account) return { accountId: "Pick an account." };
     if (!id) {
       await tx.insert(installments).values({ userId, ...row });
       return;
@@ -94,7 +90,7 @@ export async function deleteInstallment(formData: FormData) {
   refresh();
 }
 
-/** Saves one month's expense from the installment's account and rolls the due date, unless it was the last payment. */
+/** Saves one month's expense from the account picked and rolls the due date, unless it was the last payment. */
 export async function payInstallment(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
   const money = await getMoney();
@@ -110,8 +106,9 @@ export async function payInstallment(_: FormState, formData: FormData): Promise<
     if (!installment) return { errors: { installmentId: "This installment is gone. Close and refresh." } };
     const paid = installment.paidBefore + (await recordedPayments(tx, installment.id));
     if (paid >= installment.months) return { errors: { installmentId: "Already paid in full." } };
-    const from = owned.find((account) => account.id === installment.accountId);
-    if (!from) return { errors: { installmentId: "Its account is gone. Edit the installment." } };
+    // FKs skip RLS, so only an account found among the user's own rows gets saved.
+    const from = owned.find((account) => account.id === payment.accountId);
+    if (!from) return { errors: { accountId: "Pick an account." } };
     if (balance(from.id)! < installment.monthlyAmount) {
       return { errors: { installmentId: `Only ${money(balance(from.id)!)} in ${from.name}.` } };
     }

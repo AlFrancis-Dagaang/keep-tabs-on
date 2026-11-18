@@ -86,7 +86,7 @@ export const installments = pgTable(
     paidBefore: smallint("paid_before").notNull().default(0), // months paid before tracking started
     dueDay: smallint("due_day").notNull(), // like bills: monthly rolls land on it, clamped
     nextDueDate: date("next_due_date", { mode: "string" }).notNull(),
-    accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where each payment comes from
+    accountId: uuid("account_id").references(() => accounts.id, { onDelete: "restrict" }), // unused: each payment picks its From account
     setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking; counts until a payment after set_aside_before_at
     setAsideBeforeAt: timestamp("set_aside_before_at", { withTimezone: true }).notNull().defaultNow(), // when that amount was last changed
     note: text(),
@@ -133,8 +133,8 @@ export const goals = pgTable(
     name: text().notNull(),
     target: bigint({ mode: "number" }).notNull(), // centavos
     deadline: date({ mode: "string" }).notNull(),
-    accountId: uuid("account_id").notNull().references(() => accounts.id, { onDelete: "restrict" }), // where the money is saved
-    savedBefore: bigint("saved_before", { mode: "number" }).notNull().default(0), // centavos saved before tracking started
+    accountId: uuid("account_id").references(() => accounts.id, { onDelete: "restrict" }), // unused: a goal is a jar, not an account
+    savedBefore: bigint("saved_before", { mode: "number" }).notNull().default(0), // unused: folded into set_aside_before
     setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking started
     note: text(),
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
@@ -183,7 +183,7 @@ export const transactions = pgTable(
     note: text(),
     billId: uuid("bill_id").references(() => bills.id, { onDelete: "set null" }), // bill payments: expenses with no category
     debtId: uuid("debt_id").references(() => debts.id, { onDelete: "set null" }), // debt payments: expenses with no category
-    goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }), // money added to a goal: transfers into its account
+    goalId: uuid("goal_id").references(() => goals.id, { onDelete: "set null" }), // unused: old Add money transfers became set_aside_goal_id
     installmentId: uuid("installment_id").references(() => installments.id, { onDelete: "set null" }), // installment payments: expenses with no category
     // Transfers only: money set aside for an item. Separate from the four columns above, which mean "this entry is a payment".
     setAsideBillId: uuid("set_aside_bill_id").references(() => bills.id, { onDelete: "set null" }),

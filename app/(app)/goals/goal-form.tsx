@@ -2,27 +2,24 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
-import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
-import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
+import { PixelBar } from "@/components/pixel-bar";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Goal } from "@/db/schema";
 import { progressBlocks, toInput } from "@/lib/money";
-import { addToGoal, deleteGoal, type FormState, saveGoal } from "./actions";
+import { deleteGoal, type FormState, saveGoal } from "./actions";
 
-type Accounts = { id: string; name: string; balance: number }[];
-type EditableGoal = Pick<Goal, "id" | "name" | "target" | "deadline" | "accountId" | "savedBefore" | "setAsideBefore" | "note">;
+type EditableGoal = Pick<Goal, "id" | "name" | "target" | "deadline" | "setAsideBefore" | "note">;
 
-export function GoalProgress({ id, name, saved, target }: { id: string; name: string; saved: number; target: number }) {
+export function GoalProgress({ name, saved, target }: { name: string; saved: number; target: number }) {
   const { money } = useMoney();
-  const flashing = useCompletedFlash(id);
-  return <PixelBar blocks={progressBlocks(saved, target)} flash={flashing} label={`${name}: ${money(saved)} of ${money(target)} saved`} />;
+  return <PixelBar blocks={progressBlocks(saved, target)} label={`${name}: ${money(saved)} of ${money(target)} saved`} />;
 }
 
-export function GoalForm({ today, accounts, goal }: { today: string; accounts: Accounts; goal?: EditableGoal }) {
+export function GoalForm({ today, goal }: { today: string; goal?: EditableGoal }) {
   const [open, setOpen] = useState(false);
   const title = goal ? "Edit goal" : "Create goal";
   return (
@@ -33,16 +30,16 @@ export function GoalForm({ today, accounts, goal }: { today: string; accounts: A
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Something you&apos;re saving for, and the account the money sits in.</DialogDescription>
+          <DialogDescription>Something you&apos;re saving for. Fill it with transfers in Activity: pick this goal under For.</DialogDescription>
         </DialogHeader>
-        <GoalFields today={today} accounts={accounts} goal={goal} onSaved={() => setOpen(false)} />
+        <GoalFields today={today} goal={goal} onSaved={() => setOpen(false)} />
       </DialogContent>
     </Dialog>
   );
 }
 
 // Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
-function GoalFields({ today, accounts, goal, onSaved }: { today: string; accounts: Accounts; goal?: EditableGoal; onSaved: () => void }) {
+function GoalFields({ today, goal, onSaved }: { today: string; goal?: EditableGoal; onSaved: () => void }) {
   const { symbol } = useMoney();
   const [state, action, pending] = useActionState(saveGoal, {});
   useEffect(() => {
@@ -63,14 +60,7 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
       <Field label="Deadline" name="deadline" state={state}>
         <Input id="deadline" name="deadline" type="date" defaultValue={values?.deadline ?? goal?.deadline ?? today} {...invalid(state, "deadline")} />
       </Field>
-      <Field label="Saved in" name="accountId" state={state}>
-        <AccountSelect id="accountId" accounts={accounts} defaultValue={values?.accountId || goal?.accountId} state={state} />
-      </Field>
-      <Field label={`Already saved (${symbol})`} name="savedBefore" state={state}>
-        <Input id="savedBefore" name="savedBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
-          defaultValue={values?.savedBefore ?? (goal?.savedBefore ? toInput(goal.savedBefore) : undefined)} {...invalid(state, "savedBefore")} />
-      </Field>
-      <Field label={`Set aside before tracking (${symbol})`} name="setAsideBefore" state={state}>
+      <Field label={`Already saved (${symbol})`} name="setAsideBefore" state={state}>
         <Input id="setAsideBefore" name="setAsideBefore" inputMode="decimal" placeholder="0.00" className="tabular-nums"
           defaultValue={values?.setAsideBefore ?? (goal?.setAsideBefore ? toInput(goal.setAsideBefore) : undefined)} {...invalid(state, "setAsideBefore")} />
       </Field>
@@ -79,59 +69,6 @@ function GoalFields({ today, accounts, goal, onSaved }: { today: string; account
       </Field>
       <DialogFooter>
         <Button type="submit" disabled={pending}>{goal ? "Save goal" : "Create goal"}</Button>
-      </DialogFooter>
-    </form>
-  );
-}
-
-export function AddMoney(props: { goal: { id: string; name: string; accountId: string; left: number }; accounts: Accounts; today: string }) {
-  const { money } = useMoney();
-  const [open, setOpen] = useState(false);
-  // Disabled rather than hidden at target: hiding it would unmount the form before it announces the flash.
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant="secondary" size="sm" disabled={props.goal.left === 0}><Banknote />Add money</Button>
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Add money</DialogTitle>
-          <DialogDescription>{props.goal.name}: {money(props.goal.left)} left to reach the target.</DialogDescription>
-        </DialogHeader>
-        <AddFields {...props} onSaved={() => setOpen(false)} />
-      </DialogContent>
-    </Dialog>
-  );
-}
-
-function AddFields({ goal, accounts, today, onSaved }: { goal: { id: string; accountId: string; left: number }; accounts: Accounts; today: string; onSaved: () => void }) {
-  const { symbol } = useMoney();
-  const [state, action, pending] = useActionState(addToGoal, {});
-  useEffect(() => {
-    if (!state.ok) return;
-    if (state.completed) announceCompleted(goal.id);
-    onSaved();
-  }, [state, goal.id, onSaved]);
-
-  const values = state.values;
-  return (
-    <form key={JSON.stringify(values ?? {})} action={action} className="grid grid-cols-1 gap-4">
-      <input type="hidden" name="goalId" value={goal.id} />
-      <Field label="From account" name="fromAccountId" state={state}>
-        <AccountSelect id="fromAccountId" accounts={accounts.filter((account) => account.id !== goal.accountId)}
-          defaultValue={values?.fromAccountId} state={state} />
-      </Field>
-      <Field label={`Amount (${symbol})`} name="amount" state={state}>
-        <Input id="amount" name="amount" inputMode="decimal" className="tabular-nums" defaultValue={values?.amount ?? toInput(goal.left)} {...invalid(state, "amount")} />
-      </Field>
-      <Field label="Date" name="date" state={state}>
-        <Input id="date" name="date" type="date" defaultValue={values?.date ?? today} {...invalid(state, "date")} />
-      </Field>
-      <Field label="Note (optional)" name="note" state={state}>
-        <Input id="note" name="note" defaultValue={values?.note ?? undefined} {...invalid(state, "note")} />
-      </Field>
-      <DialogFooter>
-        <Button type="submit" disabled={pending}><Banknote />Add money</Button>
       </DialogFooter>
     </form>
   );
@@ -159,24 +96,6 @@ export function DeleteGoal({ id, name }: { id: string; name: string }) {
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-function AccountSelect({ id, accounts, defaultValue, state }: { id: "accountId" | "fromAccountId"; accounts: Accounts; defaultValue?: string; state: FormState }) {
-  const { money } = useMoney();
-  return (
-    <Select name={id} defaultValue={defaultValue || undefined}>
-      <SelectTrigger id={id} className="w-full" {...invalid(state, id)}>
-        <SelectValue placeholder="Pick an account" />
-      </SelectTrigger>
-      <SelectContent>
-        {accounts.map((account) => (
-          <SelectItem key={account.id} value={account.id}>
-            {account.name} <span className="text-muted-foreground tabular-nums">{money(account.balance)}</span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
   );
 }
 

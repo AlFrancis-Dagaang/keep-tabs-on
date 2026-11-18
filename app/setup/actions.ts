@@ -38,7 +38,7 @@ const rowSchemas = {
   spending: z.object({ name: name.max(40), budget: amountOrBlank }),
   income: z.object({ name: name.max(40) }),
   bills: z.object({ name, amount: positive, nextDueDate: date, repeat: z.enum(["weekly", "biweekly", "monthly", "quarterly", "yearly"], "Pick how often it repeats.") }),
-  goals: z.object({ name, target: positive, deadline: date, account: z.string().min(1, "Pick an account."), savedBefore: amountOrBlank }),
+  goals: z.object({ name, target: positive, deadline: date, savedBefore: amountOrBlank }),
   debts: z.object({ direction: z.enum(["owe", "owed"], "Pick who owes whom."), name, total: positive, deadline: date, paidBefore: amountOrBlank }),
 };
 
@@ -72,10 +72,6 @@ export async function finishSetup(input: { currency: string; rows: SetupRows }):
       seen.add(row.name);
     }
   }
-  for (const { index, row } of rows.goals) {
-    if (!rows.accounts.some((account) => String(account.index) === row.account)) errors[`goals.${index}.account`] = "Pick an account.";
-    else if (row.savedBefore > row.target) errors[`goals.${index}.savedBefore`] = "Can't be more than the target.";
-  }
   for (const { index, row } of rows.debts) {
     if (row.paidBefore > row.total) errors[`debts.${index}.paidBefore`] = "Can't be more than the total.";
   }
@@ -85,11 +81,7 @@ export async function finishSetup(input: { currency: string; rows: SetupRows }):
     const [existing] = await tx.select({ done: settings.setupDone }).from(settings).where(eq(settings.userId, userId));
     if (existing?.done) return; // a second submit after setup finished
 
-    const accountIds = new Map<string, string>();
-    const created = await tx.insert(accounts)
-      .values(rows.accounts.map(({ row }) => ({ userId, name: row.name, startingBalance: row.balance })))
-      .returning({ id: accounts.id });
-    rows.accounts.forEach(({ index }, i) => accountIds.set(String(index), created[i].id));
+    await tx.insert(accounts).values(rows.accounts.map(({ row }) => ({ userId, name: row.name, startingBalance: row.balance })));
 
     const spending = rows.spending.length
       ? await tx.insert(categories).values(rows.spending.map(({ row }) => ({ userId, name: row.name, kind: "spending" as const }))).returning({ id: categories.id })
@@ -105,7 +97,7 @@ export async function finishSetup(input: { currency: string; rows: SetupRows }):
     }
     if (rows.goals.length) {
       await tx.insert(goals).values(rows.goals.map(({ row }) => ({
-        userId, name: row.name, target: row.target, deadline: row.deadline, accountId: accountIds.get(row.account)!, savedBefore: row.savedBefore,
+        userId, name: row.name, target: row.target, deadline: row.deadline, setAsideBefore: row.savedBefore,
       })));
     }
     if (rows.debts.length) {

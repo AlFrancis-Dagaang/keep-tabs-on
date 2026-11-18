@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { type Currency, currencies, currencySymbol, directionLabels, repeatLabels } from "@/lib/money";
 import { finishSetup, type SetupRows } from "./actions";
 
-type Kind = "text" | "money" | "date" | "repeat" | "account" | "direction";
+type Kind = "text" | "money" | "date" | "repeat" | "direction";
 type Section = {
   key: keyof SetupRows;
   title: string;
@@ -36,10 +36,10 @@ const sections: Section[] = [
       { name: "nextDueDate", label: "Next due", kind: "date" }, { name: "repeat", label: "Repeats", kind: "repeat" },
     ],
     start: [] },
-  { key: "goals", title: "Goals (optional)", hint: "Something you're saving for. Pick the account the money sits in.", add: "Add goal",
+  { key: "goals", title: "Goals (optional)", hint: "Something you're saving for. Fill it later with transfers in Activity.", add: "Add goal",
     fields: [
       { name: "name", label: "Name", kind: "text", placeholder: "Emergency fund" }, { name: "target", label: "Target", kind: "money" },
-      { name: "deadline", label: "Deadline", kind: "date" }, { name: "account", label: "Account", kind: "account" },
+      { name: "deadline", label: "Deadline", kind: "date" },
       { name: "savedBefore", label: "Already saved (optional)", kind: "money" },
     ],
     start: [] },
@@ -63,13 +63,8 @@ export function SetupForm({ currency: initial }: { currency: Currency }) {
   const change = (key: keyof SetupRows, index: number, field: string, value: string) =>
     setRows((current) => ({ ...current, [key]: current[key].map((row, i) => (i === index ? { ...row, [field]: value } : row)) }));
 
-  // Goals pick an account by its row number, so removing an account row clears those picks.
   const remove = (key: keyof SetupRows, index: number) =>
-    setRows((current) => ({
-      ...current,
-      [key]: current[key].filter((_, i) => i !== index),
-      ...(key === "accounts" && { goals: current.goals.map((goal) => ({ ...goal, account: "" })) }),
-    }));
+    setRows((current) => ({ ...current, [key]: current[key].filter((_, i) => i !== index) }));
 
   function submit(event: React.FormEvent) {
     event.preventDefault();
@@ -112,11 +107,6 @@ export function SetupForm({ currency: initial }: { currency: Currency }) {
                     ) : field.kind === "repeat" ? (
                       <select id={id} value={value} onChange={(event) => change(section.key, index, field.name, event.target.value)} className={selectClass}>
                         {Object.entries(repeatLabels).map(([code, label]) => <option key={code} value={code}>{label}</option>)}
-                      </select>
-                    ) : field.kind === "account" ? (
-                      <select id={id} value={value} onChange={(event) => change(section.key, index, field.name, event.target.value)} aria-invalid={!!error} className={selectClass}>
-                        <option value="">Pick an account</option>
-                        {rows.accounts.map((account, i) => account.name.trim() && <option key={i} value={i}>{account.name}</option>)}
                       </select>
                     ) : (
                       <Input

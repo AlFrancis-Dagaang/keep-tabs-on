@@ -339,8 +339,8 @@ describe("balancesAfterEdit", () => {
 });
 
 describe("isLinked", () => {
-  const none = { billId: null, debtId: null, goalId: null, installmentId: null };
-  it("is true when a bill, debt, goal or installment made the entry", () => {
+  const none = { billId: null, debtId: null, installmentId: null };
+  it("is true when a bill, debt or installment made the entry", () => {
     expect(isLinked(none)).toBe(false);
     for (const key of Object.keys(none)) expect(isLinked({ ...none, [key]: "x" })).toBe(true);
   });
@@ -360,7 +360,7 @@ describe("setAsideOf", () => {
   });
 
   it("does not make a transfer linked", () => {
-    expect(isLinked({ billId: null, debtId: null, goalId: null, installmentId: null, ...{ setAsideBillId: "a" } })).toBe(false);
+    expect(isLinked({ billId: null, debtId: null, installmentId: null, ...{ setAsideBillId: "a" } })).toBe(false);
   });
 });
 
