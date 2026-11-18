@@ -5,7 +5,7 @@ Calm, warm and readable, like the Claude app. Notion-style layout: left sidebar 
 
 ## Layout
 - Sidebar: Overview, Accounts, Activity, Recurring bills, Installments, Goals, Debts, Budget, Set aside, Settings, light/dark toggle.
-- Set aside page: one flat table (Kind, Item, Set aside, Out of, Status), biggest first, items with nothing set aside left out; the Total row sums Set aside only. Status is a clay pill ("Ready to pay"; "Full" for goals and for debts owed to you) once Set aside reaches Out of, else "₱X to go". Cards below md.
+- Set aside page: one flat table (Kind, Item, Set aside, Out of, Status), biggest first, items with nothing set aside left out; the Total row sums Set aside only. Status is a clay pill ("Ready to pay"; "Full" for goals and for debts owed to you) once Set aside reaches Out of, else "₱X to go". Cards below md. Done goals are left out.
 - Mobile (below 768px): the sidebar becomes a top bar with a hamburger that opens a drawer (page links with icons, theme toggle, Sign out); it closes on navigate. No bottom tab bar.
 - Mobile tables: each row is a card (title, labelled fields, amount top right, actions); Overview mini-tables are compact lists. From 768px up they are tables.
 - Between 768px and their width, wide tables scroll sideways inside their panel; the page never scrolls sideways.
@@ -54,7 +54,7 @@ Theme follows the system light/dark setting, with a manual toggle.
 - Month picker: a button with the selected month ("November 2026") opens a year header with arrows, a 4×3 month grid, "This month", "Month to date" and "All dates". Months before the earliest entry or after the current one are dimmed; the current month is underlined. Single days and ranges sit under "Custom range".
 
 ## Overview page
-Reference mock: the owner's image (T-19). Four stat cards: Net worth ("Across N accounts"), Income this month and Expenses this month (each with an arrow and % against last month, hidden when last month has no data), Bills due in 7 days (₱ total). Only Expenses has a pixel bar: this month's spending as a share of income (full and clay when over, hidden when income is 0). The cards are equal height. Below: Accounts (icon, name, balance), Upcoming bills (date, amount, "Due soon" within 3 days or "Upcoming" pill), Goals (name, pixel bar, %), Debts (name, amount, pixel bar) and Recent activity (date with "Today" tag, description, amount), each with a "View all" link. Budget left no longer shows here; it lives on Budget.
+Reference mock: the owner's image (T-19). Four stat cards: Net worth ("Across N accounts"), Income this month and Expenses this month (each with an arrow and % against last month, hidden when last month has no data), Bills due in 7 days (₱ total). Only Expenses has a pixel bar: this month's spending as a share of income (full and clay when over, hidden when income is 0). The cards are equal height. Below: Accounts (icon, name, balance), Upcoming bills (date, amount, "Due soon" within 3 days or "Upcoming" pill), Goals (open ones only: name, pixel bar, %), Debts (name, amount, pixel bar) and Recent activity (date with "Today" tag, description, amount), each with a "View all" link. Budget left no longer shows here; it lives on Budget.
 - Desktop: four cards in a row, then a grid whose panels stretch to fill their row, so no column ends short: Accounts, Upcoming bills, Goals; then Debts and the wider Recent activity.
 - Mobile: cards and lists stack in the same order; lists are compact, no labels.
 

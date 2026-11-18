@@ -54,6 +54,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-21](tasks/T-21.md) — Set aside before tracking: an optional starting amount on bills, debts, installments and goals that counts in the Set aside bar
 - [T-22](tasks/T-22.md) — Set aside summary page: one flat table of everything set aside, biggest first, Total of Set aside only
 - [T-23](tasks/T-23.md) — Goals are a jar and installment payments pick their account: Add money removed, one goal figure from For transfers, From account chosen when paying (planned)
+- [T-24](tasks/T-24.md) — Mark goals done: done_at column, Mark done and Reopen, done goals drop out of Set aside and Overview (planned)
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests
