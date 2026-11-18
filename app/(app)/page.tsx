@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, gt, sql, sum } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, sql, sum } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
@@ -49,7 +49,7 @@ async function Overview() {
         saved: goalSetAside,
       })
       .from(goals)
-      .where(eq(goals.userId, userId))
+      .where(and(eq(goals.userId, userId), isNull(goals.doneAt)))
       .orderBy(asc(goals.deadline), asc(goals.createdAt))
       .limit(5),
     debts: await tx

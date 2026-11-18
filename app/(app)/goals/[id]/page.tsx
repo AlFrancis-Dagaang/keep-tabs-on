@@ -12,7 +12,7 @@ import { getUserId } from "@/lib/auth/server";
 import { goalSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 
-import { GoalProgress } from "../goal-form";
+import { DonePill, GoalProgress, MarkDone } from "../goal-form";
 import { formatDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
@@ -33,7 +33,7 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
   const userId = await getUserId();
   const { goal, transfers } = await withUser(userId, async (tx) => ({
     goal: (await tx
-      .select({ id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, saved: goalSetAside })
+      .select({ id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline, doneAt: goals.doneAt, saved: goalSetAside })
       .from(goals)
       .where(and(eq(goals.id, id.data), eq(goals.userId, userId))))[0],
     transfers: await tx
@@ -49,7 +49,9 @@ async function GoalDetail({ params }: { params: Promise<{ id: string }> }) {
   return (
     <>
       <Link href="/goals" className="text-sm text-muted-foreground underline-offset-4 hover:underline">← Goals</Link>
-      <PageHeader title={goal.name} description={`Deadline ${formatDate(goal.deadline)}`} />
+      <PageHeader title={goal.name} icon={goal.doneAt ? <DonePill /> : undefined} description={`Deadline ${formatDate(goal.deadline)}`}>
+        <MarkDone id={goal.id} done={!!goal.doneAt} />
+      </PageHeader>
       <div className="mb-6 rounded-xl border bg-surface p-4">
         <GoalProgress name={goal.name} saved={goal.saved} target={goal.target} />
         <div className="mt-2 text-sm tabular-nums">{money(goal.saved)} of {money(goal.target)} saved</div>

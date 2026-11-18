@@ -287,6 +287,42 @@ describe.skipIf(!process.env.DATABASE_URL)("set aside", () => {
       return data;
     };
 
+    it("marking a goal done hides it from Set aside and changes nothing else; reopening brings it back", async () => {
+      const userId = randomUUID();
+      const s = await setup(userId);
+      const { setGoalDone } = await import("../app/(app)/goals/actions");
+      try {
+        currentUser = userId;
+        const [trip, other] = await withUser(userId, (tx) => tx.insert(goals).values([
+          { userId, name: "Trip", target: 100_000, deadline: "2027-01-01", setAsideBefore: 20_000 },
+          { userId, name: "Phone", target: 50_000, deadline: "2027-02-01" },
+        ]).returning());
+        await withUser(userId, (tx) => tx.insert(transactions).values([
+          transfer(userId, s.from.id, s.holding.id, { setAsideGoalId: trip.id, amount: 80_000 }),
+          transfer(userId, s.from.id, s.holding.id, { setAsideGoalId: other.id, amount: 10_000 }),
+        ]));
+        const snapshot = () => withUser(userId, async (tx) => ({
+          figures: await tx.select({ id: goals.id, saved: goalSetAside }).from(goals).orderBy(goals.name),
+          transfers: await tx.select().from(transactions).orderBy(transactions.id),
+          accounts: await tx.select().from(accounts).orderBy(accounts.id),
+          sets: await loadSetAsideRows(tx, userId),
+        }));
+        const before = await snapshot();
+        expect(before.sets.total).toBe(110_000);
+
+        await setGoalDone(form({ id: trip.id, done: "1" }));
+        const done = await snapshot();
+        expect(done.sets.rows.map((row) => row.name)).toEqual(["Phone"]);
+        expect(done.sets.total).toBe(10_000);
+        expect({ ...done, sets: 0 }).toEqual({ ...before, sets: 0 }); // figures, transfers and accounts identical
+
+        await setGoalDone(form({ id: trip.id, done: "0" }));
+        expect(await snapshot()).toEqual(before);
+      } finally {
+        await cleanup(userId);
+      }
+    });
+
     it("saves a goal with no account, and its figure can pass the target", async () => {
       const userId = randomUUID();
       const s = await setup(userId);

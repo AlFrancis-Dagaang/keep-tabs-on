@@ -3,14 +3,14 @@
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
 import { PixelBar } from "@/components/pixel-bar";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { Check, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { Goal } from "@/db/schema";
 import { progressBlocks, toInput } from "@/lib/money";
-import { deleteGoal, type FormState, saveGoal } from "./actions";
+import { deleteGoal, type FormState, saveGoal, setGoalDone } from "./actions";
 
 type EditableGoal = Pick<Goal, "id" | "name" | "target" | "deadline" | "setAsideBefore" | "note">;
 
@@ -70,6 +70,20 @@ function GoalFields({ today, goal, onSaved }: { today: string; goal?: EditableGo
       <DialogFooter>
         <Button type="submit" disabled={pending}>{goal ? "Save goal" : "Create goal"}</Button>
       </DialogFooter>
+    </form>
+  );
+}
+
+export function DonePill() {
+  return <span className="rounded-full bg-primary px-2.5 py-0.5 text-xs font-semibold whitespace-nowrap text-primary-foreground">Done</span>;
+}
+
+export function MarkDone({ id, done }: { id: string; done: boolean }) {
+  return (
+    <form action={setGoalDone} className="contents">
+      <input type="hidden" name="id" value={id} />
+      <input type="hidden" name="done" value={done ? "0" : "1"} />
+      <Button type="submit" variant="ghost" size="sm">{done ? <RotateCcw /> : <Check />}{done ? "Reopen" : "Mark done"}</Button>
     </form>
   );
 }

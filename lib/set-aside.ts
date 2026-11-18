@@ -1,4 +1,4 @@
-import { asc, eq, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, sql } from "drizzle-orm";
 import { bills, debts, goals, installments } from "@/db/schema";
 import type { Tx } from "@/lib/db";
 
@@ -49,7 +49,7 @@ export async function loadSetAsideRows(tx: Tx, userId: string) {
     tx.select({ id: bills.id, name: bills.name, setAside: billSetAside, outOf: bills.amount }).from(bills).where(eq(bills.userId, userId)),
     tx.select({ id: debts.id, name: debts.name, setAside: debtSetAside, outOf: debts.total, direction: debts.direction }).from(debts).where(eq(debts.userId, userId)),
     tx.select({ id: installments.id, name: installments.name, setAside: installmentSetAside, outOf: installments.monthlyAmount }).from(installments).where(eq(installments.userId, userId)),
-    tx.select({ id: goals.id, name: goals.name, setAside: goalSetAside, outOf: goals.target }).from(goals).where(eq(goals.userId, userId)),
+    tx.select({ id: goals.id, name: goals.name, setAside: goalSetAside, outOf: goals.target }).from(goals).where(and(eq(goals.userId, userId), isNull(goals.doneAt))),
   ]);
   // full: the pill reads "Full" instead of "Ready to pay", for a goal and for a debt owed to you (nothing for you to pay).
   const tag = <T extends { setAside: number; outOf: number; direction?: string }>(kind: SetAsideRow["kind"], list: T[]) =>

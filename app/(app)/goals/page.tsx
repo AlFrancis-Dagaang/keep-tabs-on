@@ -1,4 +1,4 @@
-import { asc, eq } from "drizzle-orm";
+import { asc, eq, sql } from "drizzle-orm";
 import Link from "next/link";
 import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
@@ -10,7 +10,7 @@ import { getUserId } from "@/lib/auth/server";
 import { goalSetAside } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
 
-import { DeleteGoal, GoalForm, GoalProgress } from "./goal-form";
+import { DeleteGoal, DonePill, GoalForm, GoalProgress, MarkDone } from "./goal-form";
 import { formatDate } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
@@ -28,11 +28,11 @@ async function Goals() {
   const rows = await withUser(userId, (tx) => tx
     .select({
       id: goals.id, name: goals.name, target: goals.target, deadline: goals.deadline,
-      setAsideBefore: goals.setAsideBefore, note: goals.note, saved: goalSetAside,
+      setAsideBefore: goals.setAsideBefore, note: goals.note, doneAt: goals.doneAt, saved: goalSetAside,
     })
     .from(goals)
     .where(eq(goals.userId, userId))
-    .orderBy(asc(goals.deadline), asc(goals.createdAt)));
+    .orderBy(sql`${goals.doneAt} is not null`, asc(goals.deadline), asc(goals.createdAt)));
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
 
   return (
@@ -59,6 +59,7 @@ async function Goals() {
                 <TableRow key={row.id} className="relative">
                   <TableCell className="pl-4">
                     <Link href={`/goals/${row.id}`} className="font-medium underline-offset-4 after:absolute after:inset-0 hover:underline">{row.name}</Link>
+                    {row.doneAt && <span className="ml-2 align-middle"><DonePill /></span>}
                     <div className="text-sm text-muted-foreground tabular-nums">{money(row.target)}</div>
                     <div className="text-sm text-muted-foreground">{row.note}</div>
                   </TableCell>
@@ -70,7 +71,7 @@ async function Goals() {
                     </div>
                   </TableCell>
                   <TableCell data-card="actions" className="relative z-10 pr-4 text-right whitespace-nowrap">
-                    <RowActions items={[{ label: "Edit", node: <GoalForm today={today} goal={row} /> }, { label: "Remove", node: <DeleteGoal id={row.id} name={row.name} /> }]} />
+                    <RowActions items={[{ label: "Done", node: <MarkDone id={row.id} done={!!row.doneAt} /> }, { label: "Edit", node: <GoalForm today={today} goal={row} /> }, { label: "Remove", node: <DeleteGoal id={row.id} name={row.name} /> }]} />
                   </TableCell>
                 </TableRow>
               ))}

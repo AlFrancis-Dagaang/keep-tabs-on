@@ -63,6 +63,15 @@ export async function saveGoal(_: FormState, formData: FormData): Promise<FormSt
   return { ok: true };
 }
 
+/** Marking done only hides the goal from Set aside and Overview; its figure and transfers are untouched. */
+export async function setGoalDone(formData: FormData) {
+  const userId = await getUserId();
+  const id = z.uuid().parse(formData.get("id"));
+  const done = formData.get("done") === "1";
+  await withUser(userId, (tx) => tx.update(goals).set({ doneAt: done ? new Date() : null }).where(and(eq(goals.id, id), eq(goals.userId, userId))));
+  refresh();
+}
+
 /** Its transfers stay in Activity as plain transfers. */
 export async function deleteGoal(formData: FormData) {
   const userId = await getUserId();

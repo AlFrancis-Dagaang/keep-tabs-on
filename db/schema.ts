@@ -137,6 +137,7 @@ export const goals = pgTable(
     savedBefore: bigint("saved_before", { mode: "number" }).notNull().default(0), // unused: folded into set_aside_before
     setAsideBefore: bigint("set_aside_before", { mode: "number" }).notNull().default(0), // centavos set aside before tracking started
     note: text(),
+    doneAt: timestamp("done_at", { withTimezone: true }), // set by Mark done, cleared by Reopen; only hides the goal from Set aside and Overview
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [
