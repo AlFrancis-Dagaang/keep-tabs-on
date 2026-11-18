@@ -59,6 +59,6 @@ Reference mock: the owner's image (T-19). Four stat cards: Net worth ("Across N 
 - Mobile: cards and lists stack in the same order; lists are compact, no labels.
 
 ## Copy
-- Plain, sentence case, active verbs: "Record payment", "Add money", "Create goal".
+- Plain, sentence case, active verbs: "Record payment", "Add entry", "Create goal".
 - Empty states tell the user what to do next.
 - Errors say what to fix.

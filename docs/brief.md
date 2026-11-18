@@ -9,7 +9,7 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 ## Core loop
 1. Log money as it moves: income, expense, or a transfer between my own accounts.
 2. Pay a recurring bill or debt from an account and watch its progress bar fill.
-3. Add money to a goal by transferring between accounts.
+3. Fill a goal by making a transfer and picking the goal under For.
 4. Check the overview: net worth, income and expenses this month, bills due soon, account balances, goals and debts.
 
 ## v1 scope
@@ -18,9 +18,9 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 - **Activity:** income, expense and transfer entries, each with a category, a payee, an optional note and an optional link to a bill, debt, goal or installment. A transfer can go to one of my accounts or to someone else (a free-text name): the money leaves the account and counts as neither expense nor budget. Filter by type and by date (month, day or range). Edit entries (not ones linked to a bill, debt, goal or installment) and remove them.
 - **Recurring bills:** amount, next due date, and a repeat interval (weekly, every 2 weeks, monthly, every 3 months, yearly). Partial payments are allowed. Paying in full rolls the next due date forward; the due date can always be edited. It has a detail page with its payment history and a date filter, like debts.
 - **Debts:** money you owe or money owed to you, in one list with a type label. Total, deadline, amount paid (or received) before tracking, linked payments or receipts, progress and history. Receiving a repayment adds it to an account.
-- **Installments:** a fixed-term purchase paid monthly: monthly amount, number of months, months already paid, due day and the account it's paid from. Recording a payment logs an expense, shows "3 of 12 paid" and rolls the due date; it finishes after the last payment. It has a detail page with its payment history and a date filter, like debts.
+- **Installments:** a fixed-term purchase paid monthly: monthly amount, number of months, months already paid and due day. Recording a payment picks the account it comes from, logs an expense, shows "3 of 12 paid" and rolls the due date; it finishes after the last payment. It has a detail page with its payment history and a date filter, like debts.
 - **Notes:** bills, debts, goals, installments and entries can each carry an optional note (up to 200 characters). Payments made from a pay dialog carry an optional note too, shown in the payment history.
-- **Goals:** target, deadline, the account the money is saved in, and the amount already saved. Progress comes from linked transfers; history shows from and to.
+- **Goals:** a jar with a target, a deadline and an amount already saved. One figure: already saved plus the transfers whose For is the goal; it can pass the target. The goal page lists those transfers, read-only.
 - **Editing payments:** on a bill, installment, debt or goal page, a payment can be edited (date, account, note, and the amount where it does not close a bill cycle) or removed. Removing the payment that closed a bill cycle or an installment month rolls the due date back. A change that would take an account below zero is refused.
 - **Budget:** monthly limits on spending categories only (bill and debt payments don't count). Shows the current month with a total. Past months are kept with budget, spent and saved per month and per category, and each month's budget amounts are saved as they were.
 - **Settings:** currency, manage categories.

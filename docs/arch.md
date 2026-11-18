@@ -29,11 +29,11 @@ All in Neon Postgres. Every table has user_id with RLS policies (Drizzle crudPol
 - categories: name, kind (spending | income).
 - transactions: type (income | expense | transfer), amount, date, account_id, to_account_id (transfers),
   category_id, payee, note, optional bill_id | debt_id | goal_id | installment_id, rolled_cycle_start (on the bill payment that closed a cycle: the cycle_start it replaced, so removing it reopens the cycle). A transfer goes to to_account_id or, for someone outside the accounts, to_name (never both); the latter only lowers the paying account.
-- installments: name, monthly_amount, months, paid_before (months), due_day, next_due_date, account_id, note. Paid = paid_before + linked expenses; each payment is an expense with installment_id.
+- installments: name, monthly_amount, months, paid_before (months), due_day, next_due_date, note (account_id is unused: each payment picks its From account, and paid_to is a label). Paid = paid_before + linked expenses; each payment is an expense with installment_id.
 - bills: name, amount, next_due_date, repeat (weekly | biweekly | monthly | quarterly | yearly).
 - note (optional text, max 200) also sits on bills, debts and goals.
 - debts: name, total, deadline, paid_before, direction (owe | owed). A repayment received on an owed debt is an income transaction with debt_id; the direction can't change once the debt has transactions.
-- goals: name, target, deadline, account_id, saved_before.
+- goals: name, target, deadline, set_aside_before ("Already saved"). A goal is a jar: its one figure is `goalSetAside` (set_aside_before + transfers whose For is the goal). account_id, saved_before and transactions.goal_id are unused (T-23 folded them into set_aside_before and set_aside_goal_id).
 - budget_months: month (first of the month), category_id, budget (null = limit removed). A row is written when a limit is set or changed; a month’s limit is the latest row at or before it.
 Balances, progress and budget spent are computed from transactions, never stored.
 

@@ -173,3 +173,13 @@ Status: done
 - [x] Phone: below 768px each row becomes a card (kind and "out of" under the name, amount top right) with the Total below, using `ui/table.tsx`; no sideways scroll at 390px
 - [x] Status: each row ends in a Status pill. When Set aside is at or over Out of it reads "Ready to pay" (bills, installments, debts) or "Full" (goals and debts owed to you); before that it shows the amount still to go. The Total row has no status. A DB test covers the boundary (just under, equal, over)
 - [x] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md`'s sidebar list is updated; looked at signed in on dev with the real items, at 390px and desktop
+
+## T-23: Goals are a jar, and installment payments pick their account
+Status: done
+- [x] Goals: Add money is gone. A goal fills only through a transfer whose For is that goal (Activity). The goal bar and its figure are the one Set aside figure, shown the same on Goals, the goal page, Overview and the Set aside page; there is no separate Saved bar
+- [x] The goal form loses "Saved in" and "Already saved"; "Set aside before tracking" is renamed "Already saved" for goals. A goal can exceed its target (it shows the real number); the target check against saved goes away
+- [x] Data keeps its meaning (one additive migration, applied to dev only after the host check): each goal's old "Already saved" is added into its before-tracking amount, old Add money transfers become For-linked transfers, `goals.account_id` becomes optional and is cleared. Every goal's figure after equals Saved + Set aside as before
+- [x] The goal page lists the transfers linked to it (date, from, to, note, amount), read-only; edit and remove happen in Activity
+- [x] Accounts no longer block deleting an account because a goal or an installment sits in it; setup still creates goals without an account
+- [x] Installments: the form has no Account field and an installment can be saved without one. "Record payment" has a required From account (like Recurring bills) and an optional To: free text with the user's account names as suggestions, saved as `paid_to`, no money moves. The payment is an expense for the monthly amount out of the From account, checked against its balance (never negative); due date, months paid and Set aside behave as today
+- [x] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass; docs updated; looked at signed in on dev at 390px and desktop
