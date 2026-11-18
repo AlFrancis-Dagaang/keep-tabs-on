@@ -185,8 +185,21 @@ Status: done
 - [x] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass; docs updated; looked at signed in on dev at 390px and desktop
 
 ## T-24: Mark goals done
+Status: done
+- [x] Mark done: a nullable `done_at` column on goals (one additive migration, applied to dev only after the DB host check). "Mark done" and "Reopen" are in the row menu on Goals and on the goal page; Reopen clears it. A done goal shows a "Done" pill, and done goals list below open ones (deadline order inside each group). Marking done is manual only: reaching or passing the target never does it
+- [x] Drops out: a done goal is left out of the Set aside page, including its Total, and out of Overview's Goals list. Its own page still shows its figure and its linked transfers. Reopening brings it back to both
+- [x] No side effects: marking done or reopening changes no account balance, no transfer, no other goal and the goal's own figure. A DB-backed test on dev proves that, and that the Set aside rows and Total skip a done goal and count it again once reopened
+- [x] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass; `docs/brief.md` and `docs/design.md` mention done goals where they describe goals; looked at signed in on dev at 390px and desktop
+
+## T-25: Bring production up to date with dev
 Status: todo
-- [ ] Mark done: a nullable `done_at` column on goals (one additive migration, applied to dev only after the DB host check). "Mark done" and "Reopen" are in the row menu on Goals and on the goal page; Reopen clears it. A done goal shows a "Done" pill, and done goals list below open ones (deadline order inside each group). Marking done is manual only: reaching or passing the target never does it
-- [ ] Drops out: a done goal is left out of the Set aside page, including its Total, and out of Overview's Goals list. Its own page still shows its figure and its linked transfers. Reopening brings it back to both
-- [ ] No side effects: marking done or reopening changes no account balance, no transfer, no other goal and the goal's own figure. A DB-backed test on dev proves that, and that the Set aside rows and Total skip a done goal and count it again once reopened
-- [ ] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass; `docs/brief.md` and `docs/design.md` mention done goals where they describe goals; looked at signed in on dev at 390px and desktop
+- [ ] Before touching production, read which migrations it has applied (0011 to 0016) and whether the Vercel build runs `db:migrate` (the T-18 and T-20 outcomes disagree); report both and ask before running anything
+- [ ] Production has every migration through 0016 and the app builds and loads signed in on the production URL
+- [ ] Every real goal's figure (Therapy: Saved, Set aside, Already saved, Set aside before tracking) is read before and after, and matches what you expect
+- [ ] Delete the `pre-set-aside-link` restore branch and the Neon CLI credentials file; add the decisions entry for the T-20 production exception
+
+## T-26: Remove dead goal code and test linked transfers
+Status: todo
+- [ ] The dead `goalId` branches in `activity/page.tsx` and `accounts/[id]/page.tsx` are gone, with no change to what either page shows
+- [ ] A DB-backed test on dev proves that editing and removing a transfer linked to a set-aside item keeps the item's figure right
+- [ ] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass
