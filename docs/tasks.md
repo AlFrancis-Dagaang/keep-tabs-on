@@ -191,12 +191,15 @@ Status: done
 - [x] No side effects: marking done or reopening changes no account balance, no transfer, no other goal and the goal's own figure. A DB-backed test on dev proves that, and that the Set aside rows and Total skip a done goal and count it again once reopened
 - [x] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass; `docs/brief.md` and `docs/design.md` mention done goals where they describe goals; looked at signed in on dev at 390px and desktop
 
-## T-25: Bring production up to date with dev
+## T-25: Phone bottom bar and Activity opens on today
 Status: todo
-- [ ] Before touching production, read which migrations it has applied (0011 to 0016) and whether the Vercel build runs `db:migrate` (the T-18 and T-20 outcomes disagree); report both and ask before running anything
-- [ ] Production has every migration through 0016 and the app builds and loads signed in on the production URL
-- [ ] Every real goal's figure (Therapy: Saved, Set aside, Already saved, Set aside before tracking) is read before and after, and matches what you expect
-- [ ] Delete the `pre-set-aside-link` restore branch and the Neon CLI credentials file; add the decisions entry for the T-20 production exception
+- [ ] Phone nav: below 768px the top bar, burger and drawer are gone. A bottom tab bar replaces them, matching `prototypes/mobile-bottom-bar.html` (approved): Overview, Accounts, Activity, Bills and More, using the same icons as the sidebar. The current page's tab is lit (Bills stays lit on `/bills/[id]`, and so on for the other tabs)
+- [ ] More: opens a sheet with Installments, Goals, Debts, Budget, Set aside and Settings. Choosing a page closes it. More is lit on the pages it holds. Sign out and the theme toggle live on the Settings page below 768px (the sidebar keeps them from 768px up, which is unchanged)
+- [ ] Phone fit: the bar stays at the bottom, page content is never hidden behind it, each tap target is at least 44px, and there is no sideways scroll at 390px
+- [ ] Activity default: opening `/activity` with no `from`/`to` shows only today's entries (Asia/Manila date). The picker button reads "Today" then; an empty day says so
+- [ ] Picker: the month grid, Today, This month and All dates. "Month to date" and "Custom range…" are gone, with their form and state. "All dates" still reaches everything, and a link with `from`/`to` in the URL (a month, or an older bookmark) still filters correctly
+- [ ] Scope: the account, bill and installment pages differ only in that their picker loses Month to date and Custom range; Overview's Income and Expenses cards open Activity on this month and Recent activity's View all on all dates; no balance, query or schema change beyond the Activity default
+- [ ] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md` describes the bottom bar and the new Activity default; looked at signed in on dev at 390px and desktop
 
 ## T-26: Remove dead goal code and test linked transfers
 Status: todo

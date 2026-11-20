@@ -1,0 +1,137 @@
+<!doctype html>
+<!-- Covers: T-25. Throwaway mock of the phone bottom bar, the More sheet and the Activity picker (opens on Today). Sign out and theme now live in Settings, not More. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T-25 prototype: mobile bottom bar</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Source+Serif+4:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f3ec;--surface:#fffdf8;--fg:#1f1c17;--muted:#7a746a;--line:#e3ddd0;--accent:#ece6d8;--primary:#2f4a3a;--on:#fff}
+@media (prefers-color-scheme:dark){:root{--bg:#161512;--surface:#1e1c18;--fg:#efe9dc;--muted:#9a9487;--line:#33302a;--accent:#2a2721;--primary:#9cc3a8;--on:#10200f}}
+*{box-sizing:border-box}
+body{margin:0;background:#cfc9bb;font-family:"Instrument Sans",system-ui,sans-serif;color:var(--fg);display:flex;gap:32px;justify-content:center;align-items:flex-start;padding:24px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;align-items:center;gap:8px}
+.col h2{font:500 14px "Instrument Sans";margin:0;color:#444}
+.phone{width:375px;height:760px;background:var(--bg);border-radius:36px;border:8px solid #111;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.screen{flex:1;overflow-y:auto;padding:20px 16px 16px}
+h1{font:500 26px "Source Serif 4",serif;margin:0 0 2px}
+.sub{color:var(--muted);font-size:14px;margin:0 0 14px}
+.row{display:flex;gap:8px;margin-bottom:12px}
+.btn{flex:1;height:44px;border:1px solid var(--line);background:var(--surface);border-radius:10px;font:inherit;color:var(--fg);display:flex;align-items:center;justify-content:space-between;padding:0 12px;cursor:pointer}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;margin-bottom:8px;display:flex;justify-content:space-between;font-size:14px}
+.card small{display:block;color:var(--muted)}
+.neg{color:#b3402f}.pos{color:#2d7a4a}
+/* bottom bar */
+nav.bar{height:64px;border-top:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(5,1fr);padding-bottom:6px}
+nav.bar button{background:none;border:0;font:inherit;font-size:11px;color:var(--muted);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer}
+nav.bar button svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+nav.bar button[aria-current=page]{color:var(--fg);font-weight:600}
+nav.bar button[aria-current=page] .pill{background:var(--accent)}
+.pill{padding:3px 16px;border-radius:999px;display:flex}
+/* more sheet */
+.scrim{position:absolute;inset:0;background:rgba(0,0,0,.4);opacity:0;pointer-events:none;transition:.2s}
+.sheet{position:absolute;left:0;right:0;bottom:64px;background:var(--surface);border-radius:20px 20px 0 0;padding:8px 12px 12px;transform:translateY(110%);transition:.25s;border-top:1px solid var(--line)}
+.open .scrim{opacity:1;pointer-events:auto}.open .sheet{transform:none}
+.grip{width:36px;height:4px;border-radius:2px;background:var(--line);margin:4px auto 10px}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid button{background:var(--accent);border:0;border-radius:12px;height:76px;font:inherit;font-size:13px;color:var(--fg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;cursor:pointer}
+.grid svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.foot{display:flex;gap:8px;margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+.foot button{flex:1;height:44px;border:1px solid var(--line);background:none;border-radius:10px;font:inherit;color:var(--fg);cursor:pointer}
+/* picker */
+.pop{position:absolute;left:16px;right:16px;top:150px;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);display:none}
+.pop.show{display:block}
+.months{display:grid;grid-template-columns:repeat(4,1fr);gap:4px;margin:8px 0}
+.months span{padding:9px 0;text-align:center;border-radius:8px;font-size:14px}
+.months .sel{background:var(--primary);color:var(--on)}.months .dis{color:var(--muted);opacity:.4}
+.opt{padding:10px 8px;border-radius:8px;font-size:14px;display:block;cursor:pointer}
+.opt:hover{background:var(--accent)}
+.yr{display:flex;justify-content:space-between;font-weight:500}
+.note{max-width:375px;font-size:13px;color:#333;line-height:1.5}
+.note b{display:block;margin-bottom:4px}
+</style>
+</head>
+<body>
+
+<!-- SVG sprite -->
+<svg width="0" height="0" style="position:absolute">
+<symbol id="home" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></symbol>
+<symbol id="bank" viewBox="0 0 24 24"><path d="M3 21h18M5 21V10M19 21V10M9 21V10M15 21V10M2 10l10-6 10 6"/></symbol>
+<symbol id="swap" viewBox="0 0 24 24"><path d="M8 3L4 7l4 4M4 7h16M16 21l4-4-4-4M20 17H4"/></symbol>
+<symbol id="cal" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M16 3v4M8 3v4M3 11h18"/></symbol>
+<symbol id="more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.2"/><circle cx="12" cy="12" r="1.2"/><circle cx="19" cy="12" r="1.2"/></symbol>
+<symbol id="inst" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M8 2v4M16 2v4M3 10h18M8 15h3"/></symbol>
+<symbol id="goal" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+<symbol id="debt" viewBox="0 0 24 24"><path d="M11 17h2a2 2 0 000-4h-3a2 2 0 010-4h3M12 6v2M12 18v2M3 12h2M19 12h2"/></symbol>
+<symbol id="pig" viewBox="0 0 24 24"><path d="M5 11a7 6 0 0114 0v3a3 3 0 01-3 3h-1v2h-3v-2H9l-2 2v-3a5 5 0 01-2-5zM15 10h.01"/></symbol>
+<symbol id="vault" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="12" cy="12" r="3"/><path d="M12 9v6M9 12h6"/></symbol>
+<symbol id="gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M5 5l2 2M17 17l2 2M19 5l-2 2M7 17l-2 2"/></symbol>
+</svg>
+
+<!-- Phone A: Activity, today default -->
+<div class="col">
+  <h2>Activity (opens on Today)</h2>
+  <div class="phone" id="a">
+    <div class="screen">
+      <h1>Activity</h1>
+      <p class="sub">Income, expenses and transfers.</p>
+      <div class="row">
+        <button class="btn">All types ⌄</button>
+        <button class="btn" id="pickBtn">📅 Today ⌄</button>
+      </div>
+      <div class="card"><div>Lunch<small>Food · GCash</small></div><span class="neg">−₱180.00</span></div>
+      <div class="card"><div>Salary<small>Income · BDO</small></div><span class="pos">+₱12,000.00</span></div>
+      <div class="card"><div>Jeep fare<small>Transport · Cash</small></div><span class="neg">−₱24.00</span></div>
+    </div>
+    <div class="pop" id="pop">
+      <div class="yr"><span>‹</span><span>2026</span><span>›</span></div>
+      <div class="months">
+        <span>Jan</span><span>Feb</span><span>Mar</span><span>Apr</span>
+        <span>May</span><span>Jun</span><span>Jul</span><span>Aug</span>
+        <span>Sep</span><span>Oct</span><span class="sel">Nov</span><span class="dis">Dec</span>
+      </div>
+      <a class="opt">Today</a>
+      <a class="opt">This month</a>
+      <a class="opt">All dates</a>
+    </div>
+    <nav class="bar" data-bar></nav>
+    <div class="scrim"></div><div class="sheet" data-sheet></div>
+  </div>
+  <div class="note"><b>Tap the date button</b>No Month to date, no Custom range. Today is the way back after picking a month.</div>
+</div>
+
+<!-- Phone B: More sheet open -->
+<div class="col">
+  <h2>More sheet open</h2>
+  <div class="phone open" id="b">
+    <div class="screen">
+      <h1>Overview</h1>
+      <p class="sub">Net worth, budget left, upcoming bills.</p>
+      <div class="card"><div>Net worth<small>All accounts</small></div><b>₱48,220.00</b></div>
+      <div class="card"><div>Budget left<small>November</small></div><b>₱6,400.00</b></div>
+    </div>
+    <nav class="bar" data-bar data-current="more"></nav>
+    <div class="scrim"></div><div class="sheet" data-sheet></div>
+  </div>
+  <div class="note"><b>Tabs: Overview, Accounts, Activity, Bills, More</b>More holds the other six pages plus Sign out and theme. The top bar and burger are gone on phones.</div>
+</div>
+
+<script>
+const tabs=[["home","Overview"],["bank","Accounts"],["swap","Activity"],["cal","Bills"],["more","More"]];
+const more=[["inst","Installments"],["goal","Goals"],["debt","Debts"],["pig","Budget"],["vault","Set aside"],["gear","Settings"]];
+const ic=n=>`<svg><use href="#${n}"/></svg>`;
+document.querySelectorAll("[data-bar]").forEach(bar=>{
+  const phone=bar.closest(".phone");
+  const cur=bar.dataset.current||(phone.id==="a"?"Activity":"Overview");
+  bar.innerHTML=tabs.map(([i,l])=>`<button ${l.toLowerCase()===cur.toLowerCase()?'aria-current="page"':""} data-l="${l}"><span class="pill">${ic(i)}</span>${l}</button>`).join("");
+  bar.querySelector('[data-l="More"]').onclick=()=>phone.classList.toggle("open");
+});
+document.querySelectorAll("[data-sheet]").forEach(s=>{
+  s.innerHTML=`<div class="grip"></div><div class="grid">${more.map(([i,l])=>`<button>${ic(i)}${l}</button>`).join("")}</div><div class="foot"><button>Sign out</button><button>Theme</button></div>`;
+});
+document.querySelectorAll(".scrim").forEach(s=>s.onclick=()=>s.closest(".phone").classList.remove("open"));
+document.getElementById("pickBtn").onclick=()=>document.getElementById("pop").classList.toggle("show");
+</script>
+</body>
+</html>
