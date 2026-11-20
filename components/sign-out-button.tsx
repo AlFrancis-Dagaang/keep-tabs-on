@@ -2,15 +2,16 @@
 
 import { LogOut } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { cn } from "cn";
 import { Button } from "@/components/ui/button";
 import { authClient } from "@/lib/auth/client";
 
-export function SignOutButton() {
+export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
   return (
     <Button
       variant="ghost"
-      className="justify-start text-muted-foreground max-md:h-11"
+      className={cn("justify-start text-muted-foreground max-md:h-11", className)}
       aria-label="Sign out"
       onClick={async () => {
         await authClient.signOut();

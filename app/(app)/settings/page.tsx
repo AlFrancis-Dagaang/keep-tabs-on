@@ -3,6 +3,8 @@ import { Suspense } from "react";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { RowActions } from "@/components/row-actions";
+import { SignOutButton } from "@/components/sign-out-button";
+import { ThemePicker } from "@/components/theme-picker";
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { categories, type Category } from "@/db/schema";
@@ -21,8 +23,27 @@ export default function SettingsPage() {
         <div className="grid gap-8">
           <Currency />
           <Categories />
+          <Account />
         </div>
       </Suspense>
+    </>
+  );
+}
+
+// On phones the sidebar is gone, so the theme picker and Sign out live here, in separate cards so a stray tap on the tiles can't sign you out.
+function Account() {
+  return (
+    <>
+      <section className="md:hidden">
+        <h2 className="mb-3 font-serif text-xl">Appearance</h2>
+        <div className="flex items-center justify-between gap-4 rounded-xl border bg-surface px-4 py-3">
+          <p className="text-sm font-medium">Theme</p>
+          <ThemePicker />
+        </div>
+      </section>
+      <section className="rounded-xl border bg-surface md:hidden">
+        <SignOutButton className="h-12 w-full px-4" />
+      </section>
     </>
   );
 }

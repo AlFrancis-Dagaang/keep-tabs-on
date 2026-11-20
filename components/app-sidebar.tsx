@@ -8,11 +8,11 @@ import { ArrowLeftRight, CalendarClock, CalendarRange, HandCoins, Landmark, Layo
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
-const pages = [
+export const pages = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
   { href: "/accounts", label: "Accounts", icon: Landmark },
   { href: "/activity", label: "Activity", icon: ArrowLeftRight },
-  { href: "/bills", label: "Recurring bills", icon: CalendarClock },
+  { href: "/bills", label: "Recurring bills", short: "Bills", icon: CalendarClock },
   { href: "/installments", label: "Installments", icon: CalendarRange },
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/debts", label: "Debts", icon: HandCoins },
@@ -21,7 +21,7 @@ const pages = [
   { href: "/settings", label: "Settings", icon: Settings },
 ];
 
-// The left sidebar, md and up; below that, MobileNav shows the same links in a drawer.
+// The left sidebar, md and up; below that, MobileNav is a bottom tab bar.
 export function AppSidebar() {
   return (
     <aside className="hidden border-r bg-surface px-3 py-6 md:sticky md:top-0 md:flex md:h-screen md:w-56 md:shrink-0 md:flex-col">
@@ -36,19 +36,19 @@ export function AppSidebar() {
 }
 
 // usePathname suspends on routes with unknown params (/debts/[id]); the fallback is the same links, unlit
-export function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
+export function NavLinks() {
   return (
-    <Suspense fallback={<Links pathname={null} onNavigate={onNavigate} />}>
-      <CurrentLinks onNavigate={onNavigate} />
+    <Suspense fallback={<Links pathname={null} />}>
+      <CurrentLinks />
     </Suspense>
   );
 }
 
-function CurrentLinks({ onNavigate }: { onNavigate?: () => void }) {
-  return <Links pathname={usePathname()} onNavigate={onNavigate} />;
+function CurrentLinks() {
+  return <Links pathname={usePathname()} />;
 }
 
-function Links({ pathname, onNavigate }: { pathname: string | null; onNavigate?: () => void }) {
+function Links({ pathname }: { pathname: string | null }) {
   return pages.map(({ href, label, icon: Icon }) => {
     const current = pathname === href || !!pathname?.startsWith(`${href}/`); // keeps Debts lit on /debts/[id]
     return (
@@ -56,9 +56,8 @@ function Links({ pathname, onNavigate }: { pathname: string | null; onNavigate?:
         key={href}
         href={href}
         aria-current={current ? "page" : undefined}
-        onClick={onNavigate}
         className={cn(
-          "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm max-md:min-h-11 whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-foreground",
+          "flex shrink-0 items-center gap-2 rounded-lg px-3 py-1.5 text-sm whitespace-nowrap text-muted-foreground hover:bg-accent hover:text-foreground",
           current && "bg-accent font-medium text-foreground",
         )}
       >

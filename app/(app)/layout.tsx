@@ -8,11 +8,11 @@ import { getSettings } from "@/lib/settings";
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
   return (
-    <div className="flex min-h-screen flex-col md:flex-row">
+    <div className="flex min-h-screen md:flex-row">
       <AppSidebar />
       <MobileNav />
-      {/* min-w-0 lets wide tables scroll inside their panel instead of widening the page */}
-      <main className="min-w-0 flex-1 px-4 py-6 md:px-10 md:py-10">
+      {/* min-w-0 lets wide tables scroll inside their panel instead of widening the page; pb-24 clears the phone tab bar */}
+      <main className="min-w-0 flex-1 px-4 pt-6 pb-24 md:px-10 md:py-10">
         <Suspense fallback={<LoadingBar />}>
           <SetupGate>{children}</SetupGate>
         </Suspense>

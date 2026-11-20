@@ -13,7 +13,7 @@ import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
 import { goalSetAside } from "@/lib/set-aside";
-import { billsDueSoon, billStatus, directionLabels, formatDate, manilaMonth, monthChange, monthTotals, netWorth, previousMonth, progressBlocks } from "@/lib/money";
+import { billsDueSoon, billStatus, directionLabels, formatDate, manilaMonth, monthChange, monthRange, monthTotals, netWorth, previousMonth, progressBlocks } from "@/lib/money";
 import { getMoney } from "@/lib/settings";
 
 
@@ -87,6 +87,7 @@ async function Overview() {
 
   const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
   const month = manilaMonth(new Date());
+  const thisMonth = new URLSearchParams(monthRange(month)).toString();
   const { income, expenses } = monthTotals(month, data.balances.entries);
   const dueSoon = billsDueSoon(data.bills.map((bill) => ({ ...bill, paid: bill.paid ?? 0 })), today);
   const last = monthTotals(previousMonth(month), data.balances.entries);
@@ -99,8 +100,8 @@ async function Overview() {
     <div className="grid gap-8">
       <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
         <Card href="/accounts" label="Net worth" value={money(netWorth(data.balances.accounts))} note={`Across ${counted} ${counted === 1 ? "account" : "accounts"}`} />
-        <Card href="/activity?type=income" label="Income this month" value={money(income)} note={changeNote(incomeChange)} />
-        <Card href="/activity?type=expense" label="Expenses this month" value={money(expenses)} note={changeNote(expensesChange)}>
+        <Card href={`/activity?type=income&${thisMonth}`} label="Income this month" value={money(income)} note={changeNote(incomeChange)} />
+        <Card href={`/activity?type=expense&${thisMonth}`} label="Expenses this month" value={money(expenses)} note={changeNote(expensesChange)}>
           {income > 0 && (
             <PixelBar blocks={progressBlocks(expenses, income)} over={expenses > income} label={`${money(expenses)} spent of ${money(income)} income this month`} />
           )}
@@ -161,7 +162,7 @@ async function Overview() {
           </MiniTable>
         </Section>
 
-        <Section className="lg:col-span-2" title="Recent activity" href="/activity" empty={data.recent.length === 0 && "No entries yet. Log what comes in and goes out with Add entry in Activity."}>
+        <Section className="lg:col-span-2" title="Recent activity" href="/activity?all=1" empty={data.recent.length === 0 && "No entries yet. Log what comes in and goes out with Add entry in Activity."}>
           <MiniTable>
             {data.recent.map((row) => (
               <TableRow key={row.id}>

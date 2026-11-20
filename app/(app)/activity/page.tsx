@@ -23,7 +23,7 @@ import { getMoney } from "@/lib/settings";
 const types: Transaction["type"][] = ["income", "expense", "transfer"];
 const toAccounts = alias(accounts, "to_accounts");
 
-type Search = Promise<{ type?: string; from?: string; to?: string }>;
+type Search = Promise<{ type?: string; from?: string; to?: string; all?: string }>;
 type Row = Pick<Transaction, "type" | "payee" | "paidTo" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId" | "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId"> & { setAsideName?: string | null; account: string; toAccount: string | null; category: string | null };
 
 const dash = <span className="text-muted-foreground">—</span>;
@@ -64,7 +64,11 @@ async function Activity({ searchParams }: { searchParams: Search }) {
   const userId = await getUserId();
   const search = await searchParams;
   const type = types.find((t) => t === search.type);
-  const { from, to } = parseRange(search.from, search.to);
+  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
+  const explicit = parseRange(search.from, search.to);
+  const all = search.all === "1";
+  // No range in the URL means today; all=1 is how "All dates" is asked for.
+  const { from, to } = explicit.from || explicit.to ? explicit : all ? {} : { from: today, to: today };
   const { balances, choices, earliest, rows: found, setAsideItems } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
     choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
@@ -89,9 +93,9 @@ async function Activity({ searchParams }: { searchParams: Search }) {
     const link = setAsideOf(row);
     return { ...row, setAsideName: link && setAsideItems.find((item) => item.value === `${link.kind}:${link.id}`)?.name };
   });
-  const today = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Manila" }).format(new Date());
+  const isToday = from === today && to === today;
   const typeHref = (t?: string) => {
-    const query = new URLSearchParams({ ...(t && { type: t }), ...(from && { from }), ...(to && { to }) }).toString();
+    const query = new URLSearchParams({ ...(t && { type: t }), ...(explicit.from && { from: explicit.from }), ...(explicit.to && { to: explicit.to }), ...(all && { all: "1" }) }).toString();
     return query ? `/activity?${query}` : "/activity";
   };
   const cols = columns[type ?? "all"];
@@ -109,11 +113,11 @@ async function Activity({ searchParams }: { searchParams: Search }) {
         <>
           <div className="mb-4 flex gap-2 max-md:[&>button]:flex-1">
             <TypeFilter items={[undefined, ...types].map((t) => ({ label: t ?? "All types", href: typeHref(t), current: t === type }))} />
-            <MonthPicker path="/activity" today={today} min={earliest ?? today} from={from} to={to} keep={type ? { type } : undefined} />
+            <MonthPicker path="/activity" today={today} min={earliest ?? today} from={from} to={to} keep={type ? { type } : undefined} defaultsToToday />
           </div>
           {rows.length === 0 ? (
             <p className="rounded-xl border bg-surface p-6 text-muted-foreground">
-              {from || to ? `No ${type ? `${type} ` : ""}entries in this range.` : type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}
+              {isToday ? `No ${type ? `${type} ` : ""}entries today. Log one with Add entry.` : from || to ? `No ${type ? `${type} ` : ""}entries in this range.` : type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}
             </p>
           ) : (
             <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
