@@ -26,3 +26,9 @@ export function parseIcon(value: string | null | undefined): string | null {
   if (value === cashKey || logos.some((logo) => logo.key === value)) return value;
   return value.startsWith("tile:") && Object.hasOwn(tileColors, value.slice(5)) ? value : null;
 }
+
+/** The colour behind an account's card on phones: its tile colour, else grey (cash, no icon, a logo). */
+export function cardColor(icon: string | null | undefined): string {
+  const value = parseIcon(icon);
+  return value?.startsWith("tile:") ? tileColors[value.slice(5) as TileColor] : tileColors.grey;
+}

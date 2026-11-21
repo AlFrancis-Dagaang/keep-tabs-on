@@ -8,8 +8,10 @@ import { Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, Table
 import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
+import { cardColor } from "@/lib/account-icons";
 import { netWorth } from "@/lib/money";
 
+import { AccountMenu } from "./account-menu";
 import { AccountForm, DeleteAccount } from "./account-form";
 import { getMoney } from "@/lib/settings";
 
@@ -40,8 +42,33 @@ async function AccountsTable() {
   }
 
   const excluded = rows.filter((account) => !account.includeInNetWorth);
+  const excludes = excluded.length > 0 && `Excludes ${excluded.length} ${excluded.length === 1 ? "account" : "accounts"}`;
   return (
-    <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
+    <>
+    {/* Phones get tinted cards; from md up it is the table below. */}
+    <div className="grid gap-2.5 md:hidden">
+      <div className="rounded-2xl border bg-surface px-4 py-4">
+        <div className="text-sm text-muted-foreground">Net worth</div>
+        <div className="font-serif text-4xl font-medium tabular-nums">{money(netWorth(rows))}</div>
+        {excludes && <div className="text-xs text-muted-foreground">{excludes}</div>}
+      </div>
+      {rows.map((account) => (
+        <div key={account.id} className={`relative flex min-h-28 flex-col justify-between rounded-2xl p-4 text-white shadow-sm ${account.includeInNetWorth ? "" : "opacity-80 saturate-50"}`} style={{ background: cardColor(account.icon) }}>
+          <div className="flex items-center justify-between gap-2">
+            <span className="flex min-w-0 items-center gap-2.5">
+              <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-white/20"><AccountIcon icon={account.icon} name={account.name} /></span>
+              <Link href={`/accounts/${account.id}`} className="truncate text-base font-semibold after:absolute after:inset-0 after:rounded-2xl">{account.name}</Link>
+            </span>
+            <span className="relative z-10"><AccountMenu account={account} /></span>
+          </div>
+          <div>
+            <div className="font-serif text-3xl font-medium tabular-nums">{money(account.balance)}</div>
+            {!account.includeInNetWorth && <div className="text-xs opacity-90">Not in net worth</div>}
+          </div>
+        </div>
+      ))}
+    </div>
+    <div className="hidden rounded-xl border bg-surface md:block">
       <Table>
         <TableHeader>
           <TableRow>
@@ -74,9 +101,7 @@ async function AccountsTable() {
           <TableRow>
             <TableCell className="pl-4 font-medium">
               Net worth
-              {excluded.length > 0 && (
-                <div className="text-sm font-normal text-muted-foreground">Excludes {excluded.length} {excluded.length === 1 ? "account" : "accounts"}</div>
-              )}
+              {excludes && <div className="text-sm font-normal text-muted-foreground">{excludes}</div>}
             </TableCell>
             <TableCell className="text-right font-medium tabular-nums">{money(netWorth(rows))}</TableCell>
             <TableCell />
@@ -84,5 +109,6 @@ async function AccountsTable() {
         </TableFooter>
       </Table>
     </div>
+    </>
   );
 }

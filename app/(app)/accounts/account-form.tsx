@@ -13,25 +13,30 @@ import { cashKey, logos, tileColors } from "@/lib/account-icons";
 import { toInput } from "@/lib/money";
 import { deleteAccount, saveAccount } from "./actions";
 
-type AccountRow = Pick<Account, "id" | "name" | "includeInNetWorth" | "icon"> & { balance: number };
+export type AccountRow = Pick<Account, "id" | "name" | "includeInNetWorth" | "icon"> & { balance: number };
+
+// Given `control`, the dialog is opened from outside (the phone card's ⋯ menu) and has no trigger button.
+type Control = { open: boolean; onOpenChange: (open: boolean) => void };
 
 /** "Add account" with no account; "Edit" (name and balance) with one. */
-export function AccountForm({ account }: { account?: AccountRow }) {
+export function AccountForm({ account, control }: { account?: AccountRow; control?: Control }) {
   const [open, setOpen] = useState(false);
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button variant={account ? "ghost" : "default"} size="sm">
-          {account ? <Pencil /> : <Plus />}
-          {account ? "Edit" : "Add account"}
-        </Button>
-      </DialogTrigger>
+    <Dialog open={control?.open ?? open} onOpenChange={control?.onOpenChange ?? setOpen}>
+      {!control && (
+        <DialogTrigger asChild>
+          <Button variant={account ? "ghost" : "default"} size="sm">
+            {account ? <Pencil /> : <Plus />}
+            {account ? "Edit" : "Add account"}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{account ? "Edit account" : "Add account"}</DialogTitle>
           <DialogDescription>Enter what the account holds today.</DialogDescription>
         </DialogHeader>
-        <Fields account={account} onSaved={() => setOpen(false)} />
+        <Fields account={account} onSaved={() => (control?.onOpenChange ?? setOpen)(false)} />
       </DialogContent>
     </Dialog>
   );
@@ -121,20 +126,23 @@ function Fields({ account, onSaved }: { account?: AccountRow; onSaved: () => voi
   );
 }
 
-export function DeleteAccount({ account }: { account: AccountRow }) {
+export function DeleteAccount({ account, control }: { account: AccountRow; control?: Control }) {
   const [open, setOpen] = useState(false);
   const [error, setError] = useState<string>();
+  const change = control?.onOpenChange ?? setOpen;
   return (
-    <Dialog open={open} onOpenChange={(next) => {
-        setOpen(next);
+    <Dialog open={control?.open ?? open} onOpenChange={(next) => {
+        change(next);
         setError(undefined);
       }}>
-      <DialogTrigger asChild>
-        <Button variant="ghost" size="sm">
-          <Trash2 />
-          Remove
-        </Button>
-      </DialogTrigger>
+      {!control && (
+        <DialogTrigger asChild>
+          <Button variant="ghost" size="sm">
+            <Trash2 />
+            Remove
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Remove {account.name}?</DialogTitle>
@@ -144,7 +152,7 @@ export function DeleteAccount({ account }: { account: AccountRow }) {
           action={async (formData) => {
             const result = await deleteAccount(formData);
             if (result.error) setError(result.error);
-            else setOpen(false);
+            else change(false);
           }}
         >
           <input type="hidden" name="id" value={account.id} />

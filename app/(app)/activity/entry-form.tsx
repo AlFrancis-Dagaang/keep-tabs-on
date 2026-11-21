@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import { ChoiceSheet } from "@/components/choice-sheet";
 import { useMoney } from "@/components/currency-provider";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -11,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { Category, Transaction } from "@/db/schema";
 import { setAsideOf, toInput } from "@/lib/money";
+import { usePhone } from "@/lib/use-phone";
 import { deleteEntry, editPayment, saveEntry, type FormState } from "./actions";
 
 type Options = {
@@ -22,9 +24,15 @@ type Options = {
 
 type EditableEntry = Pick<Transaction, "id" | "type" | "amount" | "date" | "accountId" | "toAccountId" | "toName" | "categoryId" | "payee" | "note" | "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId">;
 
+// Below 768px the dialog is a full-screen sheet with big touch targets (PhoneFields); from 768px up it is the dialog with selects (Fields).
+const phoneSheet = "inset-0 top-0 left-0 flex h-dvh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 sm:max-w-none";
+
 /** "Add entry" with no entry; "Edit" with one. */
 export function EntryForm({ entry, ...options }: Options & { entry?: EditableEntry }) {
   const [open, setOpen] = useState(false);
+  const phone = usePhone();
+  const title = entry ? "Edit entry" : "Add entry";
+  const description = entry ? "Change this entry. The account balances follow." : "Money in, money out, or a move between your accounts.";
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -33,13 +41,27 @@ export function EntryForm({ entry, ...options }: Options & { entry?: EditableEnt
           {entry ? "Edit" : "Add entry"}
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{entry ? "Edit entry" : "Add entry"}</DialogTitle>
-          <DialogDescription>{entry ? "Change this entry. The account balances follow." : "Money in, money out, or a move between your accounts."}</DialogDescription>
-        </DialogHeader>
-        <Fields {...options} entry={entry} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      {phone ? (
+        // The amount takes focus itself (autoFocus on an Add), so the dialog doesn't move it to the first button.
+        <DialogContent showCloseButton={false} className={phoneSheet} onOpenAutoFocus={entry ? undefined : (event) => event.preventDefault()}>
+          <DialogHeader className="flex-row items-center justify-between px-4 pt-3 pb-1">
+            <DialogTitle className="font-serif text-lg font-medium">{title}</DialogTitle>
+            <DialogClose asChild>
+              <Button variant="secondary" size="icon" className="size-11 rounded-full" aria-label="Close"><X /></Button>
+            </DialogClose>
+          </DialogHeader>
+          <DialogDescription className="sr-only">{description}</DialogDescription>
+          <PhoneFields {...options} entry={entry} onSaved={() => setOpen(false)} />
+        </DialogContent>
+      ) : (
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
+          </DialogHeader>
+          <Fields {...options} entry={entry} onSaved={() => setOpen(false)} />
+        </DialogContent>
+      )}
     </Dialog>
   );
 }
@@ -87,27 +109,7 @@ function Fields({ accounts, categories, today, setAsideItems, entry, onSaved }: 
               <Input id="toName" name="toName" placeholder="Mom" defaultValue={state.values?.toName} {...invalid(state, "toName")} />
             </Field>
           )}
-          <Field label="For (optional)" name="setAside" state={state}>
-            {/* An item can't have an empty value, so "None" is sent as blank by the hidden input. */}
-            <input type="hidden" name="setAside" value={setAside} />
-            <Select value={setAside || NONE} onValueChange={(value) => setSetAside(value === NONE ? "" : value)}>
-              <SelectTrigger id="setAside" className="w-full" {...invalid(state, "setAside")}>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value={NONE}>None</SelectItem>
-                {[...new Set(setAsideItems.map((item) => item.group))].map((group) => (
-                  <SelectGroup key={group}>
-                    <SelectLabel>{group}</SelectLabel>
-                    {setAsideItems.filter((item) => item.group === group).map((item) => (
-                      <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
-                    ))}
-                  </SelectGroup>
-                ))}
-              </SelectContent>
-            </Select>
-            <p className="text-sm text-muted-foreground">Counts toward its Set aside bar. Nothing is paid.</p>
-          </Field>
+          <SetAsideField state={state} items={setAsideItems} value={setAside} onChange={setSetAside} />
         </>
       ) : (
         <Field label="Category" name="categoryId" state={state}>
@@ -143,6 +145,189 @@ function Fields({ accounts, categories, today, setAsideItems, entry, onSaved }: 
       <DialogFooter>
         <Button type="submit" disabled={pending}>{entry ? "Save changes" : "Add entry"}</Button>
       </DialogFooter>
+    </form>
+  );
+}
+
+function SetAsideField({ state, items, value, onChange }: { state: FormState; items: Options["setAsideItems"]; value: string; onChange: (value: string) => void }) {
+  return (
+    <Field label="For (optional)" name="setAside" state={state}>
+      {/* An item can't have an empty value, so "None" is sent as blank by the hidden input. */}
+      <input type="hidden" name="setAside" value={value} />
+      <Select value={value || NONE} onValueChange={(next) => onChange(next === NONE ? "" : next)}>
+        <SelectTrigger id="setAside" className="w-full" {...invalid(state, "setAside")}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value={NONE}>None</SelectItem>
+          {[...new Set(items.map((item) => item.group))].map((group) => (
+            <SelectGroup key={group}>
+              <SelectLabel>{group}</SelectLabel>
+              {items.filter((item) => item.group === group).map((item) => (
+                <SelectItem key={item.value} value={item.value}>{item.label}</SelectItem>
+              ))}
+            </SelectGroup>
+          ))}
+        </SelectContent>
+      </Select>
+      <p className="text-sm text-muted-foreground">Counts toward its Set aside bar. Nothing is paid.</p>
+    </Field>
+  );
+}
+
+const LAST_ACCOUNT = "lastAccountId";
+
+// The account the last new entry used, if it is still one of yours. localStorage can be blocked, so a miss is just "none".
+function lastAccount(accounts: Options["accounts"]) {
+  try {
+    const id = localStorage.getItem(LAST_ACCOUNT);
+    return accounts.find((account) => account.id === id)?.id ?? "";
+  } catch {
+    return "";
+  }
+}
+
+// The phone form: same fields and the same saveEntry as Fields, but the choices are big buttons that open bottom sheets.
+// Lives inside DialogContent, which unmounts on close, so each open starts with a clean form.
+function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSaved }: Options & { entry?: EditableEntry; onSaved: () => void }) {
+  const { symbol, money } = useMoney();
+  const [saved, action, pending] = useActionState(saveEntry, {});
+  const state: FormState = { ...saved, values: saved.values ?? (entry && {
+    type: entry.type, accountId: entry.accountId, toAccountId: entry.toAccountId ?? "", toName: entry.toName ?? "", categoryId: entry.categoryId ?? "",
+    amount: toInput(entry.amount), date: entry.date, payee: entry.payee ?? "", note: entry.note ?? "", setAside: linkOf(entry), paidTo: "",
+  }) };
+  const [type, setType] = useState<Transaction["type"]>(entry?.type ?? "expense");
+  const [accountId, setAccountId] = useState(() => entry?.accountId ?? lastAccount(accounts));
+  const [to, setTo] = useState(entry?.toName ? OTHER : entry?.toAccountId ?? ""); // an account id, OTHER for a name, or none yet
+  const [categoryId, setCategoryId] = useState(entry?.categoryId ?? "");
+  const [setAside, setSetAside] = useState(entry ? linkOf(entry) : "");
+  const [more, setMore] = useState(!!(entry?.payee || entry && linkOf(entry))); // an entry that has them shows them
+  useEffect(() => {
+    if (!saved.ok) return;
+    if (!entry) {
+      try {
+        localStorage.setItem(LAST_ACCOUNT, accountId);
+      } catch {}
+    }
+    onSaved();
+  }, [saved, onSaved, entry, accountId]);
+
+  const kind = type === "income" ? "income" : "spending";
+  const transfer = type === "transfer";
+  const accountChoices = accounts.map((account) => ({ value: account.id, label: account.name, detail: money(account.balance) }));
+  return (
+    <form key={JSON.stringify(saved.values ?? {})} action={action} className="flex min-h-0 flex-1 flex-col">
+      {entry && <input type="hidden" name="id" value={entry.id} />}
+      <input type="hidden" name="type" value={type} />
+      <input type="hidden" name="accountId" value={accountId} />
+      <input type="hidden" name="toAccountId" value={to === OTHER ? "" : to} />
+      <input type="hidden" name="categoryId" value={categoryId} />
+      <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto px-4 pb-4">
+        <div className="grid grid-cols-3 rounded-xl bg-secondary p-1">
+          {(["expense", "income", "transfer"] as const).map((option) => (
+            <button
+              key={option}
+              type="button"
+              aria-pressed={type === option}
+              onClick={() => {
+                setType(option);
+                setCategoryId("");
+              }}
+              className="min-h-11 rounded-lg text-sm font-medium text-muted-foreground capitalize aria-pressed:bg-surface aria-pressed:text-foreground aria-pressed:shadow-xs"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+        <div className="grid gap-1">
+          <div className="flex items-baseline justify-center gap-1.5 pt-4">
+            <span className="font-serif text-3xl text-muted-foreground">{symbol}</span>
+            <Input
+              id="amount"
+              name="amount"
+              inputMode="decimal"
+              placeholder="0.00"
+              aria-label={`Amount (${symbol})`}
+              autoFocus={!entry}
+              className="h-auto w-48 border-0 bg-transparent p-0 text-center font-serif text-6xl shadow-none tabular-nums focus-visible:ring-0 md:text-6xl dark:bg-transparent"
+              defaultValue={state.values?.amount}
+              {...invalid(state, "amount")}
+            />
+          </div>
+          {state.errors?.amount && <p id="amount-error" className="text-center text-sm text-destructive">{state.errors.amount}</p>}
+        </div>
+        {transfer ? (
+          <div className="grid gap-2">
+            <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-1">
+              <ChoiceSheet id="accountId" title="From" compact value={accountId} onChange={setAccountId} choices={accountChoices} placeholder="Pick…" invalid={!!state.errors?.accountId} />
+              <ArrowRight className="size-4 self-center text-muted-foreground" aria-hidden />
+              <ChoiceSheet
+                id="toAccountId"
+                title="To"
+                compact
+                value={to}
+                onChange={setTo}
+                choices={[...accountChoices, { value: OTHER, label: "Someone else…", detail: "Not one of your accounts" }]}
+                placeholder="Pick…"
+                invalid={!!state.errors?.toAccountId}
+              />
+            </div>
+            {(["accountId", "toAccountId"] as const).map((name) => state.errors?.[name] && <p key={name} id={`${name}-error`} className="text-sm text-destructive">{state.errors[name]}</p>)}
+          </div>
+        ) : (
+          <Field label="Account" name="accountId" state={state}>
+            <ChoiceSheet id="accountId" title="Account" value={accountId} onChange={setAccountId} choices={accountChoices} placeholder="Pick an account" invalid={!!state.errors?.accountId} />
+          </Field>
+        )}
+        {transfer && to === OTHER && (
+          <Field label="Name" name="toName" state={state}>
+            <Input id="toName" name="toName" placeholder="Mom" className="h-12" defaultValue={state.values?.toName} {...invalid(state, "toName")} />
+          </Field>
+        )}
+        {!transfer && (
+          <Field label="Category" name="categoryId" state={state}>
+            <ChoiceSheet
+              id="categoryId"
+              title="Category"
+              value={categoryId}
+              onChange={setCategoryId}
+              choices={categories.filter((category) => category.kind === kind).map((category) => ({ value: category.id, label: category.name }))}
+              placeholder="Pick a category"
+              invalid={!!state.errors?.categoryId}
+              empty={
+                <p className="py-3 text-sm text-muted-foreground">
+                  No categories yet. Add {kind} categories in <Link href="/settings" className="underline">Settings</Link>.
+                </p>
+              }
+            />
+          </Field>
+        )}
+        <div className="grid gap-2">
+          <Input id="date" name="date" type="date" aria-label="Date" className="h-12" defaultValue={state.values?.date ?? today} {...invalid(state, "date")} />
+          {state.errors?.date && <p id="date-error" className="text-sm text-destructive">{state.errors.date}</p>}
+          <Input id="note" name="note" aria-label="Note (optional)" placeholder="Add a note" className="h-12" defaultValue={state.values?.note} {...invalid(state, "note")} />
+          {state.errors?.note && <p id="note-error" className="text-sm text-destructive">{state.errors.note}</p>}
+        </div>
+        <div className="border-t">
+          <button type="button" aria-expanded={more} onClick={() => setMore(!more)} className="flex min-h-11 w-full items-center justify-between text-sm text-muted-foreground">
+            More: {transfer ? "For (set aside)" : "Payee"}
+            <ChevronDown className={more ? "size-4 rotate-180" : "size-4"} aria-hidden />
+          </button>
+          {/* Hidden, not unmounted, so what was typed is still sent. */}
+          <div className={more ? "grid gap-2 pt-2" : "hidden"}>
+            {transfer ? (
+              <SetAsideField state={state} items={setAsideItems} value={setAside} onChange={setSetAside} />
+            ) : (
+              <Field label="Payee (optional)" name="payee" state={state}>
+                <Input id="payee" name="payee" placeholder={type === "income" ? "Employer" : "Jollibee"} className="h-12" defaultValue={state.values?.payee} {...invalid(state, "payee")} />
+              </Field>
+            )}
+          </div>
+        </div>
+      </div>
+      <div className="border-t bg-background px-4 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <Button type="submit" size="lg" className="h-14 w-full rounded-xl text-base font-semibold" disabled={pending}>{entry ? "Save changes" : "Add entry"}</Button>
+      </div>
     </form>
   );
 }

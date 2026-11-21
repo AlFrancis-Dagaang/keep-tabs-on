@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { parseIcon, tileColors } from "./account-icons";
+import { cardColor, parseIcon, tileColors } from "./account-icons";
 
 describe("parseIcon", () => {
   it("keeps a tile, cash and null", () => {
@@ -15,5 +15,15 @@ describe("parseIcon", () => {
 
   it("has a colour behind every tile", () => {
     for (const hex of Object.values(tileColors)) expect(hex).toMatch(/^#[0-9A-F]{6}$/);
+  });
+});
+
+describe("cardColor", () => {
+  it("is the tile's colour", () => {
+    for (const [name, hex] of Object.entries(tileColors)) expect(cardColor(`tile:${name}`)).toBe(hex);
+  });
+
+  it("is grey for cash, no icon, a logo key or a bad value", () => {
+    for (const icon of ["cash", null, undefined, "", "bpi", "tile:magenta", "tile:toString"]) expect(cardColor(icon)).toBe(tileColors.grey);
   });
 });

@@ -10,6 +10,8 @@ Calm, warm and readable, like the Claude app. Notion-style layout: left sidebar 
 - Mobile tables: each row is a card (title, labelled fields, amount top right, actions); Overview mini-tables are compact lists. From 768px up they are tables.
 - Between 768px and their width, wide tables scroll sideways inside their panel; the page never scrolls sideways.
 - Edit and pay forms open in a centered modal.
+- Add entry and Edit entry, below 768px, are a full-screen sheet instead (`prototypes/mobile-add-entry.html`): Expense, Income and Transfer tabs, a large amount that takes focus on an Add, Account and Category as big buttons that open a bottom sheet of rows (accounts show their balance, the chosen row is ticked), Transfer with From and To side by side ("Someone else…" only in To), a full-width date row and note, a collapsed "More" row (Payee, or "For" on a transfer) and a Save button pinned at the bottom. A new entry starts on the account used last (kept in the browser's localStorage). From 768px up it is the modal with selects.
+- Accounts, below 768px (`prototypes/mobile-accounts.html`): a Net worth card, then a full-width card per account tinted with its tile colour (grey for cash, no icon or a logo), big balance, "Not in net worth" and muted when left out, a ⋯ with Edit and Remove, and the card opens the account's page. From 768px up it is the table.
 
 ## Colors
 Token | Light | Dark
