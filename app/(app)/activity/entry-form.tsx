@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
 import { ChoiceSheet } from "@/components/choice-sheet";
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { useMoney } from "@/components/currency-provider";
-import { ArrowRight, ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,7 @@ const phoneSheet = "inset-0 top-0 left-0 flex h-dvh max-h-none w-full max-w-none
 /** "Add entry" with no entry; "Edit" with one. */
 export function EntryForm({ entry, ...options }: Options & { entry?: EditableEntry }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   const phone = usePhone();
   const title = entry ? "Edit entry" : "Add entry";
   const description = entry ? "Change this entry. The account balances follow." : "Money in, money out, or a move between your accounts.";
@@ -44,11 +46,11 @@ export function EntryForm({ entry, ...options }: Options & { entry?: EditableEnt
       {phone ? (
         // The amount takes focus itself (autoFocus on an Add), so the dialog doesn't move it to the first button.
         <DialogContent showCloseButton={false} className={phoneSheet} onOpenAutoFocus={entry ? undefined : (event) => event.preventDefault()}>
-          <DialogHeader className="flex-row items-center justify-between px-4 pt-3 pb-1">
-            <DialogTitle className="font-serif text-lg font-medium">{title}</DialogTitle>
+          <DialogHeader className="flex-row items-center gap-2 px-2 pt-3 pb-1">
             <DialogClose asChild>
-              <Button variant="secondary" size="icon" className="size-11 rounded-full" aria-label="Close"><X /></Button>
+              <Button variant="ghost" size="icon" className="size-11 rounded-full" aria-label="Back"><ChevronLeft className="size-6" /></Button>
             </DialogClose>
+            <DialogTitle className="font-serif text-lg font-medium">{title}</DialogTitle>
           </DialogHeader>
           <DialogDescription className="sr-only">{description}</DialogDescription>
           <PhoneFields {...options} entry={entry} onSaved={() => setOpen(false)} />
@@ -201,6 +203,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
   const [to, setTo] = useState(entry?.toName ? OTHER : entry?.toAccountId ?? ""); // an account id, OTHER for a name, or none yet
   const [categoryId, setCategoryId] = useState(entry?.categoryId ?? "");
   const [setAside, setSetAside] = useState(entry ? linkOf(entry) : "");
+  const [amountLength, setAmountLength] = useState(state.values?.amount?.length ?? 0);
   const [more, setMore] = useState(!!(entry?.payee || entry && linkOf(entry))); // an entry that has them shows them
   useEffect(() => {
     if (!saved.ok) return;
@@ -214,6 +217,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
 
   const kind = type === "income" ? "income" : "spending";
   const transfer = type === "transfer";
+  const amountSize = amountLength <= 8 ? "text-6xl" : amountLength <= 11 ? "text-5xl" : "text-4xl"; // so 18,900.00 and more still fit
   const accountChoices = accounts.map((account) => ({ value: account.id, label: account.name, detail: money(account.balance) }));
   return (
     <form key={JSON.stringify(saved.values ?? {})} action={action} className="flex min-h-0 flex-1 flex-col">
@@ -249,8 +253,9 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
               placeholder="0.00"
               aria-label={`Amount (${symbol})`}
               autoFocus={!entry}
-              className="h-auto w-48 border-0 bg-transparent p-0 text-center font-serif text-6xl shadow-none tabular-nums focus-visible:ring-0 md:text-6xl dark:bg-transparent"
+              className={`h-auto w-full min-w-0 border-0 bg-transparent p-0 text-center font-serif shadow-none tabular-nums focus-visible:ring-0 dark:bg-transparent ${amountSize}`}
               defaultValue={state.values?.amount}
+              onChange={(event) => setAmountLength(event.target.value.length)}
               {...invalid(state, "amount")}
             />
           </div>
@@ -393,6 +398,7 @@ export function EditPayment({ payment, accounts, accountLabel = "Paid from", pai
   payment: PaymentToEdit; accounts: Options["accounts"]; accountLabel?: string; paidToLabel?: string; amountLocked?: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -401,13 +407,9 @@ export function EditPayment({ payment, accounts, accountLabel = "Paid from", pai
           Edit
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Edit payment</DialogTitle>
-          <DialogDescription>Change this payment. The account balances and progress follow.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title="Edit payment" description="Change this payment. The account balances and progress follow.">
         <PaymentFields payment={payment} accounts={accounts} accountLabel={accountLabel} paidToLabel={paidToLabel} amountLocked={amountLocked} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
 import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -27,19 +28,16 @@ export function BillProgress({ id, name, paid, amount }: { id: string; name: str
 
 export function BillForm({ today, bill }: { today: string; bill?: EditableBill }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   const title = bill ? "Edit bill" : "Add bill";
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {bill ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Add bill</Button>}
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>A bill that repeats. You can change the due date anytime.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={title} description="A bill that repeats. You can change the due date anytime.">
         <BillFields today={today} bill={bill} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }
@@ -96,18 +94,15 @@ function BillFields({ today, bill, onSaved }: { today: string; bill?: EditableBi
 export function PayBill(props: { bill: { id: string; name: string; left: number }; accounts: Accounts; today: string }) {
   const { money } = useMoney();
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm"><Banknote />Record payment</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Record payment</DialogTitle>
-          <DialogDescription>{props.bill.name}: {money(props.bill.left)} left this cycle. Partial payments are fine.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title="Record payment" description={<>{props.bill.name}: {money(props.bill.left)} left this cycle. Partial payments are fine.</>}>
         <PayFields {...props} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

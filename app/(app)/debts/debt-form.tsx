@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { announceCompleted, PixelBar, useCompletedFlash } from "@/components/pixel-bar";
 import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -25,19 +26,16 @@ export function DebtProgress({ id, name, paid, total, direction }: { id: string;
 // locked: the debt has payments or receipts, so its direction can't change.
 export function DebtForm({ today, debt, locked = false }: { today: string; debt?: EditableDebt; locked?: boolean }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   const title = debt ? "Edit debt" : "Add debt";
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {debt ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Add debt</Button>}
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Money you owe (a credit card, a loan) or money owed to you.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={title} description="Money you owe (a credit card, a loan) or money owed to you.">
         <DebtFields today={today} debt={debt} locked={locked} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }
@@ -101,6 +99,7 @@ function DebtFields({ today, debt, locked, onSaved }: { today: string; debt?: Ed
 export function PayDebt(props: { debt: { id: string; name: string; left: number; direction: Debt["direction"] }; accounts: Accounts; today: string }) {
   const { money } = useMoney();
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   const owed = props.debt.direction === "owed";
   // Disabled rather than hidden once paid off: hiding it would unmount the form before it announces the flash.
   return (
@@ -108,15 +107,9 @@ export function PayDebt(props: { debt: { id: string; name: string; left: number;
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm" disabled={props.debt.left === 0}><Banknote />{owed ? "Record receipt" : "Record payment"}</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{owed ? "Record receipt" : "Record payment"}</DialogTitle>
-          <DialogDescription>
-            {props.debt.name}: {money(props.debt.left)} left to {owed ? "receive" : "pay"}. Partial {owed ? "repayments" : "payments"} are fine.
-          </DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={owed ? "Record receipt" : "Record payment"} description={<>{props.debt.name}: {money(props.debt.left)} left to {owed ? "receive" : "pay"}. Partial {owed ? "repayments" : "payments"} are fine.</>}>
         <PayFields {...props} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

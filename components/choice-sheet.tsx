@@ -1,9 +1,9 @@
 "use client";
 
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 import { useState } from "react";
 import { cn } from "cn";
-import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
 export type Choice = { value: string; label: string; detail?: string };
 
@@ -39,7 +39,10 @@ export function ChoiceSheet({ id, title, value, onChange, choices, placeholder, 
         </button>
       </SheetTrigger>
       <SheetContent side="bottom" showCloseButton={false} className="max-h-[75dvh] gap-0 overflow-y-auto rounded-t-2xl bg-surface px-4 pt-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
-        <SheetTitle className="mb-2 font-serif text-lg font-medium">{title}</SheetTitle>
+        <div className="mb-2 flex items-center justify-between">
+          <SheetTitle className="font-serif text-lg font-medium">{title}</SheetTitle>
+          <SheetClose className="grid size-11 place-items-center rounded-full hover:bg-secondary" aria-label="Close"><X className="size-5" /></SheetClose>
+        </div>
         {choices.length === 0 && empty}
         {choices.map((choice) => (
           <button

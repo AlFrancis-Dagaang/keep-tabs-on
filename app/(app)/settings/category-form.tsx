@@ -1,5 +1,6 @@
 "use client";
 
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { useActionState, useEffect, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,6 +15,7 @@ type CategoryRow = Pick<Category, "id" | "name" | "kind">;
 /** "Add category" for a kind with no category; "Rename" with one. */
 export function CategoryForm({ kind, category }: { kind: Category["kind"]; category?: CategoryRow }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -22,13 +24,9 @@ export function CategoryForm({ kind, category }: { kind: Category["kind"]; categ
           {category ? "Rename" : "Add category"}
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{category ? "Rename category" : `Add ${kind} category`}</DialogTitle>
-          <DialogDescription>{kind === "spending" ? "Where your money goes, like Food or Rent." : "Where your money comes from, like Salary."}</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={category ? "Rename category" : `Add ${kind} category`} description={kind === "spending" ? "Where your money goes, like Food or Rent." : "Where your money comes from, like Salary."}>
         <Fields kind={kind} category={category} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

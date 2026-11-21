@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState, useEffect, useState } from "react";
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { useMoney } from "@/components/currency-provider";
 import { Banknote, Pencil, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -17,18 +18,15 @@ type EditableInstallment = Pick<Installment, "id" | "name" | "monthlyAmount" | "
 
 export function InstallmentForm({ today, installment }: { today: string; installment?: EditableInstallment }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {installment ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Add installment</Button>}
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{installment ? "Edit installment" : "Add installment"}</DialogTitle>
-          <DialogDescription>A purchase paid in equal monthly payments. You can change the due date anytime.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={installment ? "Edit installment" : "Add installment"} description="A purchase paid in equal monthly payments. You can change the due date anytime.">
         <Fields today={today} installment={installment} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }
@@ -81,18 +79,15 @@ function Fields({ today, installment, onSaved }: { today: string; installment?: 
 export function PayInstallment(props: { installment: { id: string; name: string; monthlyAmount: number }; accounts: Accounts; today: string }) {
   const { money } = useMoney();
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="secondary" size="sm"><Banknote />Record payment</Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>Record payment</DialogTitle>
-          <DialogDescription>{props.installment.name}: {money(props.installment.monthlyAmount)} a month.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title="Record payment" description={<>{props.installment.name}: {money(props.installment.monthlyAmount)} a month.</>}>
         <PayFields {...props} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

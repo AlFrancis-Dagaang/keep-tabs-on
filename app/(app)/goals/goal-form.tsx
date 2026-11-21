@@ -2,6 +2,7 @@
 
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { PixelBar } from "@/components/pixel-bar";
 import { Check, Pencil, Plus, RotateCcw, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -21,19 +22,16 @@ export function GoalProgress({ name, saved, target }: { name: string; saved: num
 
 export function GoalForm({ today, goal }: { today: string; goal?: EditableGoal }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   const title = goal ? "Edit goal" : "Create goal";
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         {goal ? <Button variant="ghost" size="sm"><Pencil />Edit</Button> : <Button size="sm"><Plus />Create goal</Button>}
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>Something you&apos;re saving for. Fill it with transfers in Activity: pick this goal under For.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={title} description="Something you&apos;re saving for. Fill it with transfers in Activity: pick this goal under For.">
         <GoalFields today={today} goal={goal} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

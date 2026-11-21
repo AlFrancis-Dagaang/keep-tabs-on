@@ -1,9 +1,10 @@
 "use client";
 
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { useActionState, useEffect, useState } from "react";
 import { Pencil } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toInput } from "@/lib/money";
@@ -14,6 +15,7 @@ type Limit = { id: string; name: string; budget: number | null };
 /** "Set limit" for a category with none; "Edit limit" with one. */
 export function LimitForm({ category }: { category: Limit }) {
   const [open, setOpen] = useState(false);
+  useBackToClose(open, setOpen);
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -22,13 +24,9 @@ export function LimitForm({ category }: { category: Limit }) {
           {category.budget === null ? "Set limit" : "Edit limit"}
         </Button>
       </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{category.name} limit</DialogTitle>
-          <DialogDescription>How much you plan to spend on {category.name} each month, from this month on. Leave blank for no limit.</DialogDescription>
-        </DialogHeader>
+      <FormSheetContent title={`${category.name} limit`} description={<>How much you plan to spend on {category.name} each month, from this month on. Leave blank for no limit.</>}>
         <Fields category={category} onSaved={() => setOpen(false)} />
-      </DialogContent>
+      </FormSheetContent>
     </Dialog>
   );
 }

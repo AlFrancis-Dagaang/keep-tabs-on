@@ -3,6 +3,7 @@
 import { useActionState, useEffect, useState } from "react";
 import { useMoney } from "@/components/currency-provider";
 import { Pencil, Plus, Trash2 } from "lucide-react";
+import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { AccountIcon } from "@/components/account-icon";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -20,9 +21,12 @@ type Control = { open: boolean; onOpenChange: (open: boolean) => void };
 
 /** "Add account" with no account; "Edit" (name and balance) with one. */
 export function AccountForm({ account, control }: { account?: AccountRow; control?: Control }) {
-  const [open, setOpen] = useState(false);
+  const [localOpen, setLocalOpen] = useState(false);
+  const open = control?.open ?? localOpen;
+  const setOpen = control?.onOpenChange ?? setLocalOpen;
+  useBackToClose(open, setOpen);
   return (
-    <Dialog open={control?.open ?? open} onOpenChange={control?.onOpenChange ?? setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       {!control && (
         <DialogTrigger asChild>
           <Button variant={account ? "ghost" : "default"} size="sm">
@@ -31,13 +35,9 @@ export function AccountForm({ account, control }: { account?: AccountRow; contro
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>{account ? "Edit account" : "Add account"}</DialogTitle>
-          <DialogDescription>Enter what the account holds today.</DialogDescription>
-        </DialogHeader>
-        <Fields account={account} onSaved={() => (control?.onOpenChange ?? setOpen)(false)} />
-      </DialogContent>
+      <FormSheetContent title={account ? "Edit account" : "Add account"} description="Enter what the account holds today.">
+        <Fields account={account} onSaved={() => setOpen(false)} />
+      </FormSheetContent>
     </Dialog>
   );
 }
