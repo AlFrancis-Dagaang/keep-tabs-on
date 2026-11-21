@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { type ReactNode, Suspense } from "react";
+import { AddEntryFab } from "@/components/add-entry-fab";
 import { AppSidebar } from "@/components/app-sidebar";
 import { CurrencyProvider } from "@/components/currency-provider";
 import { LoadingBar } from "@/components/loading-bar";
@@ -25,5 +26,12 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 async function SetupGate({ children }: { children: ReactNode }) {
   const { currency, setupDone } = await getSettings();
   if (!setupDone) redirect("/setup");
-  return <CurrencyProvider currency={currency}>{children}</CurrencyProvider>;
+  return (
+    <CurrencyProvider currency={currency}>
+      {children}
+      <Suspense>
+        <AddEntryFab />
+      </Suspense>
+    </CurrencyProvider>
+  );
 }

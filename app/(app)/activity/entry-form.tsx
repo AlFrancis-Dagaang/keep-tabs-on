@@ -28,8 +28,8 @@ type EditableEntry = Pick<Transaction, "id" | "type" | "amount" | "date" | "acco
 // Below 768px the dialog is a full-screen sheet with big touch targets (PhoneFields); from 768px up it is the dialog with selects (Fields).
 const phoneSheet = "inset-0 top-0 left-0 flex h-dvh max-h-none w-full max-w-none translate-x-0 translate-y-0 flex-col gap-0 rounded-none border-0 p-0 sm:max-w-none";
 
-/** "Add entry" with no entry; "Edit" with one. */
-export function EntryForm({ entry, ...options }: Options & { entry?: EditableEntry }) {
+/** "Add entry" with no entry; "Edit" with one. `floating` swaps the button for the round + that hovers over every phone page. */
+export function EntryForm({ entry, floating, ...options }: Options & { entry?: EditableEntry; floating?: boolean }) {
   const [open, setOpen] = useState(false);
   useBackToClose(open, setOpen);
   const phone = usePhone();
@@ -38,10 +38,16 @@ export function EntryForm({ entry, ...options }: Options & { entry?: EditableEnt
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button variant={entry ? "ghost" : "default"} size="sm">
-          {entry ? <Pencil /> : <Plus />}
-          {entry ? "Edit" : "Add entry"}
-        </Button>
+        {floating ? (
+          <Button size="icon" aria-label="Add entry" className="fixed right-4 bottom-[calc(5rem+env(safe-area-inset-bottom))] z-20 size-14 rounded-full shadow-lg md:hidden">
+            <Plus className="size-7" />
+          </Button>
+        ) : (
+          <Button variant={entry ? "ghost" : "default"} size="sm">
+            {entry ? <Pencil /> : <Plus />}
+            {entry ? "Edit" : "Add entry"}
+          </Button>
+        )}
       </DialogTrigger>
       {phone ? (
         // The amount takes focus itself (autoFocus on an Add), so the dialog doesn't move it to the first button.
