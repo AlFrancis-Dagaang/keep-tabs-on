@@ -1,0 +1,57 @@
+<!doctype html>
+<!-- Covers: T-26 follow-up. Throwaway mock of a floating "Add entry" button on every page except Activity. Phone: round + above the tab bar, bottom right. Desktop: a pill with a label. Tap the + to see it open the Add entry sheet. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>T-26 prototype: floating add</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Source+Serif+4:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf9f5;--surface:#fff;--raised:#f0eee6;--line:#e3e1d8;--fg:#1f1e1c;--muted:#6e6b63;--clay:#c96442}
+@media (prefers-color-scheme:dark){:root{--bg:#1f1f1e;--surface:#262624;--raised:#30302e;--line:#3a3a37;--fg:#eceae3;--muted:#a3a19a}}
+*{box-sizing:border-box}
+body{margin:0;background:#cfc9bb;font-family:"Instrument Sans",system-ui,sans-serif;color:var(--fg);display:flex;gap:32px;justify-content:center;align-items:flex-start;padding:24px;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;align-items:center;gap:8px}
+.col h2{font:500 14px "Instrument Sans";margin:0;color:#444}
+.note{max-width:375px;font-size:13px;color:#444;margin:0}
+.phone{width:375px;height:760px;background:var(--bg);border-radius:36px;border:8px solid #111;position:relative;overflow:hidden;display:flex;flex-direction:column}
+.body{flex:1;overflow-y:auto;padding:20px 16px 12px}
+h1{font:500 28px "Source Serif 4",serif;margin:0 0 14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:14px 16px;margin-bottom:10px}
+.card small{color:var(--muted);font-size:13px}
+.card b{display:block;font:500 26px "Source Serif 4",serif;font-variant-numeric:tabular-nums}
+.row{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--line);font-size:15px}.row:last-child{border:0}
+.nav{height:64px;border-top:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(5,1fr);font-size:11px;color:var(--muted);text-align:center;align-items:center}
+.nav .on{color:var(--fg);font-weight:600}
+/* phone FAB: 56px, 16px from the right, 16px above the tab bar */
+.fab{position:absolute;right:16px;bottom:80px;width:56px;height:56px;border-radius:50%;border:0;background:var(--clay);color:#fff;font-size:30px;line-height:1;box-shadow:0 4px 14px #0005;cursor:pointer}
+.sheet{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:5}
+.sheet.on{display:flex}
+.sheet header{display:flex;align-items:center;gap:8px;padding:12px 8px 4px}
+.sheet header button{width:44px;height:44px;border:0;border-radius:50%;background:none;font-size:22px;color:var(--fg)}
+.sheet header span{font:500 18px "Source Serif 4",serif}
+.sheet .amt{font:500 56px "Source Serif 4",serif;text-align:center;margin:40px 0;color:var(--muted)}
+.sheet .pick{margin:0 16px 10px;border:1px solid var(--line);border-radius:14px;background:var(--surface);padding:16px;color:var(--muted)}
+.sheet .save{margin:auto 16px 16px;height:56px;border-radius:14px;background:var(--clay);color:#fff;display:grid;place-items:center;font-weight:600}
+/* desktop */
+.desk{width:720px;height:460px;background:var(--bg);border-radius:12px;border:6px solid #111;position:relative;overflow:hidden;display:flex}
+.side{width:150px;border-right:1px solid var(--line);background:var(--surface);padding:16px 12px;font-size:14px;color:var(--muted);display:grid;gap:12px;align-content:start}
+.side .on{color:var(--fg);font-weight:600}
+.main{flex:1;padding:24px}
+.pill{position:absolute;right:24px;bottom:24px;height:48px;padding:0 20px;border-radius:24px;border:0;background:var(--clay);color:#fff;font:600 15px "Instrument Sans";box-shadow:0 4px 14px #0005}
+</style>
+</head>
+<body>
+<script>
+const nav=on=>`<div class="nav">${["Overview","Accounts","Activity","Bills","More"].map(n=>`<span class="${n===on?"on":""}">${n}</span>`).join("")}</div>`;
+const sheet=`<div class="sheet"><header><button aria-label="Back">‹</button><span>Add entry</span></header><div class="amt">₱0.00</div><div class="pick">Pick an account</div><div class="pick">Pick a category</div><div class="save">Add entry</div></div>`;
+const phone=(title,note,tab,content,fab=true)=>`<div class="col"><h2>${title}</h2><div class="phone"><div class="body">${content}</div>${nav(tab)}${fab?`<button class="fab" aria-label="Add entry" onclick="this.parentNode.querySelector('.sheet').classList.add('on')">+</button>`:""}${sheet}</div><p class="note">${note}</p></div>`;
+const rows=r=>r.map(x=>`<div class="row"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
+document.body.innerHTML=
+ phone("Overview","FAB sits 16px above the tab bar, bottom right. Tap it: the same full-screen Add entry sheet opens.","Overview",`<h1>Overview</h1><div class="card"><small>Net worth</small><b>₱32,185.75</b></div><div class="card"><small>Upcoming bills</small>${rows([["Internet","₱1,499.00"],["Rent","₱8,000.00"],["Netflix","₱549.00"]])}</div><div class="card"><small>Budget left</small><b>₱6,240.00</b></div>`)+
+ phone("Bills","Bills already has + Add bill at the top. The FAB still adds an ENTRY, which could be confused with it.","Bills",`<h1>Bills</h1>${rows([["Internet","₱1,499.00"],["Rent","₱8,000.00"],["Netflix","₱549.00"],["Meralco","₱2,310.00"],["Globe","₱999.00"],["Insurance","₱1,200.00"],["Gym","₱900.00"]]).replace(/class="row"/g,'class="card" style="display:flex;justify-content:space-between"')}`)+
+ phone("Activity: no button","Activity already has Add entry in its header, so the FAB is hidden there. Same for the sheet itself.","Activity",`<h1>Activity</h1>${rows([["Jollibee","−₱245.00"],["Salary","+₱28,000.00"],["GCash → Maya","₱500.00"],["Grab","−₱180.00"]])}`,false)+
+ `<div class="col"><h2>Desktop (md and up)</h2><div class="desk"><div class="side"><span>Overview</span><span class="on">Bills</span><span>Activity</span></div><div class="main"><h1>Bills</h1><div class="card"><small>Internet</small><b>₱1,499.00</b></div></div><button class="pill">+ Add entry</button></div><p class="note" style="max-width:720px">On desktop it is a pill with a label (a bare + is unclear with a mouse). Opens the usual centered Add entry dialog.</p></div>`;
+</script>
+</body>
+</html>
