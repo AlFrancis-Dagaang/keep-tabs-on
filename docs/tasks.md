@@ -201,8 +201,13 @@ Status: done
 - [x] Scope: the account, bill and installment pages differ only in that their picker loses Month to date and Custom range; Overview's Income and Expenses cards open Activity on this month and Recent activity's View all on all dates; no balance, query or schema change beyond the Activity default
 - [x] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md` describes the bottom bar and the new Activity default; looked at signed in on dev at 390px and desktop
 
-## T-26: Remove dead goal code and test linked transfers
+## T-26: Phone polish: Add entry sheet and Accounts cards
 Status: todo
-- [ ] The dead `goalId` branches in `activity/page.tsx` and `accounts/[id]/page.tsx` are gone, with no change to what either page shows
-- [ ] A DB-backed test on dev proves that editing and removing a transfer linked to a set-aside item keeps the item's figure right
-- [ ] `pnpm lint`, `pnpm test` (DB test run 3 times) and `pnpm build` pass
+- [ ] Add entry on phones: below 768px "Add entry" and "Edit" open a full-screen sheet matching `prototypes/mobile-add-entry.html` (approved): Expense, Income and Transfer tabs, a large amount that autofocuses with the numeric keyboard, and a Save button pinned at the bottom
+- [ ] Pickers: Account and Category are big buttons that open a bottom sheet of rows (accounts show their balance, the chosen row is ticked). A transfer shows From and To side by side; "Someone else…" is only in To and then asks for a name. A type with no categories says so and links to Settings
+- [ ] Rest of the sheet: Date is a full-width row defaulting to Today, the note is full width below it, and Payee and "For (set aside)" sit in a collapsed "More" row. Errors show under their field. Saving, validation and the server action are unchanged
+- [ ] Last used: a new entry starts on the account used last, kept in the browser's localStorage, with no schema change. Edit starts on the entry's own account
+- [ ] Accounts on phones: below 768px a Net worth card, then a full-width card per account matching `prototypes/mobile-accounts.html` (approved): tinted with its tile color, big balance, "Not in net worth" when left out, a ⋯ with Edit and Remove (Remove still confirms). The card opens the account's page
+- [ ] Unchanged: desktop (the Add entry dialog and the Accounts table), the pay and add-money forms on bills, debts, goals and installments, and all balance math and queries
+- [ ] Phone fit: every tap target is at least 44px, no sideways scroll at 390px, and the pinned Save stays reachable with the keyboard open
+- [ ] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md` describes both phone layouts; looked at signed in on dev at 390px and desktop

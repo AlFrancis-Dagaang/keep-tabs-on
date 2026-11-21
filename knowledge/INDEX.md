@@ -56,6 +56,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-23](tasks/T-23.md) — Goals are a jar and installment payments pick their account: Add money removed, one goal figure from For transfers, From account chosen when paying (planned)
 - [T-24](tasks/T-24.md) — Mark goals done: done_at column, Mark done and Reopen, done goals drop out of Set aside and Overview (planned)
 - [T-25](tasks/T-25.md) — Phone bottom bar and Activity opens on today: tab bar plus More sheet replace the burger drawer, picker loses Month to date and Custom range (planned)
+- [T-26](tasks/T-26.md) — Phone polish: full-screen Add entry sheet with account and category pickers, tinted account cards with a ⋯ menu
 
 ## Retros
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests
