@@ -2,10 +2,12 @@
 
 import Link from "next/link";
 import { useActionState, useEffect, useState } from "react";
+import { CategoryIcon } from "@/components/category-icon";
 import { ChoiceSheet } from "@/components/choice-sheet";
 import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { useMoney } from "@/components/currency-provider";
-import { ArrowRight, ChevronDown, ChevronLeft, Pencil, Plus, Trash2 } from "lucide-react";
+import { ArrowRight, ChevronDown, ChevronLeft, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { Tile } from "@/components/icon-card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -18,7 +20,7 @@ import { deleteEntry, editPayment, saveEntry, type FormState } from "./actions";
 
 type Options = {
   accounts: { id: string; name: string; balance: number }[];
-  categories: Pick<Category, "id" | "name" | "kind">[];
+  categories: Pick<Category, "id" | "name" | "kind" | "icon">[];
   today: string; // YYYY-MM-DD in Asia/Manila, from the server
   setAsideItems: { value: string; label: string; name: string; group: string }[]; // what a transfer can be set aside for: value is "kind:id"
 };
@@ -224,7 +226,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
   const kind = type === "income" ? "income" : "spending";
   const transfer = type === "transfer";
   const amountSize = amountLength <= 8 ? "text-6xl" : amountLength <= 11 ? "text-5xl" : "text-4xl"; // so 18,900.00 and more still fit
-  const accountChoices = accounts.map((account) => ({ value: account.id, label: account.name, detail: money(account.balance) }));
+  const accountChoices = accounts.map((account) => ({ value: account.id, label: account.name, detail: money(account.balance), icon: <Tile><Wallet className="size-5" /></Tile> }));
   return (
     <form key={JSON.stringify(saved.values ?? {})} action={action} className="flex min-h-0 flex-1 flex-col">
       {entry && <input type="hidden" name="id" value={entry.id} />}
@@ -232,8 +234,8 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
       <input type="hidden" name="accountId" value={accountId} />
       <input type="hidden" name="toAccountId" value={to === OTHER ? "" : to} />
       <input type="hidden" name="categoryId" value={categoryId} />
-      <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto px-4 pb-4">
-        <div className="grid grid-cols-3 rounded-xl bg-secondary p-1">
+      <div className="grid shrink-0 gap-3 rounded-b-[28px] bg-primary px-4 pt-2 pb-5 text-primary-foreground">
+        <div className="grid grid-cols-3 rounded-xl bg-white/20 p-1">
           {(["expense", "income", "transfer"] as const).map((option) => (
             <button
               key={option}
@@ -243,7 +245,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
                 setType(option);
                 setCategoryId("");
               }}
-              className="min-h-11 rounded-lg text-sm font-medium text-muted-foreground capitalize aria-pressed:bg-surface aria-pressed:text-foreground aria-pressed:shadow-xs"
+              className="min-h-11 rounded-lg text-sm font-medium capitalize aria-pressed:bg-surface aria-pressed:text-foreground aria-pressed:shadow-xs"
             >
               {option}
             </button>
@@ -251,7 +253,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
         </div>
         <div className="grid gap-1">
           <div className="flex items-baseline justify-center gap-1.5 pt-4">
-            <span className="font-serif text-3xl text-muted-foreground">{symbol}</span>
+            <span className="font-serif text-3xl opacity-85">{symbol}</span>
             <Input
               id="amount"
               name="amount"
@@ -259,14 +261,16 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
               placeholder="0.00"
               aria-label={`Amount (${symbol})`}
               autoFocus={!entry}
-              className={`h-auto w-full min-w-0 border-0 bg-transparent p-0 text-center font-serif shadow-none tabular-nums focus-visible:ring-0 dark:bg-transparent ${amountSize}`}
+              className={`h-auto w-full min-w-0 border-0 bg-transparent p-0 text-center font-serif shadow-none tabular-nums focus-visible:ring-0 dark:bg-transparent placeholder:text-primary-foreground/60 ${amountSize}`}
               defaultValue={state.values?.amount}
               onChange={(event) => setAmountLength(event.target.value.length)}
               {...invalid(state, "amount")}
             />
           </div>
-          {state.errors?.amount && <p id="amount-error" className="text-center text-sm text-destructive">{state.errors.amount}</p>}
+          {state.errors?.amount && <p id="amount-error" className="text-center text-sm">{state.errors.amount}</p>}
         </div>
+      </div>
+      <div className="grid flex-1 grid-cols-1 content-start gap-4 overflow-y-auto px-4 py-4">
         {transfer ? (
           <div className="grid gap-2">
             <div className="grid grid-cols-[1fr_auto_1fr] items-stretch gap-1">
@@ -302,7 +306,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
               title="Category"
               value={categoryId}
               onChange={setCategoryId}
-              choices={categories.filter((category) => category.kind === kind).map((category) => ({ value: category.id, label: category.name }))}
+              choices={categories.filter((category) => category.kind === kind).map((category) => ({ value: category.id, label: category.name, icon: <CategoryIcon icon={category.icon} size={42} /> }))}
               placeholder="Pick a category"
               invalid={!!state.errors?.categoryId}
               empty={

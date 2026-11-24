@@ -9,6 +9,11 @@
 <style>
 :root{--bg:#faf9f5;--surface:#fff;--raised:#f0eee6;--line:#e3e1d8;--fg:#1f1e1c;--muted:#6e6b63;--clay:#c96442}
 @media (prefers-color-scheme:dark){:root{--bg:#1f1f1e;--surface:#262624;--raised:#30302e;--line:#3a3a37;--fg:#eceae3;--muted:#a3a19a}}
+body[data-theme=dark]{--bg:#1f1f1e;--surface:#262624;--raised:#30302e;--line:#3a3a37;--fg:#eceae3;--muted:#a3a19a}
+body[data-theme=light]{--bg:#faf9f5;--surface:#fff;--raised:#f0eee6;--line:#e3e1d8;--fg:#1f1e1c;--muted:#6e6b63}
+.theme{width:100%;display:flex;gap:8px;justify-content:center;align-items:center;font-size:14px;color:#444}
+.theme button{height:40px;padding:0 16px;border-radius:20px;border:1px solid #0003;background:#fff8;font:500 14px "Instrument Sans";cursor:pointer}
+.theme button.on{background:#111;color:#fff}
 *{box-sizing:border-box}
 body{margin:0;background:#cfc9bb;font-family:"Instrument Sans",system-ui,sans-serif;color:var(--fg);display:flex;gap:32px;justify-content:center;align-items:flex-start;padding:24px;flex-wrap:wrap}
 .col{display:flex;flex-direction:column;align-items:center;gap:8px}
@@ -25,7 +30,7 @@ h1{font:500 28px "Source Serif 4",serif;margin:0 0 14px}
 .nav .on{color:var(--fg);font-weight:600}
 /* phone FAB: 56px, 16px from the right, 16px above the tab bar */
 .fab{position:absolute;right:16px;bottom:80px;width:56px;height:56px;border-radius:50%;border:0;background:var(--clay);color:#fff;font-size:30px;line-height:1;box-shadow:0 4px 14px #0005;cursor:pointer}
-.fab2{position:absolute;right:20px;bottom:148px;width:48px;height:48px;border-radius:50%;border:1px solid var(--line);background:var(--surface);color:var(--fg);display:grid;place-items:center;box-shadow:0 3px 10px #0004}
+.fab2{position:absolute;right:18px;bottom:148px;width:52px;height:52px;border-radius:50%;background:var(--fg);color:var(--bg);display:grid;place-items:center;box-shadow:0 0 0 4px var(--bg),0 6px 16px #0006}
 .sheet{position:absolute;inset:0;background:var(--bg);display:none;flex-direction:column;z-index:5}
 .sheet.on{display:flex}
 .sheet header{display:flex;align-items:center;gap:8px;padding:12px 8px 4px}
@@ -42,20 +47,21 @@ h1{font:500 28px "Source Serif 4",serif;margin:0 0 14px}
 .pill{position:absolute;right:24px;bottom:24px;height:48px;padding:0 20px;border-radius:24px;border:0;background:var(--clay);color:#fff;font:600 15px "Instrument Sans";box-shadow:0 4px 14px #0005}
 </style>
 </head>
-<body>
+<body data-theme="dark">
 <script>
 const nav=on=>`<div class="nav">${["Overview","Accounts","Activity","Bills","More"].map(n=>`<span class="${n===on?"on":""}">${n}</span>`).join("")}</div>`;
 const sheet=`<div class="sheet"><header><button aria-label="Back">‹</button><span>Add entry</span></header><div class="amt">₱0.00</div><div class="pick">Pick an account</div><div class="pick">Pick a category</div><div class="save">Add entry</div></div>`;
-const chart='<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 20V10M12 20V4M18 20v-7"/></svg>';
+const chart='<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M6 20V10M12 20V4M18 20v-7"/></svg>';
 // fabs: "both", "add" (no Insights button), "insights" (no Add button)
 const phone=(title,note,tab,content,fabs="both")=>`<div class="col"><h2>${title}</h2><div class="phone"><div class="body">${content}</div>${nav(tab)}${fabs!=="insights"?`<button class="fab" aria-label="Add entry" onclick="this.parentNode.querySelector('.sheet').classList.add('on')">+</button>`:""}${fabs!=="add"?`<button class="fab2" aria-label="Insights">${chart}</button>`:""}${sheet}</div><p class="note">${note}</p></div>`;
 const rows=r=>r.map(x=>`<div class="row"><span>${x[0]}</span><b>${x[1]}</b></div>`).join("");
-document.body.innerHTML=
- phone("Overview","Two floating buttons. The clay + (56px) stays the main one; the Insights button (48px, white with a border) stacks 12px above it. Tap the +: the same full-screen Add entry sheet opens.","Overview",`<h1>Overview</h1><div class="card"><small>Net worth</small><b>₱32,185.75</b></div><div class="card"><small>Upcoming bills</small>${rows([["Internet","₱1,499.00"],["Rent","₱8,000.00"],["Netflix","₱549.00"]])}</div><div class="card"><small>Budget left</small><b>₱6,240.00</b></div>`)+
+document.body.innerHTML=`<div class="theme"><span>Theme:</span><button data-t="light">Light</button><button data-t="dark" class="on">Dark</button></div>`+
+ phone("Overview","Two floating buttons. The clay + (56px) stays the main one; the Insights button (a 52px ink circle with a ring, no label) stacks 12px above it. Tap the +: the same full-screen Add entry sheet opens.","Overview",`<h1>Overview</h1><div class="card"><small>Net worth</small><b>₱32,185.75</b></div><div class="card"><small>Upcoming bills</small>${rows([["Internet","₱1,499.00"],["Rent","₱8,000.00"],["Netflix","₱549.00"]])}</div><div class="card"><small>Budget left</small><b>₱6,240.00</b></div>`)+
  phone("Bills","Bills already has + Add bill at the top. The FAB still adds an ENTRY, which could be confused with it.","Bills",`<h1>Bills</h1>${rows([["Internet","₱1,499.00"],["Rent","₱8,000.00"],["Netflix","₱549.00"],["Meralco","₱2,310.00"],["Globe","₱999.00"],["Insurance","₱1,200.00"],["Gym","₱900.00"]]).replace(/class="row"/g,'class="card" style="display:flex;justify-content:space-between"')}`)+
  phone("Activity: no button","Activity already has Add entry in its header, so the + is hidden. The Insights button keeps its place (it does not slide down), so it never moves between pages.","Activity",`<h1>Activity</h1>${rows([["Jollibee","−₱245.00"],["Salary","+₱28,000.00"],["GCash → Maya","₱500.00"],["Grab","−₱180.00"]])}`,"insights")+
  phone("Insights: no Insights button","On the Insights page itself its own button is hidden, so only the + shows.","More",`<h1>Insights</h1><div class="card"><small>Spent</small><b>₱18,400.00</b></div><div class="card"><small>Where it went</small>${rows([["Food","₱7,600 · 41%"],["Rent","₱8,000 · 43%"],["Transport","₱2,900 · 16%"]])}</div>`,"add")+
  `<div class="col"><h2>Desktop (md and up)</h2><div class="desk"><div class="side"><span>Overview</span><span class="on">Bills</span><span>Activity</span></div><div class="main"><h1>Bills</h1><div class="card"><small>Internet</small><b>₱1,499.00</b></div></div><button class="pill">+ Add entry</button></div><p class="note" style="max-width:720px">On desktop it is a pill with a label (a bare + is unclear with a mouse). Opens the usual centered Add entry dialog.</p></div>`;
+document.querySelectorAll(".theme button").forEach(b=>b.onclick=()=>{document.body.dataset.theme=b.dataset.t;document.querySelectorAll(".theme button").forEach(x=>x.classList.toggle("on",x===b))});
 </script>
 </body>
 </html>

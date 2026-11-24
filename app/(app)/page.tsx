@@ -2,7 +2,11 @@ import { and, asc, desc, eq, gt, isNull, sql, sum } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
+import { ArrowLeftRight, HandCoins, Receipt, Target } from "lucide-react";
 import { AccountIcon } from "@/components/account-icon";
+import { CategoryIcon } from "@/components/category-icon";
+import { HeroBlock } from "@/components/hero-block";
+import { IconCard, Tile } from "@/components/icon-card";
 import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
@@ -22,7 +26,7 @@ const toAccounts = alias(accounts, "to_accounts");
 export default function OverviewPage() {
   return (
     <>
-      <PageHeader title="Overview" description="Your money at a glance." />
+      <PageHeader title="Overview" description="Your money at a glance." hideOnPhone />
       <Suspense fallback={<LoadingBar />}>
         <Overview />
       </Suspense>
@@ -66,7 +70,7 @@ async function Overview() {
     recent: await tx
       .select({
         id: transactions.id, type: transactions.type, amount: transactions.amount, date: transactions.date, payee: transactions.payee,
-        account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName, category: categories.name,
+        account: accounts.name, toAccount: toAccounts.name, toName: transactions.toName, category: categories.name, categoryIcon: categories.icon,
       })
       .from(transactions)
       .innerJoin(accounts, eq(transactions.accountId, accounts.id))
@@ -98,7 +102,60 @@ async function Overview() {
 
   return (
     <div className="grid gap-8">
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+      <div className="md:hidden">
+        <HeroBlock className="pb-14" top={<span>Overview</span>} label="Net worth" value={money(netWorth(data.balances.accounts))} chip={`Across ${counted} ${counted === 1 ? "account" : "accounts"}`} />
+        <div className="relative -mt-9 grid grid-cols-2 gap-3">
+          <Card href={`/activity?type=income&${thisMonth}`} label="Income" value={money(income)} note={changeNote(incomeChange)} />
+          <Card href={`/activity?type=expense&${thisMonth}`} label="Spent" value={money(expenses)} note={changeNote(expensesChange)} />
+        </div>
+        <div className="mt-6 grid gap-6">
+          <Section title="Upcoming bills" href="/bills" empty={data.bills.length === 0 && "No bills yet. Add rent, internet or a subscription in Recurring bills."}>
+            <div className="grid gap-2">
+              {data.bills.slice(0, 5).map((bill) => {
+                const status = billStatus(bill.nextDueDate, today);
+                return (
+                  <IconCard key={bill.id} href={`/bills/${bill.id}`} icon={<Tile tone={status === "overdue" ? "warning" : undefined}><Receipt className="size-5" /></Tile>} title={bill.name}
+                    sub={`${formatDate(bill.nextDueDate)} · ${{ overdue: "Overdue", soon: "Due soon", upcoming: "Upcoming" }[status]}`} amount={money(bill.amount - (bill.paid ?? 0))} amountSub="left" />
+                );
+              })}
+            </div>
+          </Section>
+          <Section title="Accounts" href="/accounts">
+            <div className="grid gap-2">
+              {data.balances.accounts.map((account) => (
+                <IconCard key={account.id} href={`/accounts/${account.id}`} icon={<Tile><AccountIcon icon={account.icon} name={account.name} /></Tile>} title={account.name} amount={money(account.balance)} />
+              ))}
+            </div>
+          </Section>
+          <Section title="Goals" href="/goals" empty={data.goals.length === 0 && "No goals yet. Create one in Goals: an emergency fund, a trip, a new phone."}>
+            <div className="grid gap-2">
+              {data.goals.map((goal) => (
+                <PhoneProgress key={goal.id} href={`/goals/${goal.id}`} icon={<Target className="size-5" />} name={goal.name} done={goal.saved} total={goal.target} verb="saved" />
+              ))}
+            </div>
+          </Section>
+          <Section title="Debts" href="/debts" empty={data.debts.length === 0 && "No debts. Add money you owe, or money owed to you, in Debts."}>
+            <div className="grid gap-2">
+              {data.debts.map((debt) => (
+                <PhoneProgress key={debt.id} href={`/debts/${debt.id}`} icon={<HandCoins className="size-5" />} name={debt.name} tag={directionLabels[debt.direction]} done={debt.paid} total={debt.total} verb={debt.direction === "owed" ? "received" : "paid"} />
+              ))}
+            </div>
+          </Section>
+          <Section title="Recent activity" href="/activity?all=1" empty={data.recent.length === 0 && "No entries yet. Log what comes in and goes out with Add entry in Activity."}>
+            <div className="grid gap-2">
+              {data.recent.map((row) => (
+                <IconCard key={row.id} tone={row.type === "income" ? "income" : undefined}
+                  icon={row.type === "transfer" ? <Tile><ArrowLeftRight className="size-5" /></Tile> : <CategoryIcon icon={row.categoryIcon} size={42} />}
+                  title={row.payee ?? row.category ?? (row.type === "transfer" ? "Transfer" : "—")}
+                  sub={`${formatDate(row.date)} · ${row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account}`}
+                  amount={`${{ income: "+", expense: "−", transfer: "" }[row.type]}${money(row.amount)}`} />
+              ))}
+            </div>
+          </Section>
+        </div>
+      </div>
+
+      <div className="hidden grid-cols-2 gap-3 md:grid lg:grid-cols-4">
         <Card href="/accounts" label="Net worth" value={money(netWorth(data.balances.accounts))} note={`Across ${counted} ${counted === 1 ? "account" : "accounts"}`} />
         <Card href={`/activity?type=income&${thisMonth}`} label="Income this month" value={money(income)} note={changeNote(incomeChange)} />
         <Card href={`/activity?type=expense&${thisMonth}`} label="Expenses this month" value={money(expenses)} note={changeNote(expensesChange)}>
@@ -109,7 +166,7 @@ async function Overview() {
         <Card href="/bills" label="Bills due in 7 days" value={money(dueSoon.left)} note={`${dueSoon.count} ${dueSoon.count === 1 ? "bill" : "bills"}`} />
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[1fr_1.3fr_1fr]">
+      <div className="hidden gap-8 md:grid lg:grid-cols-[1fr_1.3fr_1fr]">
         <Section title="Accounts" href="/accounts">
           <MiniTable>
             {data.balances.accounts.map((account) => (
@@ -234,5 +291,15 @@ async function ProgressRow({ href, name, tag, done, total, verb }: { href: strin
         <div className="mt-1 text-sm text-muted-foreground tabular-nums">{money(done)} of {money(total)} {verb} · {Math.min(100, Math.floor((done * 100) / total))}%</div>
       </TableCell>
     </TableRow>
+  );
+}
+
+// A phone card for a goal or debt: the pixel bar sits under the name.
+async function PhoneProgress({ href, icon, name, tag, done, total, verb }: { href: string; icon: ReactNode; name: string; tag?: string; done: number; total: number; verb: string }) {
+  const money = await getMoney();
+  return (
+    <IconCard href={href} icon={<Tile>{icon}</Tile>} title={name} sub={tag ?? `${money(done)} of ${money(total)} ${verb}`} amount={`${Math.min(100, Math.floor((done * 100) / total))}%`}>
+      <span className="mt-1.5"><PixelBar blocks={progressBlocks(done, total)} label={`${name}: ${money(done)} of ${money(total)} ${verb}`} /></span>
+    </IconCard>
   );
 }

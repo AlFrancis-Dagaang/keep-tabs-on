@@ -5,7 +5,7 @@ import { useState } from "react";
 import { cn } from "cn";
 import { Sheet, SheetClose, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 
-export type Choice = { value: string; label: string; detail?: string };
+export type Choice = { value: string; label: string; detail?: string; icon?: React.ReactNode }; // icon: a tile drawn before the label
 
 /**
  * A big button showing the chosen row that opens a bottom sheet of rows; choosing one closes it.
@@ -31,7 +31,8 @@ export function ChoiceSheet({ id, title, value, onChange, choices, placeholder, 
           )}
         >
           {compact && <span className="text-xs text-muted-foreground">{title}</span>}
-          <span className="grid min-w-0">
+          {!compact && chosen?.icon}
+          <span className="grid min-w-0 flex-1">
             <span className={cn("truncate font-semibold", !chosen && "font-normal text-muted-foreground")}>{chosen?.label ?? placeholder}</span>
             {chosen?.detail && <span className="text-xs text-muted-foreground tabular-nums">{chosen.detail}</span>}
           </span>
@@ -53,9 +54,10 @@ export function ChoiceSheet({ id, title, value, onChange, choices, placeholder, 
               onChange(choice.value);
               setOpen(false);
             }}
-            className="flex min-h-14 items-center justify-between gap-3 border-b py-2 text-left last:border-0"
+            className="flex min-h-14 items-center gap-3 border-b py-2 text-left last:border-0"
           >
-            <span className="grid">
+            {choice.icon}
+            <span className="grid flex-1">
               <span className="font-semibold">{choice.label}</span>
               {choice.detail && <span className="text-sm text-muted-foreground tabular-nums">{choice.detail}</span>}
             </span>

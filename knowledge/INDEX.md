@@ -15,6 +15,7 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [Show a mock of the placement before building a new UI element](lessons/2026-11-16-mock-placement-first.md) — when the plan doesn't name a position, show 2–3 placements and get a pick first
 - [Qualify the outer table in raw SQL subqueries](lessons/2026-11-17-qualify-outer-table.md) — Drizzle may render the column unqualified; spell out "table"."col"
 - [Give DB-backed tests an explicit timeout](lessons/2026-11-17-db-test-timeout.md) — 30 s testTimeout in vitest.config.mts; run 3 times before calling it green
+- [Remember that pushing to main migrates production through the Vercel build](lessons/2026-11-24-push-migrates-production.md) — read vercel.json before planning a deploy-order step; no manual production migration
 
 ## Decisions
 - [Stack](decisions/2026-11-09-stack.md) — Next.js + Neon/Drizzle + Neon Auth on Vercel; RLS via restricted role and per-request transaction
@@ -63,3 +64,4 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-12 to T-17](retros/2026-11-16-t12-t17.md) — scope grew in T-17, show-before-build pattern, month of use started 14 Nov
 - [T-18 to T-24](retros/2026-11-18-t18-t24.md) — docs lagging code, production migrations unconfirmed, Set aside added to the brief
 - [T-27](tasks/T-27.md) — Insights: where the money goes this month, by category, with a 6-month trend and a written summary (numbers only, no AI)
+- [T-28](tasks/T-28.md) — Phone cards part 1: category icons, hero block, icon cards on Overview and Activity, Add entry hero

@@ -3,6 +3,10 @@ import { alias } from "drizzle-orm/pg-core";
 import Link from "next/link";
 import { Fragment, Suspense } from "react";
 import { cn } from "cn";
+import { ArrowLeftRight } from "lucide-react";
+import { CategoryIcon } from "@/components/category-icon";
+import { HeroBlock } from "@/components/hero-block";
+import { IconCard, Tile } from "@/components/icon-card";
 import { EntryDate } from "@/components/entry-date";
 import { LoadingBar } from "@/components/loading-bar";
 import { MonthPicker } from "@/components/month-picker";
@@ -15,7 +19,7 @@ import { getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { loadSetAsideItems } from "@/lib/set-aside";
 import { withUser } from "@/lib/db";
-import { formatDate, isLinked, parseRange, setAsideOf } from "@/lib/money";
+import { formatDate, isLinked, monthRange, parseRange, setAsideOf } from "@/lib/money";
 
 import { DeleteEntry, EntryForm } from "./entry-form";
 import { getMoney } from "@/lib/settings";
@@ -24,7 +28,7 @@ const types: Transaction["type"][] = ["income", "expense", "transfer"];
 const toAccounts = alias(accounts, "to_accounts");
 
 type Search = Promise<{ type?: string; from?: string; to?: string; all?: string }>;
-type Row = Pick<Transaction, "type" | "payee" | "paidTo" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId" | "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId"> & { setAsideName?: string | null; account: string; toAccount: string | null; category: string | null };
+type Row = Pick<Transaction, "type" | "payee" | "paidTo" | "note" | "toName" | "billId" | "debtId" | "goalId" | "installmentId" | "setAsideBillId" | "setAsideDebtId" | "setAsideGoalId" | "setAsideInstallmentId"> & { setAsideName?: string | null; account: string; toAccount: string | null; category: string | null; categoryIcon: string | null };
 
 const dash = <span className="text-muted-foreground">—</span>;
 const payee = (head: string) => ({ head, cell: (row: Row) => <TableCell data-label={head}>{row.payee ?? dash}{row.paidTo && <span className="text-muted-foreground"> · To {row.paidTo}</span>}</TableCell> });
@@ -71,7 +75,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
   const { from, to } = explicit.from || explicit.to ? explicit : all ? {} : { from: today, to: today };
   const { balances, choices, earliest, rows: found, setAsideItems } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
-    choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
+    choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind, icon: categories.icon })
       .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
     setAsideItems: await loadSetAsideItems(tx, userId),
     earliest: (await tx.select({ date: min(transactions.date) }).from(transactions).where(eq(transactions.userId, userId)))[0].date,
@@ -79,7 +83,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
       .select({
         id: transactions.id, type: transactions.type, accountId: transactions.accountId, toAccountId: transactions.toAccountId, categoryId: transactions.categoryId, amount: transactions.amount, date: transactions.date, createdAt: transactions.createdAt, payee: transactions.payee,
         note: transactions.note, toName: transactions.toName, paidTo: transactions.paidTo,
-        account: accounts.name, toAccount: toAccounts.name, category: categories.name, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
+        account: accounts.name, toAccount: toAccounts.name, category: categories.name, categoryIcon: categories.icon, billId: transactions.billId, debtId: transactions.debtId, goalId: transactions.goalId, installmentId: transactions.installmentId,
         setAsideBillId: transactions.setAsideBillId, setAsideDebtId: transactions.setAsideDebtId, setAsideGoalId: transactions.setAsideGoalId, setAsideInstallmentId: transactions.setAsideInstallmentId,
       })
       .from(transactions)
@@ -99,10 +103,17 @@ async function Activity({ searchParams }: { searchParams: Search }) {
     return query ? `/activity?${query}` : "/activity";
   };
   const cols = columns[type ?? "all"];
+  // The hero figure comes from all entries in the range, whatever the type filter shows.
+  const inRange = balances.entries.filter((entry) => (!from || entry.date >= from) && (!to || entry.date <= to));
+  const total = (t: Transaction["type"]) => inRange.filter((entry) => entry.type === t).reduce((sum, entry) => sum + entry.amount, 0);
+  const monthName = from && monthRange(`${from.slice(0, 8)}01`).to === to && from.endsWith("-01") ? new Intl.DateTimeFormat("en-US", { month: "long", timeZone: "UTC" }).format(new Date(`${from}T00:00:00Z`)) : undefined;
+  const heroLabel = monthName ? `Spent in ${monthName}` : isToday ? "Spent today" : from || to ? "Spent in this range" : "Spent, all dates";
+  const days = [...new Set(rows.map((row) => row.date))];
 
   return (
     <>
-      <PageHeader title="Activity" description="Income, expenses and transfers.">
+      {balances.accounts.length > 0 && <HeroBlock top={<span>Activity</span>} label={heroLabel} value={money(total("expense"))} chip={`Income ${money(total("income"))}`} />}
+      <PageHeader title="Activity" description="Income, expenses and transfers." hideOnPhone={balances.accounts.length > 0}>
         {balances.accounts.length > 0 && <EntryForm accounts={balances.accounts} categories={choices} today={today} setAsideItems={setAsideItems} />}
       </PageHeader>
       {balances.accounts.length === 0 ? (
@@ -120,7 +131,38 @@ async function Activity({ searchParams }: { searchParams: Search }) {
               {isToday ? `No ${type ? `${type} ` : ""}entries today. Log one with Add entry.` : from || to ? `No ${type ? `${type} ` : ""}entries in this range.` : type ? `No ${type} entries yet. Log one with Add entry.` : "No entries yet. Log one with Add entry."}
             </p>
           ) : (
-            <div className="rounded-xl border bg-surface max-md:border-0 max-md:bg-transparent">
+            <>
+            <div className="grid gap-4 md:hidden">
+              {days.map((day) => (
+                <section key={day} className="grid gap-2">
+                  <h2 className="text-sm font-medium text-muted-foreground">{day === today ? "Today" : formatDate(day)}</h2>
+                  {rows.filter((row) => row.date === day).map((row) => {
+                    const where = row.type === "transfer" ? `${row.account} → ${row.toAccount ?? row.toName}` : row.account;
+                    const sign = { income: "+", expense: "−", transfer: "" }[row.type];
+                    const name = row.type === "transfer" ? (row.goalId ? "Goal" : "Transfer") : (row.payee ?? row.category ?? (row.billId ? "Bill" : row.debtId ? "Debt" : row.installmentId ? "Installment" : "Uncategorized"));
+                    return (
+                      <IconCard
+                        key={row.id}
+                        tone={row.type === "income" ? "income" : undefined}
+                        icon={row.type === "transfer" ? <Tile><ArrowLeftRight className="size-5" /></Tile> : <CategoryIcon icon={row.categoryIcon} size={42} />}
+                        title={name}
+                        sub={[row.category && row.payee ? row.category : null, where, row.note].filter(Boolean).join(" · ")}
+                        amount={`${sign}${money(row.amount)}`}
+                        actions={
+                          <RowActions
+                            items={[
+                              { label: "Edit", node: !isLinked(row) && <EntryForm entry={row} accounts={balances.accounts} categories={choices} today={today} setAsideItems={setAsideItems} /> },
+                              { label: "Remove", node: <DeleteEntry id={row.id} label={`${formatDate(row.date)} · ${where} · ${sign}${money(row.amount)}`} consequence={isLinked(row) ? "The bill, installment, debt or goal goes back too, and a due date it moved rolls back." : undefined} /> },
+                            ]}
+                          />
+                        }
+                      />
+                    );
+                  })}
+                </section>
+              ))}
+            </div>
+            <div className="hidden rounded-xl border bg-surface md:block">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -154,6 +196,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
                 </TableBody>
               </Table>
             </div>
+            </>
           )}
         </>
       )}

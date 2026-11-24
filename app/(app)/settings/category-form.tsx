@@ -7,10 +7,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { CategoryIcon } from "@/components/category-icon";
 import type { Category } from "@/db/schema";
+import { categoryIcons } from "@/lib/category-icons";
 import { deleteCategory, saveCategory } from "./actions";
 
-type CategoryRow = Pick<Category, "id" | "name" | "kind">;
+type CategoryRow = Pick<Category, "id" | "name" | "kind" | "icon">;
 
 /** "Add category" for a kind with no category; "Rename" with one. */
 export function CategoryForm({ kind, category }: { kind: Category["kind"]; category?: CategoryRow }) {
@@ -53,6 +55,17 @@ function Fields({ kind, category, onSaved }: { kind: Category["kind"]; category?
         />
         {state.errors?.name && <p id="name-error" className="text-sm text-destructive">{state.errors.name}</p>}
       </div>
+      <fieldset className="grid grid-cols-1 gap-2">
+        <legend className="mb-2 text-sm font-medium">Icon</legend>
+        <div className="grid grid-cols-6 gap-2">
+          {[{ key: "", label: "Generic" }, ...categoryIcons].map((item) => (
+            <label key={item.key} title={item.label} className="grid size-11 cursor-pointer place-items-center rounded-lg has-[:checked]:ring-2 has-[:checked]:ring-primary has-[:focus-visible]:ring-2">
+              <input type="radio" name="icon" value={item.key} defaultChecked={item.key === (state.values?.icon ?? category?.icon ?? "")} className="sr-only" aria-label={item.label} />
+              <CategoryIcon icon={item.key} />
+            </label>
+          ))}
+        </div>
+      </fieldset>
       <DialogFooter>
         <Button type="submit" disabled={pending}>
           {category ? "Save" : "Add category"}

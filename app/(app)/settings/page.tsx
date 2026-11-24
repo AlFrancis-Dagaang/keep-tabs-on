@@ -1,5 +1,6 @@
 import { asc, eq } from "drizzle-orm";
 import { Suspense } from "react";
+import { CategoryIcon } from "@/components/category-icon";
 import { LoadingBar } from "@/components/loading-bar";
 import { PageHeader } from "@/components/page-header";
 import { RowActions } from "@/components/row-actions";
@@ -67,7 +68,7 @@ async function Currency() {
 async function Categories() {
   const userId = await getUserId();
   const rows = await withUser(userId, (tx) =>
-    tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
+    tx.select({ id: categories.id, name: categories.name, kind: categories.kind, icon: categories.icon })
       .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
   );
   return (
@@ -78,7 +79,7 @@ async function Categories() {
   );
 }
 
-function CategoryTable({ title, kind, rows }: { title: string; kind: Category["kind"]; rows: Pick<Category, "id" | "name" | "kind">[] }) {
+function CategoryTable({ title, kind, rows }: { title: string; kind: Category["kind"]; rows: Pick<Category, "id" | "name" | "kind" | "icon">[] }) {
   return (
     <section>
       <div className="mb-3 flex items-center justify-between gap-4">
@@ -100,7 +101,7 @@ function CategoryTable({ title, kind, rows }: { title: string; kind: Category["k
               {rows.map((category) => (
                 <TableRow key={category.id}>
                   <TableCell className="pl-4">
-                    {category.name}
+                    <span className="inline-flex items-center gap-3"><CategoryIcon icon={category.icon} />{category.name}</span>
                   </TableCell>
                   <TableCell data-card="actions" className="pr-4 text-right whitespace-nowrap">
                     <RowActions items={[{ label: "Rename", node: <CategoryForm kind={kind} category={category} /> }, { label: "Remove", node: <DeleteCategory category={category} /> }]} />

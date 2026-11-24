@@ -21,9 +21,9 @@ function OffInsights() {
     <Link
       href="/insights"
       aria-label="Insights"
-      className="fixed right-5 bottom-[calc(9.25rem+env(safe-area-inset-bottom))] z-20 grid size-12 place-items-center rounded-full border bg-surface shadow-lg md:hidden"
+      className="fixed right-[18px] bottom-[calc(9.25rem+env(safe-area-inset-bottom))] z-20 grid size-[52px] place-items-center rounded-full bg-foreground text-background shadow-xl ring-4 ring-background md:hidden"
     >
-      <ChartNoAxesColumn className="size-5" />
+      <ChartNoAxesColumn className="size-6" strokeWidth={2.5} />
     </Link>
   );
 }

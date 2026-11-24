@@ -1,0 +1,159 @@
+<!doctype html>
+<!-- Covers: T-28 and T-29 (phone card redesign). Throwaway mock: a solid hero block with one big number at the top of each page, rows as icon cards, category icons, a Week/Month switch. Keeps the warm palette. Use the buttons at the top to try the hero colour: Clay, Ink, or a different colour per page. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Prototype: phone cards</title>
+<link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600&family=Source+Serif+4:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#faf9f5;--surface:#fff;--raised:#f0eee6;--line:#e3e1d8;--fg:#1f1e1c;--muted:#6e6b63;--clay:#c96442;--ink:#1f1e1c;--sage:#5f7a52;--sand:#c58b2a}
+@media (prefers-color-scheme:dark){body[data-theme=auto]{--bg:#1f1f1e;--surface:#262624;--raised:#30302e;--line:#3a3a37;--fg:#eceae3;--muted:#a3a19a;--ink:#3a3a37;--sage:#7fa36f}}
+body[data-theme=dark]{--bg:#1f1f1e;--surface:#262624;--raised:#30302e;--line:#3a3a37;--fg:#eceae3;--muted:#a3a19a;--ink:#3a3a37;--sage:#7fa36f}
+body[data-theme=light]{--bg:#faf9f5;--surface:#fff;--raised:#f0eee6;--line:#e3e1d8;--fg:#1f1e1c;--muted:#6e6b63;--ink:#1f1e1c;--sage:#5f7a52}
+body[data-theme=dark] .row,body[data-theme=dark] .pick{color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:#cfc9bb;font-family:"Instrument Sans",system-ui,sans-serif;color:var(--fg);padding:20px}
+.pick{display:flex;gap:8px;justify-content:center;align-items:center;margin-bottom:18px;font-size:14px;color:#444;flex-wrap:wrap}
+.pick button{height:40px;padding:0 16px;border-radius:20px;border:1px solid #0003;background:#fff8;font:500 14px "Instrument Sans";cursor:pointer}
+.pick button.on{background:#111;color:#fff}
+.row{display:flex;gap:28px;justify-content:center;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column;align-items:center;gap:8px}
+.col h2{font:500 14px "Instrument Sans";margin:0;color:#444}
+.note{max-width:375px;font-size:13px;color:#444;margin:0}
+.phone{width:375px;height:780px;background:var(--bg);border-radius:36px;border:8px solid #111;overflow:hidden;display:flex;flex-direction:column;position:relative}
+.scroll{flex:1;overflow-y:auto}
+body{--hf:#fff}
+body[data-mode=clay] .phone{--h:var(--clay)}
+body[data-mode=ink] .phone{--h:var(--ink)}
+body[data-mode=page] .p1,body[data-mode=page] .p5,body[data-mode=page] .p9{--h:var(--clay)}
+body[data-mode=page] .p2,body[data-mode=page] .p7,body[data-mode=page] .p10{--h:var(--ink)}
+body[data-mode=page] .p3,body[data-mode=page] .p6{--h:var(--sage)}
+body[data-mode=page] .p4,body[data-mode=page] .p8{--h:var(--sand)}
+.hero{background:var(--h);padding:34px 18px 24px;border-radius:0 0 28px 28px;color:var(--hf)}
+.p1 .hero{padding-bottom:52px}
+.hero small{font-size:13px;opacity:.85;display:block}
+.hero b{display:block;font:500 46px/1.05 "Source Serif 4",serif;font-variant-numeric:tabular-nums;margin:4px 0 6px}
+.hero .chip{display:inline-block;background:#fff3;border-radius:14px;padding:4px 10px;font-size:12px}
+.hero .top{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;font:500 15px "Instrument Sans"}
+.seg{display:inline-flex;background:#0003;border-radius:12px;padding:3px}
+.seg span{padding:7px 14px;border-radius:9px;font-size:13px;font-weight:500}
+.seg .on{background:#fff;color:#111}
+.body{padding:14px 16px 90px}
+h3{font:600 14px "Instrument Sans";margin:18px 2px 8px;color:var(--muted);text-transform:none}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:-30px;position:relative}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;box-shadow:0 2px 8px #0002}
+.stat small{color:var(--muted);font-size:12px;display:block}
+.stat b{font:500 22px "Source Serif 4",serif;font-variant-numeric:tabular-nums}
+.card{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:8px;min-height:64px}
+.ic{width:42px;height:42px;border-radius:13px;display:grid;place-items:center;flex:none;background:var(--raised);color:var(--fg)}
+.ic svg{width:21px;height:21px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.ic.cl{background:#c9644222;color:var(--clay)}.ic.gr{background:#5f7a5222;color:var(--sage)}
+.mid{flex:1;min-width:0}
+.mid b{display:block;font-size:15px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mid small{color:var(--muted);font-size:12.5px}
+.amt{text-align:right;font-weight:600;font-variant-numeric:tabular-nums;font-size:15px}
+.amt small{display:block;color:var(--muted);font-weight:400;font-size:12px}
+.pos{color:var(--sage)}
+.pill{display:inline-block;border-radius:12px;padding:3px 9px;font-size:11.5px;background:var(--raised)}
+.pill.cl{background:var(--clay);color:#fff}
+.day{font-size:12.5px;color:var(--muted);margin:14px 2px 6px;font-weight:600}
+.bud{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:8px}
+.bud .t{display:flex;align-items:center;gap:12px}
+.bar{height:9px;border-radius:5px;background:var(--raised);overflow:hidden;margin-top:10px}
+.bar i{display:block;height:100%;background:var(--fg)}
+.bar.over i{background:repeating-linear-gradient(135deg,var(--clay) 0 5px,#e8a28c 5px 9px)}
+.nav{position:absolute;left:0;right:0;bottom:0;height:64px;border-top:1px solid var(--line);background:var(--surface);display:grid;grid-template-columns:repeat(5,1fr);font-size:11px;color:var(--muted);text-align:center;align-items:center}
+.nav .on{color:var(--fg);font-weight:600}
+.fab{position:absolute;right:16px;bottom:80px;width:56px;height:56px;border-radius:50%;background:var(--clay);color:#fff;display:grid;place-items:center;font-size:30px;box-shadow:0 4px 14px #0005}
+.acc{border-radius:18px;padding:14px 16px;margin-bottom:10px;color:#fff;display:flex;align-items:center;gap:12px;min-height:84px}
+.acc .ic{background:#fff3;color:#fff}.acc .mid small{color:#fffc}.acc b{font-weight:600}.acc .amt{font:500 22px "Source Serif 4",serif;color:#fff}
+.pbar{height:8px;border-radius:4px;background:var(--raised);overflow:hidden;margin-top:9px}.pbar i{display:block;height:100%;background:var(--fg)}
+.pbar.full i{background:var(--clay)}
+.gl{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:8px}
+.gl .t{display:flex;align-items:center;gap:12px}
+.mon{display:flex;align-items:center;gap:6px;margin:0 0 2px}.mon span{width:44px;height:44px;border-radius:14px;border:1px solid var(--line);background:var(--surface);display:grid;place-items:center;font-size:18px}.mon b{flex:1;text-align:center;font:500 18px "Source Serif 4",serif}
+.say{background:var(--raised);border-radius:16px;padding:12px 14px;font-size:13.5px;line-height:1.45;margin:10px 0}
+.trend{display:flex;align-items:flex-end;gap:8px;height:90px}.trend div{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:3px;height:100%}
+.trend p{display:flex;align-items:flex-end;gap:2px;height:100%;margin:0}.trend i{width:10px;border-radius:3px 3px 0 0}.trend span{font-size:10.5px;color:var(--muted)}
+.sheetbar{display:flex;align-items:center;gap:6px;margin-bottom:14px}.sheetbar span{width:44px;height:44px;border-radius:50%;background:#fff3;display:grid;place-items:center;font-size:22px}
+.tabs3{display:grid;grid-template-columns:repeat(3,1fr);background:#0003;border-radius:14px;padding:3px;margin-bottom:12px}.tabs3 span{padding:11px 0;text-align:center;border-radius:11px;font-size:13.5px;font-weight:500}.tabs3 .on{background:#fff;color:#111}
+.big{display:flex;align-items:baseline;justify-content:center;gap:6px;padding:6px 0 10px}.big small{font:500 28px "Source Serif 4",serif;opacity:.8}.big b{font:500 56px "Source Serif 4",serif}
+.pickb{display:flex;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px 14px;margin-bottom:10px;min-height:64px}
+.save{position:absolute;left:16px;right:16px;bottom:16px;height:56px;border-radius:16px;background:var(--clay);color:#fff;display:grid;place-items:center;font-weight:600;font-size:16px}
+.title{padding:20px 18px 0;font:500 28px "Source Serif 4",serif}
+.filter{display:flex;gap:8px;padding:12px 16px 0}
+.filter span{padding:8px 14px;border-radius:18px;background:var(--raised);font-size:13px;font-weight:500}
+.filter .on{background:var(--fg);color:var(--bg)}
+</style>
+</head>
+<body data-mode="clay" data-theme="dark">
+<div class="pick"><span>Hero colour:</span>
+ <button data-m="clay" class="on">Clay</button><button data-m="ink">Ink</button><button data-m="page">A colour per page</button>
+ <span style="margin-left:16px">Theme:</span><button data-t="light">Light</button><button data-t="dark" class="on">Dark</button></div>
+<script>
+const I={
+ food:'<path d="M17 8h1a4 4 0 0 1 0 8h-1M3 8h14v9a4 4 0 0 1-4 4H7a4 4 0 0 1-4-4ZM6 2v2M10 2v2M14 2v2"/>',
+ bus:'<rect x="4" y="3" width="16" height="14" rx="3"/><path d="M4 11h16M8 21v-4M16 21v-4"/><circle cx="8" cy="14" r=".6"/><circle cx="16" cy="14" r=".6"/>',
+ home:'<path d="M3 11l9-8 9 8v9a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/>',
+ bolt:'<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>',
+ bag:'<path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4zM3 6h18M16 10a4 4 0 0 1-8 0"/>',
+ heart:'<path d="M20.8 4.6a5.5 5.5 0 0 0-7.8 0L12 5.7l-1-1.1a5.5 5.5 0 0 0-7.8 7.8l1 1.1L12 21l7.8-7.5 1-1.1a5.5 5.5 0 0 0 0-7.8z"/>',
+ cash:'<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/>',
+ swap:'<path d="M17 3l4 4-4 4M21 7H8M7 21l-4-4 4-4M3 17h13"/>',
+ wifi:'<path d="M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0M12 20h.01"/>'};
+const ic=(k,c="")=>`<span class="ic ${c}"><svg viewBox="0 0 24 24">${I[k]}</svg></span>`;
+const nav=on=>`<div class="nav">${["Overview","Accounts","Activity","Bills","More"].map(n=>`<span class="${n===on?"on":""}">${n}</span>`).join("")}</div><div class="fab">+</div>`;
+const act=(k,t,s,a,pos,c)=>`<div class="card">${ic(k,c)}<div class="mid"><b>${t}</b><small>${s}</small></div><div class="amt ${pos?"pos":""}">${a}</div></div>`;
+const bud=(k,t,spent,lim)=>{const left=lim-spent,over=left<0;return `<div class="bud"><div class="t">${ic(k,over?"cl":"")}<div class="mid"><b>${t}</b><small>${over?`₱${(-left).toLocaleString()} over the plan`:`₱${left.toLocaleString()} left on the plan`}</small></div><div class="amt">₱${spent.toLocaleString()}<small>of ₱${lim.toLocaleString()}</small></div></div><div class="bar ${over?"over":""}"><i style="width:${Math.min(100,spent/lim*100)}%"></i></div></div>`};
+document.body.insertAdjacentHTML("beforeend",`<div class="row">
+<div class="col"><h2>Overview</h2><div class="phone p1"><div class="scroll">
+ <div class="hero"><div class="top"><span>Hello, Al</span><span>⚙</span></div><small>Net worth</small><b>₱32,185.75</b><span class="chip">↑ 6% vs October</span></div>
+ <div class="body"><div class="two"><div class="stat"><small>Income · Nov</small><b>₱28,000</b></div><div class="stat"><small>Spent · Nov</small><b>₱18,400</b></div></div>
+ <h3>Upcoming bills</h3>
+ ${act("wifi","Internet","Due in 2 days",'₱1,499<small><span class="pill cl">Due soon</span></small>',0,"cl")}
+ ${act("home","Rent","Dec 1",'₱8,000<small><span class="pill">Upcoming</span></small>')}
+ <h3>Recent activity</h3>
+ ${act("food","Jollibee","Food · BDO Savings","−₱245")}
+ ${act("cash","Salary","Income · GCash","+₱28,000",1,"gr")}
+ </div></div>${nav("Overview")}</div><p class="note">The hero holds the one number that matters. Stat cards overlap its edge. Every row is a card with an icon tile; amount on the right.</p></div>
+<div class="col"><h2>Activity</h2><div class="phone p2"><div class="scroll">
+ <div class="hero"><div class="top"><span class="seg"><span>Week</span><span class="on">Month</span></span><span>Nov 2026</span></div><small>Spent this month</small><b>₱18,400</b><span class="chip">Income ₱28,000</span></div>
+ <div class="filter" style="padding-top:14px"><span class="on">All</span><span>Expense</span><span>Income</span><span>Transfer</span></div>
+ <div class="body" style="padding-top:2px"><div class="day">Today</div>
+ ${act("food","Jollibee","Food · BDO Savings","−₱245")}
+ ${act("bus","Grab","Transport · GCash","−₱180")}
+ <div class="day">Nov 22</div>
+ ${act("swap","GCash → Maya","Transfer","₱500")}
+ ${act("bag","Uniqlo","Shopping · Cash","−₱1,290")}
+ ${act("heart","Mercury Drug","Health · Maya","−₱320")}
+ </div></div>${nav("Activity")}</div><p class="note">Category icons make a row recognisable at a glance. Income uses a green tile and amount; transfers a swap icon.</p></div>
+<div class="col"><h2>Budget</h2><div class="phone p3"><div class="scroll">
+ <div class="hero"><div class="top"><span>November</span><span class="seg"><span class="on">Month</span><span>Week</span></span></div><small>Left to spend</small><b>₱6,240</b><span class="chip">₱18,760 of ₱25,000 used</span></div>
+ <div class="body"><h3>By category</h3>
+ ${bud("food","Food and cafes",7600,7200)}
+ ${bud("bag","Shopping",2200,3000)}
+ ${bud("home","Rent",8000,8000)}
+ ${bud("bus","Transport",2900,3500)}
+ </div></div>${nav("More")}</div><p class="note">Rows like the reference: "₱7,600 of ₱7,200" with what is left or over. Over the plan uses the clay stripes you already have.</p></div>
+</div>`);
+
+const I2={bank:'<path d="M3 21h18M5 21V10M9 21V10M15 21V10M19 21V10M2 10l10-7 10 7"/>',wallet:'<path d="M3 7a2 2 0 0 1 2-2h14v4M3 7v11a2 2 0 0 0 2 2h15V9H5a2 2 0 0 1-2-2zM16 14h2"/>',target:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/>',cal:'<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',phone:'<rect x="6" y="2" width="12" height="20" rx="2"/><path d="M11 18h2"/>',plane:'<path d="M2 12l20-8-8 20-3-9z"/>',card:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>',car:'<path d="M5 17h14M3 13l2-6h14l2 6v4H3zM7 17v2M17 17v2"/>'};Object.assign(I,I2);
+const hero=(top,label,big,chip)=>`<div class="hero">${top?`<div class="top">${top}</div>`:""}<small>${label}</small><b>${big}</b>${chip?`<span class="chip">${chip}</span>`:""}</div>`;
+const acc=(k,n,sub,bal,bg)=>`<div class="acc" style="background:${bg}">${ic(k)}<div class="mid"><b>${n}</b><small>${sub}</small></div><div class="amt">${bal}</div></div>`;
+const goal=(k,n,sub,a,pct,c,full)=>`<div class="gl"><div class="t">${ic(k,c)}<div class="mid"><b>${n}</b><small>${sub}</small></div><div class="amt">${a}</div></div><div class="pbar ${full?"full":""}"><i style="width:${pct}%"></i></div></div>`;
+const phoneF=(n,t,body,tab,note,extra="")=>`<div class="col"><h2>${t}</h2><div class="phone p${n}"><div class="scroll">${body}</div>${extra||nav(tab)}</div><p class="note">${note}</p></div>`;
+const mx=[["Jun",28,15],["Jul",28,16],["Aug",30,12],["Sep",28,17],["Oct",28,17],["Nov",28,18]];
+document.body.insertAdjacentHTML("beforeend",`<h2 style="text-align:center;font:500 16px 'Instrument Sans';margin:34px 0 14px;color:#444">More pages in the same style</h2><div class="row">`+
+phoneF(4,"Accounts",hero("<span>Accounts</span><span>＋</span>","Net worth","₱32,185.75","5 accounts · 1 left out")+`<div class="body">${acc("phone","GCash","E-wallet","₱4,210.50","#1A5FD0")}${acc("bank","BDO Savings","Bank","₱18,900.00","#0F7A47")}${acc("phone","Maya","E-wallet","₱620.00","#6A4FC2")}${acc("cash","Cash","On hand","₱1,150.00","#C96442")}${acc("bank","Old BPI","Not in net worth","₱7,305.25","#6E6B63")}</div>`,"Accounts","Keeps your tinted account cards, now under the hero. The ⋯ menu stays on each card.")+
+phoneF(5,"Bills",hero("<span>Recurring bills</span><span>＋</span>","Due this month","₱14,357","2 due in the next 7 days")+`<div class="body">${goal("wifi","Internet","Due in 2 days · monthly","₱1,499",0,"cl")}${goal("home","Rent","Dec 1 · monthly","₱8,000",60)}${goal("bolt","Meralco","Dec 5 · monthly","₱2,310",100,"gr",1)}${goal("phone","Globe","Dec 9 · monthly","₱999",25)}</div>`,"Bills","Each bill: icon, due date, amount, and how much is set aside as a bar. Paid ones turn clay and green.")+
+phoneF(6,"Goals",hero("<span>Goals</span><span>＋</span>","Saved so far","₱41,300","of ₱120,000 across 3 goals")+`<div class="body">${goal("plane","Trip to Japan","Due Sep 2027 · 34%","₱24,000",34)}${goal("phone","New laptop","Due Mar 2027 · 62%","₱15,500",62)}${goal("heart","Emergency fund","No due date · 4%","₱1,800",4)}</div>`,"More","A goal is a card with its own bar, like the reference's goal screen.")+
+phoneF(7,"Debts",hero("<span>Debts</span><span>＋</span>","You owe","₱56,000","Owed to you ₱3,500")+`<div class="body"><div class="day">You owe</div>${goal("card","Credit card","Due Dec 10 · 40% paid","₱30,000",40)}${goal("car","Car loan","Due monthly · 70% paid","₱26,000",70)}<div class="day">Owed to you</div>${goal("cash","Mark","Lunch money · 0% paid","₱3,500",0,"gr")}</div>`,"More","Two groups: what you owe and what is owed to you, each a card with a bar.")+
+phoneF(8,"Installments",hero("<span>Installments</span><span>＋</span>","Monthly payments","₱4,150","2 running")+`<div class="body">${goal("phone","iPhone","4 of 12 paid · due the 15th","₱2,650 / mo",33)}${goal("bag","Sofa","9 of 10 paid · due the 3rd","₱1,500 / mo",90)}</div>`,"More","Months paid shown as a bar and a line, the amount per month on the right.")+
+phoneF(9,"Insights",hero("<span>Insights</span><span></span>","Spent in November","₱18,400","↓ 6% vs October")+`<div class="body"><div class="mon"><span>‹</span><b>November 2026</b><span>›</span></div><div class="say">You spent <b>₱18,400</b> in November. <b>41%</b> went to Rent. You have <b>₱9,600</b> left of ₱28,000 income.</div><h3>Where it went</h3>${bud("home","Rent",8000,8000).replace(/₱0 left on the plan/,"43% of spending")}${bud("food","Food",7600,9000).replace(/₱[\d,]+ left on the plan/,"41% of spending")}<h3>Last 6 months</h3><div class="stat" style="box-shadow:none"><div class="trend">${mx.map(m=>`<div><p><i style="height:${m[1]*2.4}px;background:var(--fg)"></i><i style="height:${m[2]*2.4}px;background:var(--clay)"></i></p><span>${m[0]}</span></div>`).join("")}</div></div></div>`,"More","Insights in the card style: hero with the spent number, the written line, category rows and the 6-month bars.")+
+phoneF(10,"Add entry",`<div class="hero" style="border-radius:0 0 28px 28px"><div class="sheetbar"><span>‹</span><b style="font:500 18px 'Source Serif 4',serif">Add entry</b></div><div class="tabs3"><span class="on">Expense</span><span>Income</span><span>Transfer</span></div><div class="big"><small>₱</small><b>245.00</b></div></div><div class="body" style="padding-bottom:100px"><h3>Account</h3><div class="pickb">${ic("phone")}<div class="mid"><b>BDO Savings</b><small>₱18,900.00</small></div>⌄</div><h3>Category</h3><div class="pickb">${ic("food")}<div class="mid"><b>Food and cafes</b><small>Spending</small></div>⌄</div><h3>When and why</h3><div class="pickb">${ic("cal")}<div class="mid"><b>Nov 24, 2026</b><small>Today</small></div></div><div class="pickb"><div class="mid"><small>Add a note</small></div></div></div>`,"","The amount lives in the hero block, so the number you type is the biggest thing on screen. Pickers are icon cards (the category icon shows once chosen). Save stays pinned.",`<div class="save">Add entry</div>`)+
+`</div>`);
+document.querySelectorAll(".pick button").forEach(b=>b.onclick=()=>{const k=b.dataset.m?"mode":"theme";document.body.dataset[k]=b.dataset.m||b.dataset.t;document.querySelectorAll(`.pick button[data-${b.dataset.m?"m":"t"}]`).forEach(x=>x.classList.toggle("on",x===b))});
+</script>
+</body>
+</html>

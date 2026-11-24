@@ -221,3 +221,18 @@ Status: todo
 - [ ] Money rules: only income and expense entries count; transfers (between accounts, to goals, to someone else) are left out; nothing is stored, no schema change; the figures come from the same entries Activity shows, so they match it
 - [ ] Phone fit: every tap target at least 44px and no sideways scroll at 390px
 - [ ] `docs/brief.md` no longer lists charts and reports as non-goals ("AI chat" stays); `docs/design.md` describes the page; `pnpm lint`, `pnpm test` and `pnpm build` pass; looked at signed in on dev at 390px and desktop
+
+## T-28: Phone cards, part 1: category icons, hero block, Overview, Activity and Add entry
+Status: todo
+- [ ] Category icons: a category can have an icon from a fixed list (about 16: food, transport, home, bills, shopping, health, and so on); one nullable `icon` on categories, no uploads; picked in Settings when adding or renaming a category, with a generic icon when none is picked. The activity rows, the Add entry Category picker and Insights/Budget rows show it
+- [ ] Phone hero block: below 768px each page this task covers starts with a solid clay block holding the page's one big number, matching `prototypes/mobile-cards.html` (approved): Overview net worth with the % vs last month, Activity spent this month. Text is white; the block works in light and dark
+- [ ] Phone icon cards: below 768px the Overview lists and the Activity rows are cards (icon tile, name, one muted line, amount at the right; income green, transfers a swap icon), at least 64px tall
+- [ ] Add entry on phones: the amount, with the Expense/Income/Transfer tabs, sits in the hero block; Account and Category are icon cards (the chosen category shows its icon); Save stays pinned
+- [ ] Unchanged: desktop (768px and up), all balance math and queries, and the pages T-29 covers; no change to any server action beyond saving a category's icon
+- [ ] Phone fit and themes: tap targets at least 44px, no sideways scroll at 390px, light and dark both readable; looked at signed in on dev and on the owner's phone
+- [ ] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md` and `docs/decisions/` describe the hero block, the cards and the category icons; looked at signed in on dev at 390px and desktop
+
+## T-29: Phone cards, part 2: the other pages
+Status: todo
+- [ ] Accounts, Bills, Goals, Debts, Installments, Budget, Insights, Set aside and Settings get the same phone hero block and icon cards as T-28, matching `prototypes/mobile-cards.html`. Desktop and all data logic unchanged
+- [ ] Planned after T-28 is looked at on a real phone, so what is learned there shapes this

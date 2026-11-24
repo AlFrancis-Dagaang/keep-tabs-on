@@ -5,13 +5,14 @@ import { refresh } from "next/cache";
 import { z } from "zod";
 import { categories, settings } from "@/db/schema";
 import { getUserId } from "@/lib/auth/server";
+import { parseCategoryIcon } from "@/lib/category-icons";
 import { withUser } from "@/lib/db";
 import { currencies } from "@/lib/money";
 
 export type FormState = {
   ok?: boolean;
   errors?: { name?: string };
-  values?: { name: string }; // refills the form after React resets it
+  values?: { name: string; icon: string }; // refills the form after React resets it
 };
 
 const categoryInput = z.object({
@@ -23,17 +24,18 @@ const categoryInput = z.object({
 /** Adds a category, or renames it when the form has an id. Its kind never changes. */
 export async function saveCategory(_: FormState, formData: FormData): Promise<FormState> {
   const userId = await getUserId();
-  const values = { name: String(formData.get("name") ?? "") };
-  const parsed = categoryInput.safeParse({ id: formData.get("id") || undefined, kind: formData.get("kind"), ...values });
+  const values = { name: String(formData.get("name") ?? ""), icon: String(formData.get("icon") ?? "") };
+  const parsed = categoryInput.safeParse({ id: formData.get("id") || undefined, kind: formData.get("kind"), name: values.name });
   if (!parsed.success) return { values, errors: { name: z.flattenError(parsed.error).fieldErrors.name?.[0] } };
 
   const { id, name, kind } = parsed.data;
+  const icon = parseCategoryIcon(values.icon);
   const taken = await withUser(userId, async (tx) => {
     const same = and(eq(categories.userId, userId), eq(categories.kind, kind), eq(categories.name, name));
     const [duplicate] = await tx.select({ id: categories.id }).from(categories).where(id ? and(same, ne(categories.id, id)) : same);
     if (duplicate) return true;
-    if (!id) await tx.insert(categories).values({ userId, name, kind });
-    else await tx.update(categories).set({ name }).where(and(eq(categories.id, id), eq(categories.userId, userId)));
+    if (!id) await tx.insert(categories).values({ userId, name, kind, icon });
+    else await tx.update(categories).set({ name, icon }).where(and(eq(categories.id, id), eq(categories.userId, userId)));
   });
   if (taken) return { values, errors: { name: `You already have ${name}.` } };
   refresh();

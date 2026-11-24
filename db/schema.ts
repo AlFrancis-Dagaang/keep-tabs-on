@@ -41,6 +41,7 @@ export const categories = pgTable(
     userId: uuid("user_id").notNull(),
     name: text().notNull(),
     kind: text({ enum: ["spending", "income"] }).notNull(),
+    icon: text(), // a key from lib/category-icons.ts, or null for the generic icon
     createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   },
   (t) => [

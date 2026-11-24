@@ -11,7 +11,7 @@ export async function AddEntryFab() {
   const userId = await getUserId();
   const { balances, choices, setAsideItems } = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
-    choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind })
+    choices: await tx.select({ id: categories.id, name: categories.name, kind: categories.kind, icon: categories.icon })
       .from(categories).where(eq(categories.userId, userId)).orderBy(asc(categories.name)),
     setAsideItems: await loadSetAsideItems(tx, userId),
   }));
