@@ -168,6 +168,27 @@ export function monthTotals(month: string, entries: Pick<Transaction, "type" | "
   return { income: total("income"), expenses: total("expense") };
 }
 
+export type InsightEntry = Pick<Transaction, "type" | "amount" | "date" | "categoryId" | "billId" | "debtId" | "installmentId">;
+
+/** A month's expenses by category, biggest first. Payments carry no category, so they group as Bills, Debts or Installments; anything else uncategorized is Uncategorized. */
+export function spendingByCategory(month: string, entries: InsightEntry[], categories: Pick<Category, "id" | "name">[]): { name: string; amount: number }[] {
+  const end = nextMonth(month);
+  const totals = new Map<string, number>();
+  for (const e of entries) {
+    if (e.type !== "expense" || e.date < month || e.date >= end) continue;
+    const name = categories.find((c) => c.id === e.categoryId)?.name ?? (e.billId ? "Bills" : e.debtId ? "Debts" : e.installmentId ? "Installments" : "Uncategorized");
+    totals.set(name, (totals.get(name) ?? 0) + e.amount);
+  }
+  return [...totals].map(([name, amount]) => ({ name, amount })).sort((a, b) => b.amount - a.amount);
+}
+
+/** Income and expenses for the six months ending at `month`, oldest first. */
+export function monthlyTrend(month: string, entries: InsightEntry[]): { month: string; income: number; expenses: number }[] {
+  const months: string[] = [];
+  for (let m = month, i = 0; i < 6; m = previousMonth(m), i++) months.unshift(m);
+  return months.map((m) => ({ month: m, ...monthTotals(m, entries) }));
+}
+
 /** The month before a "YYYY-MM-01" month. */
 export function previousMonth(month: string): string {
   const [year, m] = month.split("-").map(Number);

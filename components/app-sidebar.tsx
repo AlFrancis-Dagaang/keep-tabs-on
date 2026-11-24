@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Suspense } from "react";
 import { cn } from "cn";
-import { ArrowLeftRight, CalendarClock, CalendarRange, HandCoins, Landmark, LayoutDashboard, PiggyBank, Settings, Target, Vault } from "lucide-react";
+import { ArrowLeftRight, CalendarClock, CalendarRange, ChartNoAxesColumn, HandCoins, Landmark, LayoutDashboard, PiggyBank, Settings, Target, Vault } from "lucide-react";
 import { SignOutButton } from "@/components/sign-out-button";
 import { ThemeToggle } from "@/components/theme-toggle";
 
@@ -17,6 +17,7 @@ export const pages = [
   { href: "/goals", label: "Goals", icon: Target },
   { href: "/debts", label: "Debts", icon: HandCoins },
   { href: "/budget", label: "Budget", icon: PiggyBank },
+  { href: "/insights", label: "Insights", icon: ChartNoAxesColumn },
   { href: "/set-aside", label: "Set aside", icon: Vault },
   { href: "/settings", label: "Settings", icon: Settings },
 ];

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, billStatus, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthChange, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, previousMonth, progressBlocks, setAsideOf, startingForBalance, toInput } from "./money";
+import { type InsightEntry, accountHistory, balanceOf, balancesAfterEdit, billsDueSoon, billStatus, type BudgetExpense, budgetFor, budgetHistory, currencySymbol, type Entry, formatDate, formatMoney, formatTime, installmentDueAfterRemove, isLinked, manilaMonth, maxPaymentAmount, monthChange, monthlyTrend, monthRange, monthTotals, netWorth, nextDueDate, parseMoney, parseRange, previousDueDate, previousMonth, progressBlocks, setAsideOf, spendingByCategory, startingForBalance, toInput } from "./money";
 
 describe("parseMoney", () => {
   it("reads pesos into integer centavos", () => {
@@ -395,5 +395,50 @@ describe("billStatus", () => {
   it("counts days across a month boundary", () => {
     expect(billStatus("2026-12-01", "2026-11-29")).toBe("soon");
     expect(billStatus("2026-12-03", "2026-11-29")).toBe("upcoming");
+  });
+});
+
+describe("spendingByCategory", () => {
+  const categories = [{ id: "food", name: "Food" }, { id: "fun", name: "Fun" }];
+  const entry = (over: Partial<InsightEntry>): InsightEntry => ({ type: "expense", amount: 100, date: "2026-11-05", categoryId: null, billId: null, debtId: null, installmentId: null, ...over });
+
+  it("groups by category, names payments by what they pay, and sorts biggest first", () => {
+    const entries = [
+      entry({ categoryId: "fun", amount: 300 }), entry({ categoryId: "food", amount: 200 }), entry({ categoryId: "food", amount: 400 }),
+      entry({ billId: "b", amount: 50 }), entry({ debtId: "d", amount: 60 }), entry({ installmentId: "i", amount: 70 }), entry({ amount: 10 }),
+    ];
+    expect(spendingByCategory("2026-11-01", entries, categories)).toEqual([
+      { name: "Food", amount: 600 }, { name: "Fun", amount: 300 }, { name: "Installments", amount: 70 },
+      { name: "Debts", amount: 60 }, { name: "Bills", amount: 50 }, { name: "Uncategorized", amount: 10 },
+    ]);
+  });
+
+  it("leaves out other months, income and transfers, and a deleted category becomes Uncategorized", () => {
+    const entries = [
+      entry({ date: "2026-10-31", categoryId: "food" }), entry({ date: "2026-12-01", categoryId: "food" }),
+      entry({ type: "income", categoryId: "food" }), entry({ type: "transfer" }), entry({ categoryId: "gone", amount: 5 }),
+    ];
+    expect(spendingByCategory("2026-11-01", entries, categories)).toEqual([{ name: "Uncategorized", amount: 5 }]);
+  });
+
+  it("is empty for a month with no expenses", () => {
+    expect(spendingByCategory("2026-11-01", [], categories)).toEqual([]);
+  });
+});
+
+describe("monthlyTrend", () => {
+  it("returns six months ending at the month, oldest first, with zeros for gaps and transfers left out", () => {
+    const entries: InsightEntry[] = [
+      { type: "income", amount: 1000, date: "2026-11-02", categoryId: null, billId: null, debtId: null, installmentId: null },
+      { type: "expense", amount: 400, date: "2026-09-10", categoryId: null, billId: null, debtId: null, installmentId: null },
+      { type: "transfer", amount: 999, date: "2026-11-03", categoryId: null, billId: null, debtId: null, installmentId: null },
+    ];
+    const trend = monthlyTrend("2026-11-01", entries);
+    expect(trend.map((t) => t.month)).toEqual(["2026-06-01", "2026-07-01", "2026-08-01", "2026-09-01", "2026-10-01", "2026-11-01"]);
+    expect(trend.map((t) => [t.income, t.expenses])).toEqual([[0, 0], [0, 0], [0, 0], [0, 400], [0, 0], [1000, 0]]);
+  });
+
+  it("crosses a year", () => {
+    expect(monthlyTrend("2027-02-01", []).map((t) => t.month)).toEqual(["2026-09-01", "2026-10-01", "2026-11-01", "2026-12-01", "2027-01-01", "2027-02-01"]);
   });
 });
