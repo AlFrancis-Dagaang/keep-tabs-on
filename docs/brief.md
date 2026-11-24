@@ -33,7 +33,7 @@ Young Filipino employees (about 20–30) in their first or second job. They're p
 - Bank or e-wallet syncing, statement or CSV import.
 - Envelopes that split an account's balance, or funding per payday.
 - A payday wizard or custom budget periods (monthly only).
-- AI chat, charts beyond progress bars, reports.
+- AI chat.
 - Investments, more than one currency per user, shared or family budgets.
 - Native iOS/Android apps and push notifications (an installable web app is enough).
 

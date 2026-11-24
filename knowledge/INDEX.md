@@ -62,3 +62,4 @@ One line per file, newest last: `- [Title](path) — one-line hook`
 - [T-01 to T-11](retros/2026-11-14-t01-t11.md) — whole-project retro: what shipped, lessons, recurring follow-ups, flaky RLS tests
 - [T-12 to T-17](retros/2026-11-16-t12-t17.md) — scope grew in T-17, show-before-build pattern, month of use started 14 Nov
 - [T-18 to T-24](retros/2026-11-18-t18-t24.md) — docs lagging code, production migrations unconfirmed, Set aside added to the brief
+- [T-27](tasks/T-27.md) — Insights: where the money goes this month, by category, with a 6-month trend and a written summary (numbers only, no AI)

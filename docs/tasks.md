@@ -211,3 +211,13 @@ Status: todo
 - [ ] Unchanged: desktop (the Add entry dialog and the Accounts table), the pay and add-money forms on bills, debts, goals and installments, and all balance math and queries
 - [ ] Phone fit: every tap target is at least 44px, no sideways scroll at 390px, and the pinned Save stays reachable with the keyboard open
 - [ ] `pnpm lint`, `pnpm test` and `pnpm build` pass; `docs/design.md` describes both phone layouts; looked at signed in on dev at 390px and desktop
+
+## T-27: Insights, where the money goes
+Status: todo
+- [ ] Insights page: a sidebar item and a tab in the phone More sheet, matching `prototypes/insights.html` (approved). A month picker with previous and next arrows (`?month=YYYY-MM`, default this month in Asia/Manila, never after it), then Income, Spent and Left for that month
+- [ ] Where it went: the month's expenses grouped by category, biggest first, each with its amount, its share of spending and the change against the month before (hidden when that month has none). Expenses with no category are grouped as Bills, Debts, Installments (their payments) or Uncategorized. Bars use the existing look; no chart library
+- [ ] Last 6 months: income and spent bars side by side for the six months ending at the chosen one, the chosen month marked
+- [ ] A written line built from the numbers (a template, no AI, no API): spent, change against last month, the top category's share, what is left of income. An empty month says so
+- [ ] Money rules: only income and expense entries count; transfers (between accounts, to goals, to someone else) are left out; nothing is stored, no schema change; the figures come from the same entries Activity shows, so they match it
+- [ ] Phone fit: every tap target at least 44px and no sideways scroll at 390px
+- [ ] `docs/brief.md` no longer lists charts and reports as non-goals ("AI chat" stays); `docs/design.md` describes the page; `pnpm lint`, `pnpm test` and `pnpm build` pass; looked at signed in on dev at 390px and desktop
