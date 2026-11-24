@@ -7,6 +7,7 @@ import { ChoiceSheet } from "@/components/choice-sheet";
 import { FormSheetContent, useBackToClose } from "@/components/form-sheet";
 import { useMoney } from "@/components/currency-provider";
 import { ArrowRight, ChevronDown, ChevronLeft, Pencil, Plus, Trash2, Wallet } from "lucide-react";
+import { heroBlend } from "@/components/hero-block";
 import { Tile } from "@/components/icon-card";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogClose, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -234,7 +235,7 @@ function PhoneFields({ accounts, categories, today, setAsideItems, entry, onSave
       <input type="hidden" name="accountId" value={accountId} />
       <input type="hidden" name="toAccountId" value={to === OTHER ? "" : to} />
       <input type="hidden" name="categoryId" value={categoryId} />
-      <div className="grid shrink-0 gap-3 rounded-b-[28px] bg-primary px-4 pt-2 pb-5 text-primary-foreground">
+      <div style={heroBlend} className="grid shrink-0 gap-3 rounded-b-[28px] bg-primary px-4 pt-2 pb-5 text-primary-foreground">
         <div className="grid grid-cols-3 rounded-xl bg-white/20 p-1">
           {(["expense", "income", "transfer"] as const).map((option) => (
             <button

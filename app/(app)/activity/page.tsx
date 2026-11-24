@@ -112,7 +112,7 @@ async function Activity({ searchParams }: { searchParams: Search }) {
 
   return (
     <>
-      {balances.accounts.length > 0 && <HeroBlock top={<span>Activity</span>} label={heroLabel} value={money(total("expense"))} chip={`Income ${money(total("income"))}`} />}
+      {balances.accounts.length > 0 && <HeroBlock className="mb-4" top={<span>Activity</span>} label={heroLabel} value={money(total("expense"))} chip={`Income ${money(total("income"))}`} />}
       <PageHeader title="Activity" description="Income, expenses and transfers." hideOnPhone={balances.accounts.length > 0}>
         {balances.accounts.length > 0 && <EntryForm accounts={balances.accounts} categories={choices} today={today} setAsideItems={setAsideItems} />}
       </PageHeader>

@@ -15,3 +15,10 @@ export const getUserId = cache(async () => {
   if (!session?.user) redirect("/auth/sign-in");
   return session.user.id;
 });
+
+/** The first word of the Google profile name, or null when there is none. Cached like getUserId. */
+export const getFirstName = cache(async () => {
+  await connection();
+  const { data: session } = await auth.getSession();
+  return session?.user?.name?.trim().split(/\s+/)[0] || null;
+});

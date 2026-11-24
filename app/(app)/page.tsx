@@ -13,7 +13,7 @@ import { PageHeader } from "@/components/page-header";
 import { PixelBar } from "@/components/pixel-bar";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
 import { accounts, bills, categories, debts, goals, transactions } from "@/db/schema";
-import { getUserId } from "@/lib/auth/server";
+import { getFirstName, getUserId } from "@/lib/auth/server";
 import { loadBalances } from "@/lib/balances";
 import { withUser } from "@/lib/db";
 import { goalSetAside } from "@/lib/set-aside";
@@ -37,6 +37,7 @@ export default function OverviewPage() {
 async function Overview() {
   const money = await getMoney();
   const userId = await getUserId();
+  const firstName = await getFirstName();
   // shortcut: the bills, goals and debts queries are copies of their pages' queries; move them to lib/ if a third page needs them.
   const data = await withUser(userId, async (tx) => ({
     balances: await loadBalances(tx, userId),
@@ -103,7 +104,7 @@ async function Overview() {
   return (
     <div className="grid gap-8">
       <div className="md:hidden">
-        <HeroBlock className="pb-14" top={<span>Overview</span>} label="Net worth" value={money(netWorth(data.balances.accounts))} chip={`Across ${counted} ${counted === 1 ? "account" : "accounts"}`} />
+        <HeroBlock className="pb-14" top={<span>{firstName ? `Hello, ${firstName}` : "Overview"}</span>} label="Net worth" value={money(netWorth(data.balances.accounts))} chip={`Across ${counted} ${counted === 1 ? "account" : "accounts"}`} />
         <div className="relative -mt-9 grid grid-cols-2 gap-3">
           <Card href={`/activity?type=income&${thisMonth}`} label="Income" value={money(income)} note={changeNote(incomeChange)} />
           <Card href={`/activity?type=expense&${thisMonth}`} label="Spent" value={money(expenses)} note={changeNote(expensesChange)} />
